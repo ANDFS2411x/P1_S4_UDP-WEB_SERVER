@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sprint 4 Proyecto 1</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        h1 {
+            font-size: 24px;
+        }
+        p {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        span {
+            font-weight: normal;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sprint 4 Proyecto 1</h1>
+    <p>LONGITUD: <span id="longitud">Cargando...</span></p>
+    <p>LATITUD: <span id="latitud">Cargando...</span></p>
+    <p>FECHA: <span id="fecha">Cargando...</span></p>
+    <p>TIEMPO: <span id="tiempo">Cargando...</span></p>
+
+    <script>
+        function actualizarDatos() {
+            fetch("/data") // Se conecta a la ruta `/data` en el servidor
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById("longitud").textContent = data.LONGITUDE || "N/A";
+                    document.getElementById("latitud").textContent = data.LATITUDE || "N/A";
+                    document.getElementById("fecha").textContent = data.DATE || "N/A";
+                    document.getElementById("tiempo").textContent = data.TIME || "N/A";
+                })
+                .catch(err => {
+                    console.error("Error obteniendo datos:", err);
+                });
+        }
+
+        actualizarDatos(); // Cargar datos al abrir la página
+        setInterval(actualizarDatos, 1000); // Actualizar cada segundo
+    </script>
+</body>
+</html>
