@@ -5,47 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sprint 4 Proyecto 1</title>
     <style>
+        /* Estilos generales de la página */
         body {
             font-family: Arial, sans-serif;
             text-align: center;
             margin-top: 50px;
         }
+        /* Estilo del título principal */
         h1 {
             font-size: 24px;
         }
+        /* Estilo de los párrafos */
         p {
             font-size: 18px;
             font-weight: bold;
         }
+        /* Estilo para los valores dinámicos */
         span {
             font-weight: normal;
         }
     </style>
 </head>
 <body>
+    <!-- Título principal -->
     <h1>Sprint 4 Proyecto 1</h1>
+    
+    <!-- Sección donde se mostrarán los datos obtenidos -->
     <p>LONGITUD: <span id="longitud">Cargando...</span></p>
     <p>LATITUD: <span id="latitud">Cargando...</span></p>
     <p>FECHA: <span id="fecha">Cargando...</span></p>
     <p>TIEMPO: <span id="tiempo">Cargando...</span></p>
 
     <script>
+        /* Función para obtener y actualizar los datos en la página */
         function actualizarDatos() {
-            fetch("/data") // Se conecta a la ruta `/data` en el servidor
-                .then(res => res.json())
+            fetch("/data") // Llama a la ruta `/data` del servidor para obtener los datos
+                .then(res => res.json()) // Convierte la respuesta en formato JSON
                 .then(data => {
+                    // Actualiza los elementos del DOM con los datos recibidos
                     document.getElementById("longitud").textContent = data.LONGITUDE || "N/A";
                     document.getElementById("latitud").textContent = data.LATITUDE || "N/A";
                     document.getElementById("fecha").textContent = data.DATE || "N/A";
                     document.getElementById("tiempo").textContent = data.TIME || "N/A";
                 })
                 .catch(err => {
-                    console.error("Error obteniendo datos:", err);
+                    console.error("Error obteniendo datos:", err); // Muestra errores en la consola
                 });
         }
 
-        actualizarDatos(); // Cargar datos al abrir la página
-        setInterval(actualizarDatos, 1000); // Actualizar cada segundo
+        actualizarDatos(); // Llama a la función al cargar la página
+        setInterval(actualizarDatos, 1000); // Actualiza los datos cada segundo
     </script>
 </body>
 </html>
