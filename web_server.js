@@ -55,6 +55,6 @@ app.get("/data", (req, res) => {
     });
 });
 
-app.listen(port, '0.0.0.0' => {
-    console.log(`🌐 Servidor web corriendo en http://localhost:${port}`);
-});
+app.listen(3000, '0.0.0.0', () => {
+    console.log('Servidor corriendo');
+  });
