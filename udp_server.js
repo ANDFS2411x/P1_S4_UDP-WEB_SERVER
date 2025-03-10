@@ -1,7 +1,8 @@
 // este archivo es el servidor UDP que recibe las coordenadas enviadas por la app
 
-// importamos modulos para crear server udp, socket ipv4
-// e interactuar con la base de datos MYSQL
+// importamos modulos para crear server udp,   socket     ipv4
+// e    interactuar    con      la     base      de     datos      MYSQL
+
 const dgram = require('dgram');
 const mysql = require('mysql');
 const server = dgram.createSocket('udp4');
