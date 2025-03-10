@@ -9,52 +9,109 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            margin-top: 50px;
+            margin: 0;
+            padding: 0;
         }
+
         /* Estilo del título principal */
         h1 {
-            font-size: 24px;
+            font-size: 28px;
+            margin: 20px 0;
         }
+
         /* Estilo de los párrafos */
         p {
             font-size: 18px;
             font-weight: bold;
+            margin: 5px;
         }
+
         /* Estilo para los valores dinámicos */
         span {
             font-weight: normal;
+        }
+
+        /* Contenedor del mapa */
+        #map {
+            height: 70vh;
+            width: 100%;
+        }
+
+        /* Contenedor de los datos */
+        #datos {
+            margin: 20px 0;
         }
     </style>
 </head>
 <body>
     <!-- Título principal -->
     <h1>Sprint 4 Proyecto 1</h1>
-    
-    <!-- Sección donde se mostrarán los datos obtenidos -->
-    <p>LONGITUD: <span id="longitud">Cargando...</span></p>
-    <p>LATITUD: <span id="latitud">Cargando...</span></p>
-    <p>FECHA: <span id="fecha">Cargando...</span></p>
-    <p>TIEMPO: <span id="tiempo">Cargando...</span></p>
+
+    <!-- Mapa de Google -->
+    <div id="map"></div>
+
+    <!-- Sección de datos dinámicos -->
+    <div id="datos">
+        <p>LONGITUD: <span id="longitud">Cargando...</span></p>
+        <p>LATITUD: <span id="latitud">Cargando...</span></p>
+        <p>FECHA: <span id="fecha">Cargando...</span></p>
+        <p>TIEMPO: <span id="tiempo">Cargando...</span></p>
+    </div>
+
+    <!-- Google Maps Script con TU API KEY -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBLYK3r0OfUZySJY55eGgYTyCWnyoa8nSo"></script>
 
     <script>
-        /* Función para obtener y actualizar los datos en la página */
+        let map;
+        let marker;
+
+        function initMap() {
+            // Posición inicial por si acaso
+            const posicionInicial = { lat: 10.9921285, lng: -74.8463528 };
+
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: posicionInicial,
+                zoom: 15
+            });
+
+            marker = new google.maps.Marker({
+                position: posicionInicial,
+                map: map,
+                title: "Taxi 🚕"
+            });
+
+            // Inicia la actualización de datos
+            actualizarDatos();
+            setInterval(actualizarDatos, 1000);
+        }
+
         function actualizarDatos() {
-            fetch("/data") // Llama a la ruta `/data` del servidor para obtener los datos
-                .then(res => res.json()) // Convierte la respuesta en formato JSON
+            fetch("/data")
+                .then(res => res.json())
                 .then(data => {
-                    // Actualiza los elementos del DOM con los datos recibidos
+                    // Actualiza los textos
                     document.getElementById("longitud").textContent = data.LONGITUDE || "N/A";
                     document.getElementById("latitud").textContent = data.LATITUDE || "N/A";
                     document.getElementById("fecha").textContent = data.DATE || "N/A";
                     document.getElementById("tiempo").textContent = data.TIME || "N/A";
+
+                    // Si hay coordenadas, actualiza el mapa y el marcador
+                    if (data.LATITUDE && data.LONGITUDE) {
+                        const nuevaPosicion = {
+                            lat: parseFloat(data.LATITUDE),
+                            lng: parseFloat(data.LONGITUDE)
+                        };
+
+                        marker.setPosition(nuevaPosicion);
+                        map.setCenter(nuevaPosicion);
+                    }
                 })
                 .catch(err => {
-                    console.error("Error obteniendo datos:", err); // Muestra errores en la consola
+                    console.error("Error obteniendo datos:", err);
                 });
         }
 
-        actualizarDatos(); // Llama a la función al cargar la página
-        setInterval(actualizarDatos, 1000); // Actualiza los datos cada segundo
+        window.onload = initMap;
     </script>
 </body>
 </html>
