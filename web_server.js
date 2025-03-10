@@ -1,36 +1,35 @@
 // este archivo pertenece al servidor web que expone las coordenadas en la web
 
-// Importamos los módulos necesarios
-const express = require("express"); // Framework para crear el servidor web
-const mysql = require("mysql"); // Módulo para interactuar con MySQL
-const cors = require("cors"); // Módulo para permitir solicitudes de diferentes dominios (CORS)
+const express = require("express");
+const mysql = require("mysql");
+const cors = require("cors");
 
-const app = express(); // Inicializamos la aplicación Express
-const port = 3000; // Definimos el puerto en el que escuchará el servidor
+const app = express();
+const port = 3000;
 
-app.use(cors()); // Habilitamos CORS para permitir peticiones de otros orígenes
-app.use(express.static("public")); // Servir archivos estáticos desde la carpeta "public"
+app.use(cors());
+app.use(express.static("public"));
 
-// Configuración de la base de datos MySQL
+// 🔴 NUEVA Configuración de la base de datos MySQL en AWS RDS
 const db = mysql.createConnection({
-    host: "localhost", // Dirección del servidor de la base de datos
-    user: "root", // Usuario de la base de datos
-    password: "casabuela", // Contraseña del usuario
-    database: "p1s4_db" // Nombre de la base de datos
+    host: "andfs-db.cvoykko6s04z.us-east-2.rds.amazonaws.com",
+    user: "admin",
+    password: "fabregaS2025*",
+    database: "diseniop2"
 });
 
 // Conectar con la base de datos
 db.connect(err => {
     if (err) {
-        console.error("Error conectando a la base de datos:", err);
+        console.error("❌ Error conectando a la base de datos:", err);
         return;
     }
-    console.log("Conectado a la base de datos");
+    console.log("✅ Conectado a la base de datos RDS");
 });
 
-// Ruta principal `/` que devuelve el archivo HTML principal
+// Ruta principal `/`
 app.get("/", (req, res) => {
-    const query = "SELECT * FROM registros ORDER BY DATE DESC, TIME DESC LIMIT 1"; // Consulta para obtener el último registro
+    const query = "SELECT * FROM registros ORDER BY DATE DESC, TIME DESC LIMIT 1";
     db.query(query, (err, result) => {
         if (err) {
             return res.status(500).json({ error: "Error en la consulta" });
@@ -38,13 +37,13 @@ app.get("/", (req, res) => {
         if (result.length === 0) {
             return res.status(404).json({ error: "No hay registros disponibles" });
         }
-        res.sendFile(__dirname + "/public/index.html"); // Servimos la página HTML
+        res.sendFile(__dirname + "/public/index.html");
     });
 });
 
 // Ruta `/data` para obtener el último registro en formato JSON
 app.get("/data", (req, res) => {
-    const query = "SELECT * FROM registros ORDER BY DATE DESC, TIME DESC LIMIT 1"; // Consulta para obtener el último registro
+    const query = "SELECT * FROM registros ORDER BY DATE DESC, TIME DESC LIMIT 1";
     db.query(query, (err, result) => {
         if (err) {
             return res.status(500).json({ error: "Error en la consulta" });
@@ -52,11 +51,10 @@ app.get("/data", (req, res) => {
         if (result.length === 0) {
             return res.status(404).json({ error: "No hay registros disponibles" });
         }
-        res.json(result[0]); // Enviamos el último registro en formato JSON
+        res.json(result[0]);
     });
 });
 
-// Iniciar el servidor en el puerto especificado
 app.listen(port, () => {
-    console.log(`Servidor corriendo en http://localhost:${port}`);
+    console.log(`🌐 Servidor web corriendo en http://localhost:${port}`);
 });
