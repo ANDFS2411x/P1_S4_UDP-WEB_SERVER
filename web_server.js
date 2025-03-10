@@ -8,7 +8,8 @@ const app = express();
 const port = 3000;
 
 app.use(cors());
-app.use(express.static("public"));
+app.use("/", express.static("public"));
+
 
 // 🔴 NUEVA Configuración de la base de datos MySQL en AWS RDS
 const db = mysql.createConnection({
