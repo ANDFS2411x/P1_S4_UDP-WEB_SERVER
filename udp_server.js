@@ -1,12 +1,16 @@
 // este archivo es el servidor UDP que recibe las coordenadas enviadas por la app
 
-// importamos modulos para crear server udp,   socket     ipv4
-// e    interactuar    con      la     base      de     datos      MYSQL
+// importamos modulos para crear server udp, socket ipv4
+// e interactuar con la base de datos MYSQL
 
+// Importamos 'dgram' para trabajar con sockets UDP 
 const dgram = require('dgram');
-const mysql = require('mysql');
-const server = dgram.createSocket('udp4');
 
+// Importamos 'mysql' para conectarnos a una base de datos MySQL 
+const mysql = require('mysql');
+
+// Creamos un servidor UDP que usará IPv4.
+const server = dgram.createSocket('udp4');
 // Configuración de la conexión a la base de datos MySQL
 const connection = mysql.createConnection({
   host: 'localhost',// esta es la direccion del serverMySQL
