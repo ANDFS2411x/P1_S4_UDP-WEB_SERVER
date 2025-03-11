@@ -114,12 +114,9 @@
             marker = new google.maps.Marker({
                 position: window.posicionInicial,
                 map: map,
-                title: "Taxi 🚕",
-                icon: {
-                    url: "https://cdn-icons-png.flaticon.com/512/2972/2972185.png", // Aquí va tu icono
-                    scaledSize: new google.maps.Size(50, 50) // Tamaño de la imagen (ajústalo si quieres)
-                }
-        });
+                label: "🚕",
+                title: "Taxi"
+            });
 
 
             actualizarDatos();
