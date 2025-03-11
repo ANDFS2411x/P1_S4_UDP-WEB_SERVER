@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sprint 4 Proyecto 1</title>
+    <title>Proyecto 2- Diseño Electrónico</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -45,7 +45,7 @@
 </head>
 <body>
 
-    <h1>Sprint 4 Proyecto 1</h1>
+    <h1>Proyecto 2- Diseño Electrónico</h1>
 
     <div id="map">Cargando mapa...</div>
 
@@ -60,7 +60,17 @@
         let map;
         let marker;
 
-        // Pedimos la API key al backend
+        // Paso 1: Pedimos primero los datos de ubicación
+        function obtenerDatosIniciales() {
+            return fetch("/data")
+                .then(res => res.json())
+                .catch(err => {
+                    console.error("❌ Error obteniendo datos iniciales:", err);
+                    return null;
+                });
+        }
+
+        // Paso 2: Traemos la API Key y cargamos el mapa
         fetch("/api-key")
             .then(res => res.json())
             .then(data => {
@@ -68,10 +78,26 @@
                     throw new Error("No se recibió la API key");
                 }
 
-                const script = document.createElement("script");
-                script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&callback=initMap`;
-                script.async = true;
-                document.head.appendChild(script);
+                // Ahora obtenemos la posición inicial antes de cargar el mapa
+                obtenerDatosIniciales().then(ubicacion => {
+                    if (!ubicacion || !ubicacion.LATITUDE || !ubicacion.LONGITUDE) {
+                        document.getElementById("map").innerText = "No se pudo obtener la posición inicial.";
+                        return;
+                    }
+
+                    // Creamos el script de Google Maps después de tener todo listo
+                    const script = document.createElement("script");
+                    script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&callback=initMap`;
+                    script.async = true;
+                    
+                    // Guardamos la posición inicial en window para usarla en initMap
+                    window.posicionInicial = {
+                        lat: parseFloat(ubicacion.LATITUDE),
+                        lng: parseFloat(ubicacion.LONGITUDE)
+                    };
+
+                    document.head.appendChild(script);
+                });
             })
             .catch(err => {
                 console.error("❌ Error al obtener la API key:", err);
@@ -79,15 +105,14 @@
             });
 
         function initMap() {
-            const posicionInicial = { lat: 10.9921285, lng: -74.8463528 };
-
+            // Usamos la posición que trajimos de la base de datos
             map = new google.maps.Map(document.getElementById("map"), {
-                center: posicionInicial,
+                center: window.posicionInicial,
                 zoom: 15
             });
 
             marker = new google.maps.Marker({
-                position: posicionInicial,
+                position: window.posicionInicial,
                 map: map,
                 title: "Taxi 🚕"
             });
