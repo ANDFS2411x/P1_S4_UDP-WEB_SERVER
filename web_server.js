@@ -7,6 +7,13 @@ require('dotenv').config(); // 👈 Carga las variables de entorno
 const app = express();
 const port = 3000;
 
+
+// Ruta para obtener la API Key de Google Maps
+app.get("/api-key", (req, res) => {
+    res.json({ apiKey: process.env.GOOGLE_MAPS_API_KEY });
+});
+
+
 app.use(cors());
 app.use("/", express.static("public"));
 
@@ -57,10 +64,6 @@ app.get("/data", (req, res) => {
     });
 });
 
-// Ruta para obtener la API Key de Google Maps
-app.get("/api-key", (req, res) => {
-    res.json({ apiKey: process.env.GOOGLE_MAPS_API_KEY });
-});
 
 app.listen(3000, '0.0.0.0', () => {
     console.log('Servidor corriendo');
