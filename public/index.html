@@ -60,7 +60,7 @@
         let map;
         let marker;
 
-        // 1️⃣ Pedimos la API key al backend
+        // Pedimos la API key al backend
         fetch("/api-key")
             .then(res => res.json())
             .then(data => {
@@ -78,7 +78,6 @@
                 document.getElementById("map").innerText = "No se pudo cargar el mapa.";
             });
 
-        // 2️⃣ Función para inicializar el mapa
         function initMap() {
             const posicionInicial = { lat: 10.9921285, lng: -74.8463528 };
 
@@ -93,12 +92,10 @@
                 title: "Taxi 🚕"
             });
 
-            // Empezamos a actualizar los datos
             actualizarDatos();
             setInterval(actualizarDatos, 1000);
         }
 
-        // 3️⃣ Función que trae los datos del servidor
         function actualizarDatos() {
             fetch("/data")
                 .then(res => res.json())
