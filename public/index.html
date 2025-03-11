@@ -112,11 +112,14 @@
             });
 
             marker = new google.maps.Marker({
-                position: window.posicionInicial,
-                map: map,
-                label: "🚕",
-                title: "Taxi"
-            });
+                    position: window.posicionInicial,
+                    map: map,
+                    title: "Taxi 🚕",
+                    icon: {
+                        url: "https://cdn-icons-png.flaticon.com/128/2401/2401174.png",
+                        scaledSize: new google.maps.Size(50, 50)
+                    }
+                });
 
 
             actualizarDatos();
