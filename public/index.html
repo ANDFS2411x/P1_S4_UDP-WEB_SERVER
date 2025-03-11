@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Proyecto 2- Diseño Electrónico</title>
+    <title>Proyecto 2 - Diseño Electrónico</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -41,13 +41,31 @@
             font-weight: normal;
             color: #555;
         }
+
+        #seguirBtn {
+            margin: 15px;
+            padding: 12px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #seguirBtn:hover {
+            background-color: #45a049;
+        }
     </style>
 </head>
 <body>
 
-    <h1>Proyecto 2- Diseño Electrónico</h1>
+    <h1>Proyecto 2 - Diseño Electrónico</h1>
 
     <div id="map">Cargando mapa...</div>
+
+    <!-- Botón para seguir el taxi -->
+    <button id="seguirBtn">Seguir Taxi 🚕</button>
 
     <div id="datos">
         <p>LONGITUD: <span id="longitud">Cargando...</span></p>
@@ -59,8 +77,8 @@
     <script>
         let map;
         let marker;
+        let seguirCentrando = false;
 
-        // Paso 1: Pedimos primero los datos de ubicación
         function obtenerDatosIniciales() {
             return fetch("/data")
                 .then(res => res.json())
@@ -70,7 +88,6 @@
                 });
         }
 
-        // Paso 2: Traemos la API Key y cargamos el mapa
         fetch("/api-key")
             .then(res => res.json())
             .then(data => {
@@ -78,19 +95,16 @@
                     throw new Error("No se recibió la API key");
                 }
 
-                // Ahora obtenemos la posición inicial antes de cargar el mapa
                 obtenerDatosIniciales().then(ubicacion => {
                     if (!ubicacion || !ubicacion.LATITUDE || !ubicacion.LONGITUDE) {
                         document.getElementById("map").innerText = "No se pudo obtener la posición inicial.";
                         return;
                     }
 
-                    // Creamos el script de Google Maps después de tener todo listo
                     const script = document.createElement("script");
                     script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&callback=initMap`;
                     script.async = true;
-                    
-                    // Guardamos la posición inicial en window para usarla en initMap
+
                     window.posicionInicial = {
                         lat: parseFloat(ubicacion.LATITUDE),
                         lng: parseFloat(ubicacion.LONGITUDE)
@@ -105,22 +119,31 @@
             });
 
         function initMap() {
-            // Usamos la posición que trajimos de la base de datos
             map = new google.maps.Map(document.getElementById("map"), {
                 center: window.posicionInicial,
                 zoom: 15
             });
 
             marker = new google.maps.Marker({
-                    position: window.posicionInicial,
-                    map: map,
-                    title: "Taxi 🚕",
-                    icon: {
-                        url: "https://cdn-icons-png.flaticon.com/128/2401/2401174.png",
-                        scaledSize: new google.maps.Size(50, 50)
-                    }
-                });
+                position: window.posicionInicial,
+                map: map,
+                title: "Taxi 🚕",
+                icon: {
+                    url: "https://cdn-icons-png.flaticon.com/128/2401/2401174.png",
+                    scaledSize: new google.maps.Size(50, 50)
+                }
+            });
 
+            // Evento al presionar el botón de seguir taxi
+            document.getElementById("seguirBtn").addEventListener("click", () => {
+                seguirCentrando = true;
+                centrarEnTaxi();
+            });
+
+            // Si el usuario mueve el mapa, desactiva el seguimiento automático
+            map.addListener('dragstart', () => {
+                seguirCentrando = false;
+            });
 
             actualizarDatos();
             setInterval(actualizarDatos, 1000);
@@ -142,12 +165,22 @@
                         };
 
                         marker.setPosition(nuevaPosicion);
-                        map.setCenter(nuevaPosicion);
+
+                        if (seguirCentrando) {
+                            centrarEnTaxi();
+                        }
                     }
                 })
                 .catch(err => {
                     console.error("❌ Error obteniendo datos:", err);
                 });
+        }
+
+        function centrarEnTaxi() {
+            const posicion = marker.getPosition();
+            if (posicion) {
+                map.setCenter(posicion);
+            }
         }
     </script>
 
