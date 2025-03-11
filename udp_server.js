@@ -2,15 +2,16 @@
 
 const dgram = require('dgram');
 const mysql = require('mysql');
+require('dotenv').config(); // 👈 Cargar variables del .env
 
 const server = dgram.createSocket('udp4');
 
-// 🔴 NUEVA Configuración de la base de datos en AWS RDS
+// 🔴 Configuración de la base de datos con variables de entorno
 const connection = mysql.createConnection({
-  host: 'andfs-db.cvoykko6s04z.us-east-2.rds.amazonaws.com',
-  user: 'admin',
-  password: 'fabregaS2025*',
-  database: 'diseniop2'
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME
 });
 
 connection.connect(err => {

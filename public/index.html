@@ -5,52 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sprint 4 Proyecto 1</title>
     <style>
-        /* Estilos generales de la página */
         body {
             font-family: Arial, sans-serif;
             text-align: center;
             margin: 0;
             padding: 0;
+            background-color: #f2f2f2;
         }
 
-        /* Estilo del título principal */
         h1 {
             font-size: 28px;
             margin: 20px 0;
+            color: #333;
         }
 
-        /* Estilo de los párrafos */
-        p {
-            font-size: 18px;
-            font-weight: bold;
-            margin: 5px;
-        }
-
-        /* Estilo para los valores dinámicos */
-        span {
-            font-weight: normal;
-        }
-
-        /* Contenedor del mapa */
         #map {
             height: 70vh;
             width: 100%;
+            border: 1px solid #ccc;
         }
 
-        /* Contenedor de los datos */
         #datos {
-            margin: 20px 0;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        #datos p {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        #datos span {
+            font-weight: normal;
+            color: #555;
         }
     </style>
 </head>
 <body>
-    <!-- Título principal -->
+
     <h1>Sprint 4 Proyecto 1</h1>
 
-    <!-- Mapa de Google -->
-    <div id="map"></div>
+    <div id="map">Cargando mapa...</div>
 
-    <!-- Sección de datos dinámicos -->
     <div id="datos">
         <p>LONGITUD: <span id="longitud">Cargando...</span></p>
         <p>LATITUD: <span id="latitud">Cargando...</span></p>
@@ -58,15 +56,30 @@
         <p>TIEMPO: <span id="tiempo">Cargando...</span></p>
     </div>
 
-    <!-- Google Maps Script con TU API KEY -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBLYK3r0OfUZySJY55eGgYTyCWnyoa8nSo"></script>
-
     <script>
         let map;
         let marker;
 
+        // 1️⃣ Pedimos la API key al backend
+        fetch("/api-key")
+            .then(res => res.json())
+            .then(data => {
+                if (!data.apiKey) {
+                    throw new Error("No se recibió la API key");
+                }
+
+                const script = document.createElement("script");
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&callback=initMap`;
+                script.async = true;
+                document.head.appendChild(script);
+            })
+            .catch(err => {
+                console.error("❌ Error al obtener la API key:", err);
+                document.getElementById("map").innerText = "No se pudo cargar el mapa.";
+            });
+
+        // 2️⃣ Función para inicializar el mapa
         function initMap() {
-            // Posición inicial por si acaso
             const posicionInicial = { lat: 10.9921285, lng: -74.8463528 };
 
             map = new google.maps.Map(document.getElementById("map"), {
@@ -80,22 +93,21 @@
                 title: "Taxi 🚕"
             });
 
-            // Inicia la actualización de datos
+            // Empezamos a actualizar los datos
             actualizarDatos();
             setInterval(actualizarDatos, 1000);
         }
 
+        // 3️⃣ Función que trae los datos del servidor
         function actualizarDatos() {
             fetch("/data")
                 .then(res => res.json())
                 .then(data => {
-                    // Actualiza los textos
                     document.getElementById("longitud").textContent = data.LONGITUDE || "N/A";
                     document.getElementById("latitud").textContent = data.LATITUDE || "N/A";
                     document.getElementById("fecha").textContent = data.DATE || "N/A";
                     document.getElementById("tiempo").textContent = data.TIME || "N/A";
 
-                    // Si hay coordenadas, actualiza el mapa y el marcador
                     if (data.LATITUDE && data.LONGITUDE) {
                         const nuevaPosicion = {
                             lat: parseFloat(data.LATITUDE),
@@ -107,11 +119,10 @@
                     }
                 })
                 .catch(err => {
-                    console.error("Error obteniendo datos:", err);
+                    console.error("❌ Error obteniendo datos:", err);
                 });
         }
-
-        window.onload = initMap;
     </script>
+
 </body>
 </html>
