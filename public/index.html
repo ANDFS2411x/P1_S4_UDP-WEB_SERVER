@@ -1,5 +1,5 @@
 <!-- Este html funcion asi: -->
- 
+
 <!-- 1. Pide la API Key al servidor -->
 <!-- 2. Pide los datos iniciales del taxi-->
 <!-- 3. Carga el script de Google Maps (dinámicamente) LA API -->
@@ -196,7 +196,7 @@
             });
             // Actualiza la posición del taxi cada segundo
             actualizarDatos();
-            setInterval(actualizarDatos, 1000);
+            setInterval(actualizarDatos, 10000);
         }
          // Trae los datos nuevos y actualiza el mapa
         function actualizarDatos() {
