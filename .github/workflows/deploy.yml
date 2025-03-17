@@ -21,6 +21,7 @@ jobs:
           key: ${{ secrets.EC2_PRIVATE_KEY }}  # Tu key privada copiada desde el .pem.
           script: |
             cd ~/P1_S4_UDP-WEB_SERVER  # Entra al proyecto.
-            git pull origin main        # Trae los cambios del repo.
+            git fetch origin main       # Trae los cambios, pero sin mezclar.
+            git reset --hard origin/main  # Fuerza que tu rama local quede igualita a main.
             pm2 restart webserver --update-env  # Reinicia tu app web.
             pm2 restart udpserver --update-env  # Reinicia tu app UDP.
