@@ -6,22 +6,43 @@ on:
       - main  # Se activa cuando haces push en la rama main.
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest  # GitHub ejecuta este job en una máquina Ubuntu.
-
+  deploy-gaby:
+    runs-on: gabyrunner
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4  # Clona tu código en la maquinita de GitHub.
+    - name: Checkout repo
+      uses: actions/checkout@v4  # Clona tu código en la maquinita de GitHub
+    - name: copy env
+      run: cp ~/.env . 
+    - name: Install Dependencies
+      run: npm install
+    - name: Restart Server
+      run: sudo pm2 restart all 
 
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@v1.0.0  # Se conecta por SSH a tu servidor EC2.
-        with:
-          host: ${{ secrets.EC2_HOST }}  # IP de tu servidor (guardada en secrets).
-          username: ${{ secrets.EC2_USERNAME }}  # Normalmente es "ubuntu".
-          key: ${{ secrets.EC2_PRIVATE_KEY }}  # Tu key privada copiada desde el .pem.
-          script: |
-            cd ~/P1_S4_UDP-WEB_SERVER  # Entra al proyecto.
-            git fetch origin main       # Trae los cambios, pero sin mezclar.
-            git reset --hard origin/main  # Fuerza que tu rama local quede igualita a main.
-            pm2 restart webserver --update-env  # Reinicia tu app web.
-            pm2 restart udpserver --update-env  # Reinicia tu app UDP.
+  deploy-andrew:
+    runs-on: andrew
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4  # Clona tu código en la maquinita de GitHub
+    - name: copy env
+      run: cp ~/.env . 
+    - name: Install Dependencies
+      run: npm install
+    - name: Restart Server
+      run: sudo pm2 restart all 
+  deploy-andresito:
+    runs-on: andresito
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4  # Clona tu código en la maquinita de GitHub
+    - name: copy env
+      run: cp ~/.env . 
+    - name: Install Dependencies
+      run: npm install
+    - name: Restart Server
+      run: sudo pm2 restart all 
+      
+
+
+
+
+
