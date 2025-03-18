@@ -1,4 +1,4 @@
-name: Deploy to EC2
+name: CI/CD - Deploy to EC2
 
 on:
   push:
@@ -13,57 +13,50 @@ jobs:
   # Producción de Andresito (push a main)
   deploy-andresito-prod:
     runs-on: andresito
+    if: github.ref == 'refs/heads/main'
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v4  
-    - name: copy env
-      run: cp ~/.env . 
-    - name: Install Dependencies
-      run: npm install
-    - name: Restart Server
-      run: sudo pm2 restart all 
+      - name: Checkout repo
+        uses: actions/checkout@v4   
+      - name: Install Dependencies
+        run: npm install
+      - name: Restart Server
+        run: pm2 restart all
+      - name: PM2 Status
+        run: pm2 list 
 
   # Test de Andresito (push a andresito)
   deploy-andresito-test:
     runs-on: andresito
-    
+    if: github.ref == 'refs/heads/andresito'
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-      - name: Copy env de test
-        run: cp ~/.env.andresito .env
-      - name: Cambiar puerto test
-        run: echo "PORT=3004" >> .env
       - name: Install Dependencies
         run: npm install
       - name: Restart Andresito Test Server
-        run: sudo pm2 restart all 
+        run: pm2 restart all 
       - name: PM2 Status
         run: pm2 list
-  # Producción de Gaby (cuando hace push a main)
+
+  # Producción de Gaby (push a main)
   deploy-gaby-prod:
     runs-on: gaby
+    if: github.ref == 'refs/heads/main'
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v4  
-    - name: copy env
-      run: cp ~/.env . 
-    - name: Install Dependencies
-      run: npm install
-    - name: Restart Server
-      run: sudo pm2 restart all 
+      - name: Checkout repo
+        uses: actions/checkout@v4  
+      - name: Install Dependencies
+        run: npm install
+      - name: Restart Server
+        run: sudo pm2 restart all 
 
-  # Test de Gaby (cuando hace push a gaby)
+  # Test de Gaby (push a gaby)
   deploy-gaby-test:
     runs-on: gaby
-  
+    if: github.ref == 'refs/heads/gaby'
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-      - name: Copy env de test
-        run: cp ~/.env.gaby .env
-      - name: Cambiar puerto test
-        run: echo "PORT=3002" >> .env
       - name: Install Dependencies
         run: npm install
       - name: Restart Gaby Test Server
@@ -74,31 +67,25 @@ jobs:
   # Producción de Andrew (push a main)
   deploy-andrew-prod:
     runs-on: andrew
+    if: github.ref == 'refs/heads/main'
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v4  
-    - name: copy env
-      run: cp ~/.env . 
-    - name: Install Dependencies
-      run: npm install
-    - name: Restart Server
-      run: sudo pm2 restart all 
+      - name: Checkout repo
+        uses: actions/checkout@v4  
+      - name: Install Dependencies
+        run: npm install
+      - name: Restart Server
+        run: sudo pm2 restart all 
 
   # Test de Andrew (push a andrew)
   deploy-andrew-test:
     runs-on: andrew
+    if: github.ref == 'refs/heads/andrew'
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-      - name: Copy env de test
-        run: cp ~/.env.andrew .env
-      - name: Cambiar puerto test
-        run: echo "PORT=3003" >> .env
       - name: Install Dependencies
         run: npm install
       - name: Restart Andrew Test Server
         run: sudo pm2 restart all 
       - name: PM2 Status
         run: pm2 list
-
-
