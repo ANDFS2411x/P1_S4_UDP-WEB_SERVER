@@ -3,46 +3,110 @@ name: Deploy to EC2
 on:
   push:
     branches:
-      - main  # Se activa cuando haces push en la rama main.
+      - main
+      - gaby
+      - andrew
+      - andresito
 
 jobs:
-  deploy-gaby:
+  # Producción de Gaby (cuando hace push a main)
+  deploy-gaby-prod:
     runs-on: gaby
+    if: github.ref == 'refs/heads/main'
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v4  # Clona tu código en la maquinita de GitHub
-    - name: copy env
-      run: cp ~/.env . 
-    - name: Install Dependencies
-      run: npm install
-    - name: Restart Server
-      run: sudo pm2 restart all 
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Copy env de producción
+        run: cp ~/.env.prod .env
+      - name: Install Dependencies
+        run: npm install
+      - name: Restart Production Server
+        run: sudo pm2 restart all
 
-  deploy-andrew:
+  # Test de Gaby (cuando hace push a gaby)
+  deploy-gaby-test:
+    runs-on: gaby
+    if: github.ref == 'refs/heads/gaby'
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Copy env de test
+        run: cp ~/.env.gaby .env
+      - name: Cambiar puerto test
+        run: echo "PORT=3002" >> .env
+      - name: Install Dependencies
+        run: npm install
+      - name: Restart Gaby Test Server
+        run: |
+          sudo pm2 delete gaby-test || true
+          PORT=3002 pm2 start web_server.js --name gaby-test
+      - name: PM2 Status
+        run: pm2 list
+
+  # Producción de Andrew (push a main)
+  deploy-andrew-prod:
     runs-on: andrew
+    if: github.ref == 'refs/heads/main'
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v4  # Clona tu código en la maquinita de GitHub
-    - name: copy env
-      run: cp ~/.env . 
-    - name: Install Dependencies
-      run: npm install
-    - name: Restart Server
-      run: sudo pm2 restart all 
-  deploy-andresito:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Copy env de producción
+        run: cp ~/.env.prod .env
+      - name: Install Dependencies
+        run: npm install
+      - name: Restart Production Server
+        run: sudo pm2 restart all
+
+  # Test de Andrew (push a andrew)
+  deploy-andrew-test:
+    runs-on: andrew
+    if: github.ref == 'refs/heads/andrew'
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Copy env de test
+        run: cp ~/.env.andrew .env
+      - name: Cambiar puerto test
+        run: echo "PORT=3003" >> .env
+      - name: Install Dependencies
+        run: npm install
+      - name: Restart Andrew Test Server
+        run: |
+          sudo pm2 delete andrew-test || true
+          PORT=3003 pm2 start web_server.js --name andrew-test
+      - name: PM2 Status
+        run: pm2 list
+
+  # Producción de Andresito (push a main)
+  deploy-andresito-prod:
     runs-on: andresito
+    if: github.ref == 'refs/heads/main'
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v4  # Clona tu código en la maquinita de GitHub
-    - name: copy env
-      run: cp ~/.env . 
-    - name: Install Dependencies
-      run: npm install
-    - name: Restart Server
-      run: sudo pm2 restart all 
-      
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Copy env de producción
+        run: cp ~/.env.prod .env
+      - name: Install Dependencies
+        run: npm install
+      - name: Restart Production Server
+        run: sudo pm2 restart all
 
-
-
-
-
+  # Test de Andresito (push a andresito)
+  deploy-andresito-test:
+    runs-on: andresito
+    if: github.ref == 'refs/heads/andresito'
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Copy env de test
+        run: cp ~/.env.andresito .env
+      - name: Cambiar puerto test
+        run: echo "PORT=3004" >> .env
+      - name: Install Dependencies
+        run: npm install
+      - name: Restart Andresito Test Server
+        run: |
+          sudo pm2 delete andresito-test || true
+          PORT=3004 pm2 start web_server.js --name andresito-test
+      - name: PM2 Status
+        run: pm2 list
