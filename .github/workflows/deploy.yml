@@ -37,9 +37,7 @@ jobs:
       - name: Install Dependencies
         run: npm install
       - name: Restart Andresito Test Server
-        run: |
-          sudo pm2 delete andresito-test || true
-          PORT=3004 pm2 start web_server.js --name andresito-test
+        run: sudo pm2 restart all 
       - name: PM2 Status
         run: pm2 list
   # Producción de Gaby (cuando hace push a main)
@@ -69,9 +67,7 @@ jobs:
       - name: Install Dependencies
         run: npm install
       - name: Restart Gaby Test Server
-        run: |
-          sudo pm2 delete gaby-test || true
-          PORT=3002 pm2 start web_server.js --name gaby-test
+        run: sudo pm2 restart all 
       - name: PM2 Status
         run: pm2 list
 
@@ -101,9 +97,7 @@ jobs:
       - name: Install Dependencies
         run: npm install
       - name: Restart Andrew Test Server
-        run: |
-          sudo pm2 delete andrew-test || true
-          PORT=3003 pm2 start web_server.js --name andrew-test
+        run: sudo pm2 restart all 
       - name: PM2 Status
         run: pm2 list
 
