@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy-gaby:
-    runs-on: gabyrunner
+    runs-on: gaby
     steps:
     - name: Checkout repo
       uses: actions/checkout@v4  # Clona tu código en la maquinita de GitHub
