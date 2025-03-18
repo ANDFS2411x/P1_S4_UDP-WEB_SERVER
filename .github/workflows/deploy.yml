@@ -4,11 +4,44 @@ on:
   push:
     branches:
       - main
+      - andresito
       - gaby
       - andrew
-      - andresito
+      
 
 jobs:
+  # Producción de Andresito (push a main)
+  deploy-andresito-prod:
+    runs-on: andresito
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4  
+    - name: copy env
+      run: cp ~/.env . 
+    - name: Install Dependencies
+      run: npm install
+    - name: Restart Server
+      run: sudo pm2 restart all 
+
+  # Test de Andresito (push a andresito)
+  deploy-andresito-test:
+    runs-on: andresito
+    if: github.ref == 'refs/heads/andresito'
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Copy env de test
+        run: cp ~/.env.andresito .env
+      - name: Cambiar puerto test
+        run: echo "PORT=3004" >> .env
+      - name: Install Dependencies
+        run: npm install
+      - name: Restart Andresito Test Server
+        run: |
+          sudo pm2 delete andresito-test || true
+          PORT=3004 pm2 start web_server.js --name andresito-test
+      - name: PM2 Status
+        run: pm2 list
   # Producción de Gaby (cuando hace push a main)
   deploy-gaby-prod:
     runs-on: gaby
@@ -74,35 +107,4 @@ jobs:
       - name: PM2 Status
         run: pm2 list
 
-  # Producción de Andresito (push a main)
-  deploy-andresito-prod:
-    runs-on: andresito
-    steps:
-    - name: Checkout repo
-      uses: actions/checkout@v4  
-    - name: copy env
-      run: cp ~/.env . 
-    - name: Install Dependencies
-      run: npm install
-    - name: Restart Server
-      run: sudo pm2 restart all 
 
-  # Test de Andresito (push a andresito)
-  deploy-andresito-test:
-    runs-on: andresito
-    if: github.ref == 'refs/heads/andresito'
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-      - name: Copy env de test
-        run: cp ~/.env.andresito .env
-      - name: Cambiar puerto test
-        run: echo "PORT=3004" >> .env
-      - name: Install Dependencies
-        run: npm install
-      - name: Restart Andresito Test Server
-        run: |
-          sudo pm2 delete andresito-test || true
-          PORT=3004 pm2 start web_server.js --name andresito-test
-      - name: PM2 Status
-        run: pm2 list
