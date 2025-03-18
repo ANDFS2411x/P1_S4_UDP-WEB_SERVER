@@ -26,7 +26,7 @@ jobs:
   # Test de Andresito (push a andresito)
   deploy-andresito-test:
     runs-on: andresito
-    if: github.ref == 'refs/heads/andresito'
+    
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
