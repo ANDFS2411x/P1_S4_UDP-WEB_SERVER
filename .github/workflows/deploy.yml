@@ -20,7 +20,7 @@ jobs:
       - name: Install Dependencies
         run: npm install
       - name: Restart Server
-        run: pm2 restart all
+        run: pm2 restart web
       - name: PM2 Status
         run: pm2 list 
 
@@ -34,7 +34,7 @@ jobs:
       - name: Install Dependencies
         run: npm install
       - name: Restart Andresito Test Server
-        run: pm2 restart all --update-env
+        run: pm2 restart andresitoweb
       - name: PM2 Status
         run: pm2 list
 
