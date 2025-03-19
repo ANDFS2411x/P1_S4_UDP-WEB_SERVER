@@ -121,141 +121,141 @@
         <p>TIEMPO: <span id="tiempo">Cargando...</span></p>
     </div>
 
-    <script>
-        let map;
-        let marker;
-        let seguirCentrando = false;
-        
-        // ✅ Lista donde vamos a guardar el camino del taxi
-        let recorrido = [];
+<script>
+    let map;
+    let marker;
+    let seguirCentrando = false;
     
-        // ✅ Línea que va a mostrar el recorrido
-        let polyline;
-    
-        function obtenerDatosIniciales() {
-            return fetch("/data")
-                .then(res => res.json())
-                .catch(err => {
-                    console.error("❌ Error obteniendo datos iniciales:", err);
-                    return null;
-                });
-        }
-    
-        fetch("/api-key")
+    // ✅ Lista donde vamos a guardar el camino del taxi
+    let recorrido = [];
+
+    // ✅ Línea que va a mostrar el recorrido
+    let polyline;
+
+    function obtenerDatosIniciales() {
+        return fetch("/data")
+            .then(res => res.json())
+            .catch(err => {
+                console.error("❌ Error obteniendo datos iniciales:", err);
+                return null;
+            });
+    }
+
+    fetch("/api-key")
+        .then(res => res.json())
+        .then(data => {
+            if (!data.apiKey) {
+                throw new Error("No se recibió la API key");
+            }
+
+            obtenerDatosIniciales().then(ubicacion => {
+                if (!ubicacion || !ubicacion.LATITUDE || !ubicacion.LONGITUDE) {
+                    document.getElementById("map").innerText = "No se pudo obtener la posición inicial.";
+                    return;
+                }
+
+                const script = document.createElement("script");
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&callback=initMap`;
+                script.async = true;
+
+                window.posicionInicial = {
+                    lat: parseFloat(ubicacion.LATITUDE),
+                    lng: parseFloat(ubicacion.LONGITUDE)
+                };
+
+                // ✅ También guardamos el primer punto en el recorrido
+                recorrido.push(window.posicionInicial);
+
+                document.head.appendChild(script);
+            });
+        })
+        .catch(err => {
+            console.error("❌ Error al obtener la API key:", err);
+            document.getElementById("map").innerText = "No se pudo cargar el mapa.";
+        });
+
+    function initMap() {
+        map = new google.maps.Map(document.getElementById("map"), {
+            center: window.posicionInicial,
+            zoom: 15
+        });
+
+        marker = new google.maps.Marker({
+            position: window.posicionInicial,
+            map: map,
+            title: "Taxi 🚕",
+            icon: {
+                url: "https://cdn-icons-png.flaticon.com/128/2401/2401174.png",
+                scaledSize: new google.maps.Size(50, 50)
+            }
+        });
+
+        // ✅ Creamos la línea vacía para el recorrido
+        polyline = new google.maps.Polyline({
+            path: recorrido,
+            geodesic: true,
+            strokeColor: "#FF0000", // Rojo
+            strokeOpacity: 1.0,
+            strokeWeight: 4,
+        });
+
+        // ✅ Ponemos la línea en el mapa
+        polyline.setMap(map);
+
+        document.getElementById("seguirBtn").addEventListener("click", () => {
+            seguirCentrando = true;
+            centrarEnTaxi();
+        });
+
+        map.addListener('dragstart', () => {
+            seguirCentrando = false;
+        });
+
+        actualizarDatos();
+        setInterval(actualizarDatos, 10000);
+    }
+
+    function actualizarDatos() {
+        fetch("/data")
             .then(res => res.json())
             .then(data => {
-                if (!data.apiKey) {
-                    throw new Error("No se recibió la API key");
-                }
-    
-                obtenerDatosIniciales().then(ubicacion => {
-                    if (!ubicacion || !ubicacion.LATITUDE || !ubicacion.LONGITUDE) {
-                        document.getElementById("map").innerText = "No se pudo obtener la posición inicial.";
-                        return;
-                    }
-    
-                    const script = document.createElement("script");
-                    script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&callback=initMap`;
-                    script.async = true;
-    
-                    window.posicionInicial = {
-                        lat: parseFloat(ubicacion.LATITUDE),
-                        lng: parseFloat(ubicacion.LONGITUDE)
+                document.getElementById("longitud").textContent = data.LONGITUDE || "N/A";
+                document.getElementById("latitud").textContent = data.LATITUDE || "N/A";
+                document.getElementById("fecha").textContent = data.DATE || "N/A";
+                document.getElementById("tiempo").textContent = data.TIME || "N/A";
+
+                if (data.LATITUDE && data.LONGITUDE) {
+                    const nuevaPosicion = {
+                        lat: parseFloat(data.LATITUDE),
+                        lng: parseFloat(data.LONGITUDE)
                     };
-    
-                    // ✅ También guardamos el primer punto en el recorrido
-                    recorrido.push(window.posicionInicial);
-    
-                    document.head.appendChild(script);
-                });
+
+                    marker.setPosition(nuevaPosicion);
+
+                    // ✅ Agregamos la nueva posición al recorrido
+                    recorrido.push(nuevaPosicion);
+
+                    // ✅ Actualizamos el camino en el mapa
+                    polyline.setPath(recorrido);
+
+                    if (seguirCentrando) {
+                        centrarEnTaxi();
+                    }
+                }
             })
             .catch(err => {
-                console.error("❌ Error al obtener la API key:", err);
-                document.getElementById("map").innerText = "No se pudo cargar el mapa.";
+                console.error("❌ Error obteniendo datos:", err);
             });
-    
-        function initMap() {
-            map = new google.maps.Map(document.getElementById("map"), {
-                center: window.posicionInicial,
-                zoom: 15
-            });
-    
-            marker = new google.maps.Marker({
-                position: window.posicionInicial,
-                map: map,
-                title: "Taxi 🚕",
-                icon: {
-                    url: "https://cdn-icons-png.flaticon.com/128/2401/2401174.png",
-                    scaledSize: new google.maps.Size(50, 50)
-                }
-            });
-    
-            // ✅ Creamos la línea vacía para el recorrido
-            polyline = new google.maps.Polyline({
-                path: recorrido,
-                geodesic: true,
-                strokeColor: "#FF0000", // Rojo
-                strokeOpacity: 1.0,
-                strokeWeight: 4,
-            });
-    
-            // ✅ Ponemos la línea en el mapa
-            polyline.setMap(map);
-    
-            document.getElementById("seguirBtn").addEventListener("click", () => {
-                seguirCentrando = true;
-                centrarEnTaxi();
-            });
-    
-            map.addListener('dragstart', () => {
-                seguirCentrando = false;
-            });
-    
-            actualizarDatos();
-            setInterval(actualizarDatos, 10000);
+    }
+
+    function centrarEnTaxi() {
+        const posicion = marker.getPosition();
+        if (posicion) {
+            map.setCenter(posicion);
         }
-    
-        function actualizarDatos() {
-            fetch("/data")
-                .then(res => res.json())
-                .then(data => {
-                    document.getElementById("longitud").textContent = data.LONGITUDE || "N/A";
-                    document.getElementById("latitud").textContent = data.LATITUDE || "N/A";
-                    document.getElementById("fecha").textContent = data.DATE || "N/A";
-                    document.getElementById("tiempo").textContent = data.TIME || "N/A";
-    
-                    if (data.LATITUDE && data.LONGITUDE) {
-                        const nuevaPosicion = {
-                            lat: parseFloat(data.LATITUDE),
-                            lng: parseFloat(data.LONGITUDE)
-                        };
-    
-                        marker.setPosition(nuevaPosicion);
-    
-                        // ✅ Agregamos la nueva posición al recorrido
-                        recorrido.push(nuevaPosicion);
-    
-                        // ✅ Actualizamos el camino en el mapa
-                        polyline.setPath(recorrido);
-    
-                        if (seguirCentrando) {
-                            centrarEnTaxi();
-                        }
-                    }
-                })
-                .catch(err => {
-                    console.error("❌ Error obteniendo datos:", err);
-                });
-        }
-    
-        function centrarEnTaxi() {
-            const posicion = marker.getPosition();
-            if (posicion) {
-                map.setCenter(posicion);
-            }
-        }
-    </script>
-    
+    }
+</script>
+
 
 </body>
 </html>
