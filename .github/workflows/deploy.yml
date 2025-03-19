@@ -7,7 +7,8 @@ on:
       - andresito
       - gaby
       - andrew
-      
+      - ali
+      - luciana
 
 jobs:
   # Producción de Andresito (push a main)
@@ -39,8 +40,6 @@ jobs:
           pm2 restart andresitoweb
           pm2 list
 
-
-
   # Producción de Gaby (push a main)
   deploy-gaby-prod:
     runs-on: gaby
@@ -56,6 +55,7 @@ jobs:
         run: sudo pm2 restart all 
       - name: PM2 Status
         run: sudo pm2 list
+
   # Test de Gaby (push a gaby)
   deploy-gaby-test:
     runs-on: gaby
@@ -98,4 +98,36 @@ jobs:
       - name: Install Dependencies
         run: npm install
       - name: Restart Server
-        run: sudo pm2 restart all
+        run: sudo pm2 restart all 
+
+  # Test de Ali (push a ali)
+  deploy-ali-test:
+    runs-on: ali-runner
+    if: github.ref == 'refs/heads/ali'
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: copy env
+        run: cp ~/.env . 
+      - name: Install Dependencies
+        run: npm install
+      - name: Restart Server
+        run: sudo pm2 restart all 
+      - name: PM2 Status
+        run: sudo pm2 list
+
+  # Test de Lucy (push a luciana)
+  deploy-lucy-test:
+    runs-on: lucy-runner
+    if: github.ref == 'refs/heads/luciana'
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: copy env
+        run: cp ~/.env . 
+      - name: Install Dependencies
+        run: npm install
+      - name: Restart Server
+        run: sudo pm2 restart all 
+      - name: PM2 Status
+        run: sudo pm2 list
