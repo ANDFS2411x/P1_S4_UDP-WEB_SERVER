@@ -23,7 +23,7 @@ jobs:
       - name: Install Dependencies
         run: npm install
       - name: Restart Server
-        run: pm2 restart web
+        run: pm2 restart all
       - name: PM2 Status
         run: pm2 list 
 
@@ -38,6 +38,7 @@ jobs:
           git pull origin andresito
           npm install
           pm2 restart andresitoweb
+          pm2 restart andresitoudp
           pm2 list
 
   # Producción de Gaby (push a main)
@@ -46,31 +47,29 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4   
       - name: copy env
-        run: cp ~/.env .   
+        run: cp ~/.env . 
       - name: Install Dependencies
         run: npm install
       - name: Restart Server
-        run: sudo pm2 restart all 
+        run: pm2 restart all
       - name: PM2 Status
-        run: sudo pm2 list
+        run: pm2 list 
 
   # Test de Gaby (push a gaby)
   deploy-gaby-test:
     runs-on: gaby
     if: github.ref == 'refs/heads/gaby'
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-      - name: copy env
-        run: cp ~/.env . 
-      - name: Install Dependencies
-        run: npm install
-      - name: Restart Gaby Test Server
-        run: sudo pm2 restart all 
-      - name: PM2 Status
-        run: sudo pm2 list
+      - name: Deploy andresito branch to testsito folder
+        run: |
+          cd /home/ubuntu/gabtest
+          git pull origin gaby
+          npm install
+          pm2 restart gaby_web_test
+          pm2 restart gaby_udp_test
+          pm2 list
 
   # Producción de Andrew (push a main)
   deploy-andrew-prod:
@@ -78,27 +77,29 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4   
       - name: copy env
         run: cp ~/.env . 
       - name: Install Dependencies
         run: npm install
       - name: Restart Server
-        run: sudo pm2 restart all 
+        run: pm2 restart all
+      - name: PM2 Status
+        run: pm2 list 
 
   # Test de Andrew (push a andrew)
   deploy-andrew-test:
     runs-on: andrew
     if: github.ref == 'refs/heads/andrew'
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-      - name: copy env
-        run: cp ~/.env . 
-      - name: Install Dependencies
-        run: npm install
-      - name: Restart Server
-        run: sudo pm2 restart all 
+      - name: Deploy andresito branch to testsito folder
+        run: |
+          cd /home/ubuntu/andrew_test
+          git pull origin andrew
+          npm install
+          pm2 restart web_test
+          pm2 restart udp_test
+          pm2 list
 
   # Producción de Ali (push a main)
   deploy-ali-prod:
