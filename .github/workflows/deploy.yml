@@ -31,16 +31,17 @@ jobs:
     runs-on: andresito
     if: github.ref == 'refs/heads/andresito'
     steps:
-      - name: Checkout repo
+      - name: Checkout repo (opcional si ya lo tienes clonado)
         uses: actions/checkout@v4
-      - name: copy env
-        run: cp ~/.env .   
-      - name: Install Dependencies
-        run: npm install
-      - name: Restart Andresito Test Server
-        run: pm2 restart andresitoweb
-      - name: PM2 Status
-        run: pm2 list
+        
+      - name: Deploy andresito branch to test folder
+        run: |
+          cd /home/ubuntu/P1_S4_UDP-WEB_SERVER
+          git pull origin andresito
+          npm install
+          pm2 restart andresitoweb
+          pm2 list
+
 
   # Producción de Gaby (push a main)
   deploy-gaby-prod:
