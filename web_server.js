@@ -18,7 +18,6 @@ const app = express();
 // 🔢 Definimos el puerto en el que va a correr el servidor
 const port = process.env.PORT || 3000;
 
-
 // 📦 Agregamos el middleware de CORS a nuestra app para aceptar peticiones de otros lugares
 app.use(cors());
 
@@ -78,6 +77,12 @@ app.get("/data", (req, res) => {
 // Esto sirve archivos estáticos que estén en la carpeta "public", por ejemplo: HTML, CSS, imágenes...
 // Se pone después de las rutas para que no bloquee las APIs que hicimos antes
 app.use("/", express.static("public"));
+
+document.addEventListener("DOMContentLoaded", (event) => {
+    console.log("DOM fully loaded and parsed");
+    const titulo = document.getElementById("titulo")
+    titulo.innerHTML = process.env.TITLE
+  });
 
 /* ------------------- 🚀 INICIAMOS EL SERVIDOR ------------------- */
 // Arrancamos el servidor en el puerto definido y en cualquier IP ('0.0.0.0')
