@@ -23,7 +23,8 @@ jobs:
       - name: Install Dependencies
         run: npm install
       - name: Restart Server
-        run: pm2 restart all
+        run: pm2 restart udp
+            pm2 restart web
       - name: PM2 Status
         run: pm2 list 
 
@@ -53,7 +54,8 @@ jobs:
       - name: Install Dependencies
         run: npm install
       - name: Restart Server
-        run: pm2 restart all
+        run: pm2 restart udp
+              pm2 restart web
       - name: PM2 Status
         run: pm2 list 
 
@@ -83,7 +85,8 @@ jobs:
       - name: Install Dependencies
         run: npm install
       - name: Restart Server
-        run: pm2 restart all
+        run: pm2 restart udp_server
+              pm2 restart web_server
       - name: PM2 Status
         run: pm2 list 
 
