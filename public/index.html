@@ -122,44 +122,50 @@
     </div>
 
     <script>
-        let map;// Aquí va el mapa
-        let marker;// Aquí va el marcador del taxi
-        let seguirCentrando = false; // Si es true, el mapa sigue al taxi solito
-
-        // Trae los datos iniciales del taxi
+        let map;
+        let marker;
+        let seguirCentrando = false;
+        
+        // ✅ Lista donde vamos a guardar el camino del taxi
+        let recorrido = [];
+    
+        // ✅ Línea que va a mostrar el recorrido
+        let polyline;
+    
         function obtenerDatosIniciales() {
-            return fetch("/data") // Pide los datos al servidor
-                .then(res => res.json()) // Los convierte a JSON
-                .catch(err => {   // Si hay error, lo muestra en consola
+            return fetch("/data")
+                .then(res => res.json())
+                .catch(err => {
                     console.error("❌ Error obteniendo datos iniciales:", err);
                     return null;
                 });
         }
-        // trae la API key de Google Maps para mostrar el mapa
+    
         fetch("/api-key")
             .then(res => res.json())
             .then(data => {
                 if (!data.apiKey) {
                     throw new Error("No se recibió la API key");
                 }
-
-                // Luego trae la posición inicial del taxi
+    
                 obtenerDatosIniciales().then(ubicacion => {
                     if (!ubicacion || !ubicacion.LATITUDE || !ubicacion.LONGITUDE) {
                         document.getElementById("map").innerText = "No se pudo obtener la posición inicial.";
                         return;
                     }
-                    // Carga el script de Google Maps y llama a initMap cuando cargue
+    
                     const script = document.createElement("script");
                     script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&callback=initMap`;
                     script.async = true;
-
-                     // Guarda la posición inicial
+    
                     window.posicionInicial = {
                         lat: parseFloat(ubicacion.LATITUDE),
                         lng: parseFloat(ubicacion.LONGITUDE)
                     };
-                    // Mete el script en la página para que cargue el mapa
+    
+                    // ✅ También guardamos el primer punto en el recorrido
+                    recorrido.push(window.posicionInicial);
+    
                     document.head.appendChild(script);
                 });
             })
@@ -167,13 +173,13 @@
                 console.error("❌ Error al obtener la API key:", err);
                 document.getElementById("map").innerText = "No se pudo cargar el mapa.";
             });
-        // Esta función inicializa el mapa con la ubicación del taxi    
+    
         function initMap() {
             map = new google.maps.Map(document.getElementById("map"), {
                 center: window.posicionInicial,
                 zoom: 15
             });
-            // Coloca el marcador del taxi
+    
             marker = new google.maps.Marker({
                 position: window.posicionInicial,
                 map: map,
@@ -183,41 +189,55 @@
                     scaledSize: new google.maps.Size(50, 50)
                 }
             });
-
-            // Evento al presionar el botón de seguir taxi
+    
+            // ✅ Creamos la línea vacía para el recorrido
+            polyline = new google.maps.Polyline({
+                path: recorrido,
+                geodesic: true,
+                strokeColor: "#FF0000", // Rojo
+                strokeOpacity: 1.0,
+                strokeWeight: 4,
+            });
+    
+            // ✅ Ponemos la línea en el mapa
+            polyline.setMap(map);
+    
             document.getElementById("seguirBtn").addEventListener("click", () => {
                 seguirCentrando = true;
                 centrarEnTaxi();
             });
-
-            // Si el usuario mueve el mapa, desactiva el seguimiento automático
+    
             map.addListener('dragstart', () => {
                 seguirCentrando = false;
             });
-            // Actualiza la posición del taxi cada segundo
+    
             actualizarDatos();
             setInterval(actualizarDatos, 10000);
         }
-         // Trae los datos nuevos y actualiza el mapa
+    
         function actualizarDatos() {
             fetch("/data")
                 .then(res => res.json())
                 .then(data => {
-                    // Muestra la nueva información en pantalla
                     document.getElementById("longitud").textContent = data.LONGITUDE || "N/A";
                     document.getElementById("latitud").textContent = data.LATITUDE || "N/A";
                     document.getElementById("fecha").textContent = data.DATE || "N/A";
                     document.getElementById("tiempo").textContent = data.TIME || "N/A";
-
-                    // Si hay nuevas coordenadas, mueve el marcador
+    
                     if (data.LATITUDE && data.LONGITUDE) {
                         const nuevaPosicion = {
                             lat: parseFloat(data.LATITUDE),
                             lng: parseFloat(data.LONGITUDE)
                         };
-
+    
                         marker.setPosition(nuevaPosicion);
-                         // Si el botón de seguir está activado, centra el mapa en el taxi
+    
+                        // ✅ Agregamos la nueva posición al recorrido
+                        recorrido.push(nuevaPosicion);
+    
+                        // ✅ Actualizamos el camino en el mapa
+                        polyline.setPath(recorrido);
+    
                         if (seguirCentrando) {
                             centrarEnTaxi();
                         }
@@ -227,7 +247,7 @@
                     console.error("❌ Error obteniendo datos:", err);
                 });
         }
-        // Centra el mapa donde está el taxi
+    
         function centrarEnTaxi() {
             const posicion = marker.getPosition();
             if (posicion) {
@@ -235,6 +255,7 @@
             }
         }
     </script>
+    
 
 </body>
 </html>
