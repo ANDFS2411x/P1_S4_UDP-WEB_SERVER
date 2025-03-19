@@ -100,6 +100,20 @@ jobs:
       - name: Restart Server
         run: sudo pm2 restart all 
 
+  # Producción de Ali (push a main)
+  deploy-ali-prod:
+    runs-on: ali-runner
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: copy env
+        run: cp ~/.env . 
+      - name: Install Dependencies
+        run: npm install
+      - name: Restart Server
+        run: sudo pm2 restart all
+
   # Test de Ali (push a ali)
   deploy-ali-test:
     runs-on: ali-runner
@@ -115,6 +129,20 @@ jobs:
         run: sudo pm2 restart all 
       - name: PM2 Status
         run: sudo pm2 list
+        
+  # Producción de Luciana (push a main)
+  deploy-lucy-prod:
+    runs-on: lucy-runner
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: copy env
+        run: cp ~/.env . 
+      - name: Install Dependencies
+        run: npm install
+      - name: Restart Server
+        run: sudo pm2 restart all
 
   # Test de Lucy (push a luciana)
   deploy-lucy-test:
