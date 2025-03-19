@@ -143,13 +143,17 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4   
       - name: copy env
         run: cp ~/.env . 
       - name: Install Dependencies
         run: npm install
       - name: Restart Server
-        run: sudo pm2 restart all
+        run: pm2 restart udp
+      - name: Retsart another server
+        run: pm2 restart web
+      - name: PM2 Status
+        run: pm2 list 
 
   # Test de Lucy (push a luciana)
   deploy-lucy-test:
@@ -157,12 +161,14 @@ jobs:
     if: github.ref == 'refs/heads/luciana'
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4   
       - name: copy env
         run: cp ~/.env . 
       - name: Install Dependencies
         run: npm install
       - name: Restart Server
-        run: sudo pm2 restart all 
+        run: pm2 restart udplucy
+      - name: Retsart another server
+        run: pm2 restart weblucy
       - name: PM2 Status
-        run: sudo pm2 list
+        run: pm2 list 
