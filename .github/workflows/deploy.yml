@@ -24,7 +24,8 @@ jobs:
         run: npm install
       - name: Restart Server
         run: pm2 restart udp
-            pm2 restart web
+      - name: Retsart another server
+        run: pm2 restart web
       - name: PM2 Status
         run: pm2 list 
 
@@ -55,7 +56,8 @@ jobs:
         run: npm install
       - name: Restart Server
         run: pm2 restart udp
-              pm2 restart web
+      - name: Retsart another server
+        run: pm2 restart web
       - name: PM2 Status
         run: pm2 list 
 
@@ -86,7 +88,8 @@ jobs:
         run: npm install
       - name: Restart Server
         run: pm2 restart udp_server
-              pm2 restart web_server
+      - name: Retsart another server
+        run: pm2 restart web_server
       - name: PM2 Status
         run: pm2 list 
 
