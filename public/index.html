@@ -1,24 +1,24 @@
-<!-- Este html funcion asi: -->
+<!-- Este html funciona así:
 
-<!-- 1. Pide la API Key al servidor -->
-<!-- 2. Pide los datos iniciales del taxi-->
-<!-- 3. Carga el script de Google Maps (dinámicamente) LA API -->
-<!-- 4. Se ejecuta initMap() -->
-<!-- 5. Se empieza a ejecutar actualizarDatos() cada segundo-->
-<!--  -->
+1. Pide la API Key al servidor.
+2. Pide los datos iniciales del taxi.
+3. Carga el script de Google Maps (dinámicamente) LA API.
+4. Se ejecuta initMap() para iniciar el mapa.
+5. Se empieza a ejecutar actualizarDatos() cada segundo para mover el taxi y dibujar el recorrido.
+
+-->
+
 <!DOCTYPE html>
-
 <html lang="es">
 <head>
-<!-- configuraciones básicas del documento -->
+    <!-- configuraciones básicas del documento -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Proyecto 2 - Diseño Electrónico</title>  <!-- titulo de la pestaña-->
-    <style>
-        /*  Estilos para que se vea bonito  */
-                    /* Frontend */
+    <title>Proyecto 2 - Diseño Electrónico</title> <!-- título de la pestaña -->
 
-         /* Diseño del fondo, el texto y la alineación general */            
+    <style>
+        /* Estilos para que se vea bonito */
+        
         body {
             font-family: Arial, sans-serif;
             text-align: center;
@@ -26,25 +26,25 @@
             padding: 0;
             background-color: #f2f2f2;
         }
-        /* Tamaño y color del título principal */
+
         h1 {
             font-size: 28px;
             margin: 20px 0;
             color: #333;
         }
-        /* El cuadro donde se carga el mapa */
+
         #map {
             height: 70vh;
             width: 100%;
             border: 1px solid #ccc;
         }
-        /* Cajita donde se muestran los datos del taxi */
+
         #datos {
             background-color: #fff;
             padding: 20px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        /* Diseño de cada dato: Longitud, Latitud, etc. */
+
         #datos p {
             font-size: 18px;
             font-weight: bold;
@@ -55,7 +55,7 @@
             font-weight: normal;
             color: #555;
         }
-        /* Botón para seguir el taxi, con efectos bonitos al pasar el mouse */
+
         #seguirBtn {
             margin: 15px;
             padding: 12px 28px;
@@ -73,18 +73,18 @@
             position: relative;
             overflow: hidden;
         }
-        /* Qué pasa cuando pasas el mouse encima */
+
         #seguirBtn:hover {
             background: linear-gradient(145deg, #60c566, #45ad4a);
             transform: translateY(-2px);
             box-shadow: 0 7px 14px rgba(0, 0, 0, 0.12), 0 3px 6px rgba(0, 0, 0, 0.08);
         }
-        /* Qué pasa cuando haces clic */
+
         #seguirBtn:active {
             transform: translateY(1px);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-         /* Efecto de brillo en el botón */
+
         #seguirBtn::after {
             content: '';
             position: absolute;
@@ -102,19 +102,18 @@
         }
     </style>
 </head>
+
 <body>
-    <!-- Título que aparece en la página -->
-    <h1>Proyecto 2 - Diseño Electrónico</h1> 
-    <!-- Contenedor donde va a salir el mapa -->
+
+    <!-- Título -->
+    <h1>Proyecto 2 - Diseño Electrónico</h1>
+
+    <!-- Contenedor del mapa -->
     <div id="map">Cargando mapa...</div>
 
-    <!-- Botón para seguir el taxi -->
-    
-    <!-- Caja de información -->
+    <!-- Caja con la info del taxi -->
     <div id="datos">
-        <button id="seguirBtn">Seguir Taxi 🚕</button> <!-- Botón para centrar el taxi -->
-
-         <!-- Textos para mostrar la ubicación y fecha del taxi -->
+        <button id="seguirBtn">Seguir Taxi 🚕</button>
         <p>LONGITUD: <span id="longitud">Cargando...</span></p>
         <p>LATITUD: <span id="latitud">Cargando...</span></p>
         <p>FECHA: <span id="fecha">Cargando...</span></p>
@@ -122,16 +121,13 @@
     </div>
 
     <script>
-        let map;
-        let marker;
-        let seguirCentrando = false;
-        
-        // ✅ Lista donde vamos a guardar el camino del taxi
-        let recorrido = [];
-    
-        // ✅ Línea que va a mostrar el recorrido
-        let polyline;
-    
+        let map;               // El mapa de Google
+        let marker;            // El ícono del taxi
+        let seguirCentrando = false; // Si el botón está activado para seguir el taxi
+        let recorrido = [];    // Aquí guardamos todas las posiciones por donde pasa el taxi
+        let polyline;          // La línea roja que marca el recorrido
+
+        // Función para obtener los datos iniciales (posición del taxi al arrancar)
         function obtenerDatosIniciales() {
             return fetch("/data")
                 .then(res => res.json())
@@ -140,32 +136,34 @@
                     return null;
                 });
         }
-    
+
+        // Pedimos la API Key y los datos iniciales, después cargamos Google Maps
         fetch("/api-key")
             .then(res => res.json())
             .then(data => {
                 if (!data.apiKey) {
                     throw new Error("No se recibió la API key");
                 }
-    
+
                 obtenerDatosIniciales().then(ubicacion => {
                     if (!ubicacion || !ubicacion.LATITUDE || !ubicacion.LONGITUDE) {
                         document.getElementById("map").innerText = "No se pudo obtener la posición inicial.";
                         return;
                     }
-    
+
+                    // Creamos el script de Google Maps y lo cargamos con la API Key
                     const script = document.createElement("script");
                     script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&callback=initMap`;
                     script.async = true;
-    
+
+                    // Guardamos la posición inicial
                     window.posicionInicial = {
                         lat: parseFloat(ubicacion.LATITUDE),
                         lng: parseFloat(ubicacion.LONGITUDE)
                     };
-    
-                    // ✅ También guardamos el primer punto en el recorrido
-                    recorrido.push(window.posicionInicial);
-    
+
+                    recorrido.push(window.posicionInicial); // Añadimos el primer punto al recorrido
+
                     document.head.appendChild(script);
                 });
             })
@@ -173,13 +171,15 @@
                 console.error("❌ Error al obtener la API key:", err);
                 document.getElementById("map").innerText = "No se pudo cargar el mapa.";
             });
-    
+
+        // Esta función arranca el mapa
         function initMap() {
             map = new google.maps.Map(document.getElementById("map"), {
                 center: window.posicionInicial,
                 zoom: 15
             });
-    
+
+            // Creamos el marcador del taxi
             marker = new google.maps.Marker({
                 position: window.posicionInicial,
                 map: map,
@@ -189,57 +189,58 @@
                     scaledSize: new google.maps.Size(50, 50)
                 }
             });
-    
-            // ✅ Creamos la línea vacía para el recorrido
+
+            // Creamos la línea que mostrará el recorrido
             polyline = new google.maps.Polyline({
-                path: recorrido,
+                path: recorrido,         // Le pasamos el array recorrido
                 geodesic: true,
-                strokeColor: "#FF0000", // Rojo
+                strokeColor: "#FF0000",  // Rojo
                 strokeOpacity: 1.0,
-                strokeWeight: 4,
+                strokeWeight: 4,         // Grosor de la línea
             });
-    
-            // ✅ Ponemos la línea en el mapa
-            polyline.setMap(map);
-    
+
+            polyline.setMap(map); // Ponemos la línea en el mapa
+
+            // Botón para seguir el taxi
             document.getElementById("seguirBtn").addEventListener("click", () => {
                 seguirCentrando = true;
                 centrarEnTaxi();
             });
-    
+
+            // Si mueves el mapa con el mouse, deja de seguir el taxi
             map.addListener('dragstart', () => {
                 seguirCentrando = false;
             });
-    
-            actualizarDatos();
-            setInterval(actualizarDatos, 5000);
+
+            actualizarDatos();                    // Llamamos una vez para empezar
+            setInterval(actualizarDatos, 5000);   // Cada 5 actualizamos 
         }
-    
+
+        // Esta función pide los nuevos datos del taxi y actualiza todo
         function actualizarDatos() {
             fetch("/data")
                 .then(res => res.json())
                 .then(data => {
+                    // Mostramos los nuevos datos en pantalla
                     document.getElementById("longitud").textContent = data.LONGITUDE || "N/A";
                     document.getElementById("latitud").textContent = data.LATITUDE || "N/A";
                     document.getElementById("fecha").textContent = data.DATE || "N/A";
                     document.getElementById("tiempo").textContent = data.TIME || "N/A";
-    
+
                     if (data.LATITUDE && data.LONGITUDE) {
                         const nuevaPosicion = {
                             lat: parseFloat(data.LATITUDE),
                             lng: parseFloat(data.LONGITUDE)
                         };
-    
-                        marker.setPosition(nuevaPosicion);
-    
-                        // ✅ Agregamos la nueva posición al recorrido
-                        recorrido.push(nuevaPosicion);
-    
-                        // ✅ Actualizamos el camino en el mapa
-                        polyline.setPath(recorrido);
-    
+
+                        marker.setPosition(nuevaPosicion);  // Mueve el ícono del taxi
+
+                        recorrido.push(nuevaPosicion);      // Agrega la nueva posición a la lista de recorrido
+
+                        polyline.setPath(recorrido);        // Actualiza el camino rojo en el mapa
+
                         if (seguirCentrando) {
-                            centrarEnTaxi();
+                            centrarEnTaxi();                // Centra el mapa si el botón está activado
                         }
                     }
                 })
@@ -247,7 +248,8 @@
                     console.error("❌ Error obteniendo datos:", err);
                 });
         }
-    
+
+        // Centra la vista en el taxi
         function centrarEnTaxi() {
             const posicion = marker.getPosition();
             if (posicion) {
@@ -255,7 +257,6 @@
             }
         }
     </script>
-    
 
 </body>
 </html>
