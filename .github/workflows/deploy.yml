@@ -64,7 +64,7 @@ jobs:
     steps:
       - name: Deploy andresito branch to testsito folder
         run: |
-          cd /home/ubuntu/gabtest
+          cd /home/ubuntu/gabtest/P1_S4_UDP-WEB_SERVER
           git pull origin gaby
           npm install
           pm2 restart gaby_web_test
@@ -94,7 +94,7 @@ jobs:
     steps:
       - name: Deploy andresito branch to testsito folder
         run: |
-          cd /home/ubuntu/andrew_test
+          cd /home/ubuntu/andrew_test/P1_S4_UDP-WEB_SERVER
           git pull origin andrew
           npm install
           pm2 restart web_test
