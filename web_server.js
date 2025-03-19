@@ -78,12 +78,6 @@ app.get("/data", (req, res) => {
 // Se pone después de las rutas para que no bloquee las APIs que hicimos antes
 app.use("/", express.static("public"));
 
-document.addEventListener("DOMContentLoaded", (event) => {
-    console.log("DOM fully loaded and parsed");
-    const titulo = document.getElementById("titulo")
-    titulo.innerHTML = process.env.TITLE
-  });
-
 /* ------------------- 🚀 INICIAMOS EL SERVIDOR ------------------- */
 // Arrancamos el servidor en el puerto definido y en cualquier IP ('0.0.0.0')
 app.listen(port, '0.0.0.0', () => {
