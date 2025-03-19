@@ -23,7 +23,9 @@ jobs:
       - name: Install Dependencies
         run: npm install
       - name: Restart Server
-        run: pm2 restart all
+        run: pm2 restart udp
+      - name: Retsart another server
+        run: pm2 restart web
       - name: PM2 Status
         run: pm2 list 
 
@@ -53,7 +55,9 @@ jobs:
       - name: Install Dependencies
         run: npm install
       - name: Restart Server
-        run: pm2 restart all
+        run: pm2 restart udp
+      - name: Retsart another server
+        run: pm2 restart web
       - name: PM2 Status
         run: pm2 list 
 
@@ -64,7 +68,7 @@ jobs:
     steps:
       - name: Deploy andresito branch to testsito folder
         run: |
-          cd /home/ubuntu/gabtest
+          cd /home/ubuntu/gabtest/P1_S4_UDP-WEB_SERVER
           git pull origin gaby
           npm install
           pm2 restart gaby_web_test
@@ -83,7 +87,9 @@ jobs:
       - name: Install Dependencies
         run: npm install
       - name: Restart Server
-        run: pm2 restart all
+        run: pm2 restart udp_server
+      - name: Retsart another server
+        run: pm2 restart web_server
       - name: PM2 Status
         run: pm2 list 
 
@@ -94,7 +100,7 @@ jobs:
     steps:
       - name: Deploy andresito branch to testsito folder
         run: |
-          cd /home/ubuntu/andrew_test
+          cd /home/ubuntu/andrew_test/P1_S4_UDP-WEB_SERVER
           git pull origin andrew
           npm install
           pm2 restart web_test
