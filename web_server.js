@@ -21,6 +21,8 @@ const port = process.env.PORT || 3000;
 // 📦 Agregamos el middleware de CORS a nuestra app para aceptar peticiones de otros lugares
 app.use(cors());
 
+app.set('view engine', 'ejs');
+
 /* ------------------- 🔴 CONFIGURAMOS LA CONEXIÓN A LA BASE DE DATOS ------------------- */
 const db = mysql.createConnection({
     host: process.env.DB_HOST,  // 🌍 Dirección del servidor de la base de datos
@@ -77,6 +79,10 @@ app.get("/data", (req, res) => {
 // Esto sirve archivos estáticos que estén en la carpeta "public", por ejemplo: HTML, CSS, imágenes...
 // Se pone después de las rutas para que no bloquee las APIs que hicimos antes
 app.use("/", express.static("public"));
+
+app.get('/', (req, res) => {
+    res.render('index', { title: process.env.PAGE_TITLE });
+});
 
 /* ------------------- 🚀 INICIAMOS EL SERVIDOR ------------------- */
 // Arrancamos el servidor en el puerto definido y en cualquier IP ('0.0.0.0')
