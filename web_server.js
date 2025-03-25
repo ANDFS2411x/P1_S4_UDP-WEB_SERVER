@@ -9,6 +9,8 @@ const mysql = require("mysql");
 // 🔓 Importamos CORS para permitir que otras páginas puedan hacer peticiones a nuestro servidor
 const cors = require("cors");
 
+const path = require('path');
+
 // 🌿 Cargamos las variables de entorno desde el archivo .env
 require('dotenv').config(); // Carga variables del .env
 
