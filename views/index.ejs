@@ -452,8 +452,6 @@
 
         async function initHistoricalTracking() {
             try {
-                const apiKeyData = await fetchData('/api-key');
-                if (!apiKeyData.apiKey) throw new Error("API Key no recibida");
                 // Configurar fechas por defecto (última hora)
                 const now = new Date();
                 const oneHourAgo = new Date(now.getTime() - (60 * 60 * 1000));
@@ -465,17 +463,9 @@
                 domElements.loadHistory.addEventListener('click', loadHistoricalData);
 
                 // Inicializar mapa si no está inicializado
-                if (!appState.mapsLoaded) {
-                    const script = document.createElement('script');
-                    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKeyData.apiKey}&callback=initHistoricalMap`;
-                    script.async = true;
-                    script.defer = true;
-                    document.head.appendChild(script);
-                    appState.mapsLoaded = true;
-                } else {
+                if (!appState.historical.loaded && appState.mapsLoaded) {
                     initHistoricalMap();
                 }
-
             } catch (error) {
                 console.error('Error inicializando Historical Tracking:', error);
                 showError(domElements.historicalError, error.message);
@@ -589,7 +579,6 @@
             lat: parseFloat(item.LATITUDE),
             lng: parseFloat(item.LONGITUDE)
         }));
-        console.log(path)
 
         // 5. Limpiar polilínea anterior si existe
         if (appState.historical.polyline) {
