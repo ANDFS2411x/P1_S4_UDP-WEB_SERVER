@@ -525,96 +525,101 @@
         }
 
         async function loadHistoricalData() {
-            console.log("Estado del contenedor:", {
-                visible: domElements.historicalMap.offsetParent !== null,
-                width: domElements.historicalMap.offsetWidth,
-                height: domElements.historicalMap.offsetHeight,
-                display: window.getComputedStyle(domElements.historicalMap).display
-            });
-            try {
-                const startDate = domElements.startDate.value;
-                const endDate = domElements.endDate.value;
+    try {
+        console.log("Iniciando carga de datos históricos...");
+        
+        const startDate = domElements.startDate.value;
+        const endDate = domElements.endDate.value;
 
-                if (!startDate || !endDate) {
-                    throw new Error("Debe seleccionar ambas fechas");
-                }
-
-                // Mostrar carga
-                domElements.historicalMap.innerHTML = "Cargando datos históricos...";
-                domElements.historicalError.style.display = "none";
-
-                // Asegurar que el mapa esté inicializado
-                if (!appState.historical.loaded) {
-                    initHistoricalMap();
-                    // Esperar a que el mapa esté listo
-                    await new Promise(resolve => setTimeout(resolve, 300));
-                }
-
-                // Obtener datos históricos
-                const response = await fetch(`${config.basePath}/historical-data?startDate=${startDate}&endDate=${endDate}`);
-
-                if (!response.ok) {
-                    throw new Error(`Error del servidor: ${response.status}`);
-                }
-
-                const result = await response.json();
-                console.log("Datos recibidos:", result); // Debug
-
-                // Verificar estructura de la respuesta
-                if (!result || !result.data || !Array.isArray(result.data)) {
-                    throw new Error("Formato de datos incorrecto recibido del servidor");
-                }
-
-                if (result.data.length === 0) {
-                    throw new Error("No hay datos para el rango seleccionado");
-                }
-
-                // Procesar datos para el mapa
-                const path = result.data.map(item => {
-                    if (!item.LATITUDE || !item.LONGITUDE) {
-                        throw new Error("Datos de ubicación incompletos");
-                    }
-                    return {
-                        lat: parseFloat(item.LATITUDE),
-                        lng: parseFloat(item.LONGITUDE)
-                    };
-                });
-
-                // Limpiar polilínea anterior si existe
-                if (appState.historical.polyline) {
-                    appState.historical.polyline.setMap(null);
-                }
-
-                // Crear nueva polilínea
-                appState.historical.polyline = new google.maps.Polyline({
-                    path: path,
-                    geodesic: true,
-                    strokeColor: "#4285F4",
-                    strokeOpacity: 1.0,
-                    strokeWeight: 4,
-                    map: appState.historical.map
-                });
-
-                // Ajustar vista para mostrar toda la ruta
-                const bounds = new google.maps.LatLngBounds();
-                path.forEach(point => bounds.extend(point));
-
-                // Forzar redibujado
-                setTimeout(() => {
-                    google.maps.event.trigger(appState.historical.map, 'resize');
-                    appState.historical.map.fitBounds(bounds);
-                    console.log("Polilínea creada y mapa ajustado"); // Debug
-                }, 100);
-
-                // Limpiar mensaje de carga
-                domElements.historicalMap.innerHTML = "";
-
-            } catch (error) {
-                console.error('Error cargando datos históricos:', error);
-                domElements.historicalMap.innerHTML = "Error al cargar datos. Intente nuevamente.";
-                showError(domElements.historicalError, error.message);
-            }
+        if (!startDate || !endDate) {
+            throw new Error("Debe seleccionar ambas fechas");
         }
+
+        // Mostrar carga
+        domElements.historicalMap.innerHTML = "Cargando datos históricos...";
+        domElements.historicalError.style.display = "none";
+
+        // 1. Asegurar que el mapa esté inicializado
+        if (!appState.historical.map) {
+            console.log("Inicializando mapa histórico...");
+            initHistoricalMap();
+            // Esperar a que el mapa esté completamente listo
+            await new Promise(resolve => {
+                const checkMap = setInterval(() => {
+                    if (appState.historical.map) {
+                        clearInterval(checkMap);
+                        resolve();
+                    }
+                }, 100);
+            });
+        }
+
+        // 2. Obtener datos históricos
+        console.log("Obteniendo datos del servidor...");
+        const response = await fetch(`${config.basePath}/historical-data?startDate=${startDate}&endDate=${endDate}`);
+        
+        if (!response.ok) {
+            throw new Error(`Error del servidor: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log("Datos recibidos:", result);
+
+        // 3. Validar datos
+        if (!result?.success || !Array.isArray(result.data)) {
+            throw new Error("Formato de datos incorrecto");
+        }
+
+        if (result.data.length === 0) {
+            throw new Error("No hay datos para el rango seleccionado");
+        }
+
+        // 4. Procesar coordenadas
+        const path = result.data.map(item => ({
+            lat: parseFloat(item.LATITUDE),
+            lng: parseFloat(item.LONGITUDE)
+        }));
+
+        // 5. Limpiar polilínea anterior si existe
+        if (appState.historical.polyline) {
+            appState.historical.polyline.setMap(null);
+        }
+
+        // 6. Crear nueva polilínea
+        console.log("Creando polilínea con", path.length, "puntos");
+        appState.historical.polyline = new google.maps.Polyline({
+            path: path,
+            geodesic: true,
+            strokeColor: "#FF0000", // Rojo para mejor visibilidad
+            strokeOpacity: 1.0,
+            strokeWeight: 4,
+            map: appState.historical.map
+        });
+
+        // 7. Ajustar vista del mapa
+        const bounds = new google.maps.LatLngBounds();
+        path.forEach(point => bounds.extend(point));
+        
+        // Añadir pequeño margen
+        const padding = 100; // pixels
+        appState.historical.map.fitBounds(bounds, padding);
+
+        // 8. Forzar redibujado
+        setTimeout(() => {
+            google.maps.event.trigger(appState.historical.map, 'resize');
+            appState.historical.map.setCenter(bounds.getCenter());
+            console.log("Mapa actualizado correctamente");
+        }, 300);
+
+        // Limpiar mensaje de carga
+        domElements.historicalMap.innerHTML = "";
+
+    } catch (error) {
+        console.error('Error:', error);
+        domElements.historicalMap.innerHTML = `Error: ${error.message}`;
+        showError(domElements.historicalError, error.message);
+    }
+}
 
         // 🔹 MANEJO DE NAVEGACIÓN 🔹
 
