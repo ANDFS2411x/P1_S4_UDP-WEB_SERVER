@@ -188,45 +188,47 @@
                 });
         }
     
-        function cargarMapa() {
-            fetch(`${basePath}/api-key`)
-            console.log(`${basePath}/api-key`)
-                .then(res => {
-                    if (!res.ok) throw new Error("Error al obtener API key");
-                    return res.json();
-                })
-                .then(data => {
-                    if (!data.apiKey) {
-                        throw new Error("No se recibió la API key");
-                    }
-    
-                    return obtenerDatosIniciales().then(ubicacion => {
-                        if (!ubicacion || !ubicacion.LATITUDE || !ubicacion.LONGITUDE) {
-                            throw new Error("No se pudo obtener la posición inicial");
-                        }
+            async function cargarMapa() {
+        try {
+            // 1. Obtener API Key
+            const apiKeyResponse = await fetch(`${basePath}/api-key`);
+            if (!apiKeyResponse.ok) {
+                throw new Error('Error al obtener API key');
+            }
+            const apiKeyData = await apiKeyResponse.json();
+            
+            if (!apiKeyData.apiKey) {
+                throw new Error('No se recibió la API key');
+            }
 
-                        // Actualizar panel de información
-                        actualizarPanelInformacion(ubicacion);
-    
-                        const script = document.createElement("script");
-                        script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&callback=initMap`;
-                        script.async = true;
-                        script.defer = true;
-    
-                        window.posicionInicial = {
-                            lat: parseFloat(ubicacion.LATITUDE),
-                            lng: parseFloat(ubicacion.LONGITUDE)
-                        };
-    
-                        recorrido = [window.posicionInicial];
-                        document.head.appendChild(script);
-                    });
-                })
-                .catch(err => {
-                    console.error("❌ Error al cargar el mapa:", err);
-                    document.getElementById("map").innerText = "Error al cargar el mapa: " + err.message;
-                });
+            // 2. Obtener posición inicial
+            const dataResponse = await fetch(`${basePath}/data`);
+            if (!dataResponse.ok) {
+                throw new Error('Error al obtener datos iniciales');
+            }
+            const ubicacion = await dataResponse.json();
+
+            if (!ubicacion?.LATITUDE || !ubicacion?.LONGITUDE) {
+                throw new Error('Datos de ubicación incompletos');
+            }
+
+            // 3. Configurar posición inicial
+            window.posicionInicial = {
+                lat: parseFloat(ubicacion.LATITUDE),
+                lng: parseFloat(ubicacion.LONGITUDE)
+            };
+            recorrido = [window.posicionInicial];
+
+            // 4. Cargar Google Maps
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKeyData.apiKey}&callback=initMap`;
+            script.async = true;
+            document.head.appendChild(script);
+        } catch (error) {
+            console.error('Error al cargar el mapa:', error);
+            document.getElementById("map").innerText = `Error: ${error.message}`;
         }
+    }
     
         function initMap() {
             console.log("Inicializando mapa...");
@@ -269,44 +271,38 @@
             updateInterval = setInterval(actualizarDatos, 5000);
         }
     
-        function actualizarDatos() {
-            fetch(`${basePath}/data`)
-            console.log(`${basePath}/data`)
-                .then(res => {
-                    if (!res.ok) throw new Error("Error en la respuesta del servidor");
-                    return res.json();
-                })
-                .then(data => {
-                    if (!data.LATITUDE || !data.LONGITUDE) {
-                        console.warn("⚠ Datos incompletos recibidos");
-                        return;
-                    }
+            async function actualizarDatos() {
+        try {
+            const response = await fetch(`${basePath}/data`);
+            if (!response.ok) {
+                throw new Error('Error en la respuesta del servidor');
+            }
+            const data = await response.json();
 
-                    // Actualizar panel de información
-                    actualizarPanelInformacion(data);
-    
-                    const nuevaPosicion = {
-                        lat: parseFloat(data.LATITUDE),
-                        lng: parseFloat(data.LONGITUDE)
-                    };
-    
-                    // Actualizar marcador
-                    marker.setPosition(nuevaPosicion);
-                    
-                    // Agregar nueva posición al recorrido
-                    recorrido.push(nuevaPosicion);
-                    
-                    // Actualizar polilínea
-                    polyline.setPath(recorrido);
-    
-                    if (seguirCentrando) {
-                        centrarEnTaxi();
-                    }
-                })
-                .catch(err => {
-                    console.error("❌ Error obteniendo datos:", err);
-                });
+            // Actualizar panel de información
+            document.getElementById("longitud").textContent = data.LONGITUDE || "N/A";
+            document.getElementById("latitud").textContent = data.LATITUDE || "N/A";
+            document.getElementById("fecha").textContent = data.DATE || "N/A";
+            document.getElementById("tiempo").textContent = data.TIME || "N/A";
+
+            if (data.LATITUDE && data.LONGITUDE) {
+                const nuevaPosicion = {
+                    lat: parseFloat(data.LATITUDE),
+                    lng: parseFloat(data.LONGITUDE)
+                };
+
+                if (marker) marker.setPosition(nuevaPosicion);
+                recorrido.push(nuevaPosicion);
+                if (polyline) polyline.setPath(recorrido);
+
+                if (seguirCentrando && map) {
+                    map.setCenter(nuevaPosicion);
+                }
+            }
+        } catch (error) {
+            console.error('Error actualizando datos:', error);
         }
+    }
 
         function actualizarPanelInformacion(data) {
             document.getElementById("longitud").textContent = data.LONGITUDE || "N/A";
