@@ -82,6 +82,8 @@ app.get("/data", (req, res) => {
 /* ------------------- 🔧 RUTA PARA DATOS HISTÓRICOS ------------------- */
 app.get("/historical-data", (req, res) => {
     const { startDate, endDate } = req.query;
+    console.log(startDate)
+    console.log(endDate)
     
     if (!startDate || !endDate) {
         return res.status(400).json({ 
