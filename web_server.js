@@ -13,6 +13,7 @@ const path = require('path');
 
 // 🌿 Cargamos las variables de entorno desde el archivo .env
 require('dotenv').config(); // Carga variables del .env
+console.log("Google Maps API Key:", process.env.GOOGLE_MAPS_API_KEY);
 
 // 🎉 Creamos una aplicación de Express (nuestro servidor)
 const app = express();
