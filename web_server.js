@@ -82,39 +82,43 @@ app.get("/data", (req, res) => {
 /* ------------------- 🔧 RUTA PARA DATOS HISTÓRICOS ------------------- */
 app.get("/historical-data", (req, res) => {
     const { startDate, endDate } = req.query;
-    console.log(startDate)
-    console.log(endDate)
+    console.log("StartDate recibido:", startDate);  // Debug
+    console.log("EndDate recibido:", endDate);      // Debug
     
     if (!startDate || !endDate) {
         return res.status(400).json({ 
             success: false,
             error: "Se requieren ambas fechas (startDate y endDate)",
-            data: [] // Asegurar que siempre haya un array
+            data: []
         });
     }
+
+    // Asegurar el formato correcto (remover 'T' si es necesario)
+    const formattedStartDate = startDate.replace('T', ' ');
+    const formattedEndDate = endDate.replace('T', ' ');
 
     const query = `
         SELECT * FROM registros 
         WHERE CONCAT(DATE, ' ', TIME) BETWEEN ? AND ?
         ORDER BY DATE ASC, TIME ASC
     `;
-        // Mostrar el query con los parámetros en la consola
-        console.log("Ejecutando query histórico:", query.replace(/\?/g, (match, offset) => {
-            return offset === 0 ? `'${startDate}'` : `'${endDate}'`;
-        }));
-    db.query(query, [startDate, endDate], (err, results) => {
+
+    // Debug: Mostrar consulta con parámetros formateados
+    console.log("Query ejecutado:", query, [formattedStartDate, formattedEndDate]);
+
+    db.query(query, [formattedStartDate, formattedEndDate], (err, results) => {
         if (err) {
             console.error("❌ Error en consulta histórica:", err);
             return res.status(500).json({
                 success: false,
                 error: "Error en la consulta",
-                data: [] // Asegurar que siempre haya un array
+                data: []
             });
         }
         
         res.json({
             success: true,
-            data: results || [] // Asegurar que siempre sea un array
+            data: results || []
         });
     });
 });
