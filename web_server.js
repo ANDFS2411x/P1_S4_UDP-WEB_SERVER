@@ -47,7 +47,7 @@ db.connect(err => {
 });
 
 /* ------------------- 🔧 RUTA PARA OBTENER LA API KEY DE GOOGLE MAPS ------------------- */
-app.get("/test/api-key", (req, res) => {
+app.get("/api-key", (req, res) => {
     // Cuando se haga el fetch /api-key, se da la clave de Google Maps:
     const apiKey = process.env.GOOGLE_MAPS_API_KEY; // 🔐 Tomamos la API key de las variables de entorno
    // Si no hay API Key, mandamos un error
@@ -60,7 +60,7 @@ app.get("/test/api-key", (req, res) => {
 
 /* ------------------- 🔧 RUTA PARA OBTENER LOS DATOS DE LA TABLA REGISTROS ------------------- */
 // Cuando alguien visite /data, le damos el último registro guardado en la base de datos
-app.get("/test/data", (req, res) => {
+app.get("/data", (req, res) => {
     // Consulta SQL para traer el último registro de la tabla "registros"
     const query = "SELECT * FROM registros ORDER BY DATE DESC, TIME DESC LIMIT 1";
     // Hacemos la consulta a la base de datos
