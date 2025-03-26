@@ -83,33 +83,36 @@ app.get("/data", (req, res) => {
 app.get("/historical-data", (req, res) => {
     const { startDate, endDate } = req.query;
     
-    // Validar parámetros
     if (!startDate || !endDate) {
         return res.status(400).json({ 
             success: false,
-            error: "Se requieren ambas fechas (startDate y endDate)" 
+            error: "Se requieren ambas fechas (startDate y endDate)",
+            data: [] // Asegurar que siempre haya un array
         });
     }
 
-    // Consulta SQL para obtener datos en el rango de fechas
     const query = `
         SELECT * FROM registros 
         WHERE CONCAT(DATE, ' ', TIME) BETWEEN ? AND ?
         ORDER BY DATE ASC, TIME ASC
     `;
-    
+        // Mostrar el query con los parámetros en la consola
+        console.log("Ejecutando query histórico:", query.replace(/\?/g, (match, offset) => {
+            return offset === 0 ? `'${startDate}'` : `'${endDate}'`;
+        }));
     db.query(query, [startDate, endDate], (err, results) => {
         if (err) {
             console.error("❌ Error en consulta histórica:", err);
-            return res.status(500).json({ 
+            return res.status(500).json({
                 success: false,
-                error: "Error en la consulta histórica" 
+                error: "Error en la consulta",
+                data: [] // Asegurar que siempre haya un array
             });
         }
         
-        res.json({ 
+        res.json({
             success: true,
-            data: results 
+            data: results || [] // Asegurar que siempre sea un array
         });
     });
 });
