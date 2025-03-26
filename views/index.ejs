@@ -53,7 +53,7 @@
         }
 
         /* 🔹 Mapa compartido */
-        #sharedMapContainer {
+        #mapContainer {
             height: 70vh;
             width: 100%;
             border: 1px solid #ccc;
@@ -174,9 +174,9 @@
         </div>
         
         <button id="seguirBtn" class="action-button">Seguir Taxi</button>
-        <div id="sharedMapContainer">
+        <div id="mapContainer">
             <div id="sharedMap">Cargando mapa...</div>
-            <div id="loadingMessage" class="loading-message" style="display: none;">Cargando datos...</div>
+            <div id="loadingMessage" class="loading-message" style="display: none;">Cargando datos en tiempo real...</div>
         </div>
         <div id="realTimeError" class="error-message"></div>
     </div>
@@ -200,8 +200,8 @@
         </div>
         
         <div id="historicalError" class="error-message"></div>
-        <div id="sharedMapContainer">
-            <div id="sharedMap">Seleccione un rango de fechas y haga clic en "Cargar Trayectoria"</div>
+        <div id="mapContainer">
+            <div id="sharedMap">Seleccione un rango de fechas</div>
             <div id="loadingMessage" class="loading-message" style="display: none;">Cargando datos históricos...</div>
         </div>
     </div>
@@ -221,10 +221,14 @@
                 polyline: null,     // Polilínea en tiempo real
                 seguirCentrando: false,
                 recorrido: [],
-                intervalId: null
+                intervalId: null,
+                center: { lat: 4.710989, lng: -74.072092 }, // Centro por defecto
+                zoom: 15
             },
             historical: {
-                polyline: null      // Polilínea histórica
+                polyline: null,     // Polilínea histórica
+                center: { lat: 4.710989, lng: -74.072092 }, // Centro por defecto
+                zoom: 12
             },
             mapsLoaded: false       // Estado de la API de Google Maps
         };
@@ -257,7 +261,8 @@
             setTimeout(() => element.style.display = 'none', 5000);
         }
 
-        function showLoading(show) {
+        function showLoading(show, message = '') {
+            domElements.loadingMessage.textContent = message || 'Cargando...';
             domElements.loadingMessage.style.display = show ? 'block' : 'none';
         }
 
@@ -305,12 +310,14 @@
 
                 updateInfoPanel(ubicacion);
 
+                // Configurar posición inicial
                 const posicionInicial = {
                     lat: parseFloat(ubicacion.LATITUDE),
                     lng: parseFloat(ubicacion.LONGITUDE)
                 };
 
                 appState.realTime.recorrido = [posicionInicial];
+                appState.realTime.center = posicionInicial;
 
                 // Cargar Google Maps API si no está cargada
                 if (!appState.mapsLoaded) {
@@ -333,19 +340,16 @@
         function initMapInstance() {
             console.log('Inicializando mapa compartido...');
             
-            const center = appState.realTime.recorrido.length > 0 ? 
-                appState.realTime.recorrido[0] : 
-                { lat: 4.710989, lng: -74.072092 };
-
+            // Crear mapa con la vista inicial de tiempo real
             appState.map = new google.maps.Map(domElements.sharedMap, {
-                center: center,
-                zoom: 15,
+                center: appState.realTime.center,
+                zoom: appState.realTime.zoom,
                 streetViewControl: false
             });
 
             // Configurar marcador en tiempo real
             appState.realTime.marker = new google.maps.Marker({
-                position: center,
+                position: appState.realTime.center,
                 map: appState.map,
                 title: "Taxi 🚕",
                 icon: {
@@ -407,9 +411,13 @@
                     lng: parseFloat(data.LONGITUDE)
                 };
 
+                // Actualizar posición del taxi
                 appState.realTime.marker.setPosition(nuevaPosicion);
                 appState.realTime.recorrido.push(nuevaPosicion);
                 appState.realTime.polyline.setPath(appState.realTime.recorrido);
+
+                // Actualizar centro de la vista realTime
+                appState.realTime.center = nuevaPosicion;
 
                 if (appState.realTime.seguirCentrando) {
                     centerOnTaxi();
@@ -453,20 +461,12 @@
                     throw new Error("Debe seleccionar ambas fechas");
                 }
 
-                showLoading(true);
+                showLoading(true, "Cargando datos históricos...");
                 domElements.historicalError.style.display = "none";
 
                 // Limpiar polilínea histórica anterior
                 if (appState.historical.polyline) {
                     appState.historical.polyline.setMap(null);
-                }
-
-                // Limpiar elementos de tiempo real
-                if (appState.realTime.marker) {
-                    appState.realTime.marker.setMap(null);
-                }
-                if (appState.realTime.polyline) {
-                    appState.realTime.polyline.setMap(null);
                 }
 
                 // Obtener datos históricos
@@ -497,15 +497,21 @@
                     map: appState.map
                 });
 
-                // Ajustar vista del mapa
+                // Calcular bounds para la vista histórica
                 const bounds = new google.maps.LatLngBounds();
                 path.forEach(point => bounds.extend(point));
+                
+                // Actualizar centro y zoom de la vista histórica
+                appState.historical.center = bounds.getCenter();
+                appState.historical.zoom = 12;
+
+                // Ajustar vista del mapa a la ruta histórica
                 appState.map.fitBounds(bounds, 100);
 
                 // Forzar redibujado
                 setTimeout(() => {
                     google.maps.event.trigger(appState.map, 'resize');
-                    appState.map.setCenter(bounds.getCenter());
+                    appState.map.setCenter(appState.historical.center);
                 }, 300);
 
             } catch (error) {
@@ -524,7 +530,7 @@
             domElements.realTimeBtn.classList.add("active");
             domElements.historicalBtn.classList.remove("active");
 
-            // Restaurar elementos de tiempo real
+            // Mostrar elementos de tiempo real
             if (appState.realTime.marker) {
                 appState.realTime.marker.setMap(appState.map);
             }
@@ -532,10 +538,14 @@
                 appState.realTime.polyline.setMap(appState.map);
             }
             
-            // Limpiar polilínea histórica
+            // Ocultar polilínea histórica
             if (appState.historical.polyline) {
                 appState.historical.polyline.setMap(null);
             }
+
+            // Ajustar a la vista de tiempo real
+            appState.map.setCenter(appState.realTime.center);
+            appState.map.setZoom(appState.realTime.zoom);
 
             // Iniciar actualizaciones
             if (!appState.realTime.intervalId) {
@@ -549,9 +559,6 @@
             domElements.historicalBtn.classList.add("active");
             domElements.realTimeBtn.classList.remove("active");
 
-            // Detener actualizaciones de tiempo real
-            stopRealTimeUpdates();
-
             // Ocultar elementos de tiempo real
             if (appState.realTime.marker) {
                 appState.realTime.marker.setMap(null);
@@ -559,6 +566,17 @@
             if (appState.realTime.polyline) {
                 appState.realTime.polyline.setMap(null);
             }
+
+            // Mostrar polilínea histórica si existe
+            if (appState.historical.polyline) {
+                appState.historical.polyline.setMap(appState.map);
+                // Ajustar a la vista histórica
+                appState.map.setCenter(appState.historical.center);
+                appState.map.setZoom(appState.historical.zoom);
+            }
+
+            // Detener actualizaciones de tiempo real
+            stopRealTimeUpdates();
         }
 
         // 🔹 INICIALIZACIÓN DE LA APLICACIÓN 🔹
