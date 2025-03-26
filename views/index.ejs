@@ -125,15 +125,14 @@
         let map;
         let marker;
         let seguirCentrando = false;
-        
-        // ✅ Lista donde vamos a guardar el camino del taxi
         let recorrido = [];
-    
-        // ✅ Línea que va a mostrar el recorrido
         let polyline;
     
+        // 🔹 Detectamos si estamos en testeo o producción
+        const basePath = window.location.pathname.includes("/test") ? "/test" : "";
+    
         function obtenerDatosIniciales() {
-            return fetch("/data")
+            return fetch(`${basePath}/data`)
                 .then(res => res.json())
                 .catch(err => {
                     console.error("❌ Error obteniendo datos iniciales:", err);
@@ -141,7 +140,7 @@
                 });
         }
     
-        fetch("/api-key")
+        fetch(`${basePath}/api-key`)  // 🔹 Se ajusta la ruta de la API Key dinámicamente
             .then(res => res.json())
             .then(data => {
                 if (!data.apiKey) {
@@ -163,9 +162,7 @@
                         lng: parseFloat(ubicacion.LONGITUDE)
                     };
     
-                    // ✅ También guardamos el primer punto en el recorrido
                     recorrido.push(window.posicionInicial);
-    
                     document.head.appendChild(script);
                 });
             })
@@ -190,16 +187,14 @@
                 }
             });
     
-            // ✅ Creamos la línea vacía para el recorrido
             polyline = new google.maps.Polyline({
                 path: recorrido,
                 geodesic: true,
-                strokeColor: "#FF0000", // Rojo
+                strokeColor: "#FF0000",
                 strokeOpacity: 1.0,
                 strokeWeight: 4,
             });
     
-            // ✅ Ponemos la línea en el mapa
             polyline.setMap(map);
     
             document.getElementById("seguirBtn").addEventListener("click", () => {
@@ -216,7 +211,7 @@
         }
     
         function actualizarDatos() {
-            fetch("/data")
+            fetch(`${basePath}/data`)  // 🔹 Ajustamos la URL de los datos dinámicamente
                 .then(res => res.json())
                 .then(data => {
                     document.getElementById("longitud").textContent = data.LONGITUDE || "N/A";
@@ -231,11 +226,7 @@
                         };
     
                         marker.setPosition(nuevaPosicion);
-    
-                        // ✅ Agregamos la nueva posición al recorrido
                         recorrido.push(nuevaPosicion);
-    
-                        // ✅ Actualizamos el camino en el mapa
                         polyline.setPath(recorrido);
     
                         if (seguirCentrando) {
@@ -255,6 +246,7 @@
             }
         }
     </script>
+    
     
 
 </body>
