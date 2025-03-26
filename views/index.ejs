@@ -486,6 +486,7 @@
             }
             
             const result = await response.json();
+            console.log(result)
             
             // Verificar estructura de la respuesta
             if (!result || !result.data || !Array.isArray(result.data)) {
