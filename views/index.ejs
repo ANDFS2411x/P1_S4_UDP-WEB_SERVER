@@ -134,6 +134,17 @@
             margin: 10px 0;
             display: none;
         }
+
+        #historicalMap {
+        height: 500px !important;
+        width: 100% !important;
+        background-color: #f0f0f0;
+        position: relative;
+    }
+    
+    .map-container {
+        min-height: 500px;
+    }
     </style>
 </head>
 <body>
@@ -487,7 +498,7 @@
     }
 }
 
-        async function loadHistoricalData() {
+async function loadHistoricalData() {
     try {
         const startDate = domElements.startDate.value;
         const endDate = domElements.endDate.value;
@@ -500,6 +511,13 @@
         domElements.historicalMap.innerHTML = "Cargando datos históricos...";
         domElements.historicalError.style.display = "none";
         
+        // Asegurar que el mapa esté inicializado
+        if (!appState.historical.loaded) {
+            initHistoricalMap();
+            // Esperar a que el mapa esté listo
+            await new Promise(resolve => setTimeout(resolve, 300));
+        }
+        
         // Obtener datos históricos
         const response = await fetch(`${config.basePath}/historical-data?startDate=${startDate}&endDate=${endDate}`);
         
@@ -508,6 +526,7 @@
         }
         
         const result = await response.json();
+        console.log("Datos recibidos:", result); // Debug
         
         // Verificar estructura de la respuesta
         if (!result || !result.data || !Array.isArray(result.data)) {
@@ -516,11 +535,6 @@
         
         if (result.data.length === 0) {
             throw new Error("No hay datos para el rango seleccionado");
-        }
-        
-        // Asegurarse que el mapa esté inicializado
-        if (!appState.historical.map && appState.mapsLoaded) {
-            initHistoricalMap();
         }
         
         // Procesar datos para el mapa
@@ -552,7 +566,13 @@
         // Ajustar vista para mostrar toda la ruta
         const bounds = new google.maps.LatLngBounds();
         path.forEach(point => bounds.extend(point));
-        appState.historical.map.fitBounds(bounds);
+        
+        // Forzar redibujado
+        setTimeout(() => {
+            google.maps.event.trigger(appState.historical.map, 'resize');
+            appState.historical.map.fitBounds(bounds);
+            console.log("Polilínea creada y mapa ajustado"); // Debug
+        }, 100);
         
         // Limpiar mensaje de carga
         domElements.historicalMap.innerHTML = "";
