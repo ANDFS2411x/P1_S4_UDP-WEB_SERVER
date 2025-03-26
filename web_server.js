@@ -82,20 +82,16 @@ app.get("/data", (req, res) => {
 /* ------------------- 🔧 RUTA PARA DATOS HISTÓRICOS ------------------- */
 app.get("/historical-data", (req, res) => {
     const { startDate, endDate } = req.query;
-    console.log("StartDate recibido:", startDate);  // Debug
-    console.log("EndDate recibido:", endDate);      // Debug
-    
+    console.log("StartDate recibido:", startDate);
+    console.log("EndDate recibido:", endDate);
+
     if (!startDate || !endDate) {
         return res.status(400).json({ 
             success: false,
-            error: "Se requieren ambas fechas (startDate y endDate)",
+            error: "Se requieren ambas fechas",
             data: []
         });
     }
-
-    // Asegurar el formato correcto (remover 'T' si es necesario)
-    const formattedStartDate = startDate.replace('T', ' ');
-    const formattedEndDate = endDate.replace('T', ' ');
 
     const query = `
         SELECT * FROM registros 
@@ -103,22 +99,34 @@ app.get("/historical-data", (req, res) => {
         ORDER BY DATE ASC, TIME ASC
     `;
 
-    // Debug: Mostrar consulta con parámetros formateados
-    console.log("Query ejecutado:", query, [formattedStartDate, formattedEndDate]);
+    const params = [
+        startDate.replace('T', ' ') + ':00',  // Formato: 'YYYY-MM-DD HH:MM:00'
+        endDate.replace('T', ' ') + ':00'
+    ];
 
-    db.query(query, [formattedStartDate, formattedEndDate], (err, results) => {
+    console.log("Query ejecutado:", query.replace(/\?/g, (_, i) => params[i]));
+
+    db.query(query, params, (err, results) => {
         if (err) {
-            console.error("❌ Error en consulta histórica:", err);
+            console.error("❌ Error en la consulta:", err);
             return res.status(500).json({
                 success: false,
-                error: "Error en la consulta",
+                error: "Error en la base de datos",
                 data: []
             });
         }
-        
+
+        // ✅ Debug: Mostrar resultados de la BD
+        console.log("Respuesta de la BD:", {
+            rowCount: results.length,
+            firstRow: results[0] || null,
+            queryExecuted: query.replace(/\?/g, (_, i) => params[i])
+        });
+
         res.json({
             success: true,
-            data: results || []
+            count: results.length,
+            data: results
         });
     });
 });
