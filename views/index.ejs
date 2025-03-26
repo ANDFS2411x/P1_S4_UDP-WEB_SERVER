@@ -474,6 +474,7 @@
                 if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
 
                 const result = await response.json();
+                console.log(result)
                 if (!result?.success || !Array.isArray(result.data)) {
                     throw new Error("Formato de datos incorrecto");
                 }
