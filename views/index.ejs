@@ -127,10 +127,8 @@
         let polyline;
         let intervalId = null;
     
-        const basePath = window.location.pathname.includes("/test") ? "/test" : "";
-    
         function obtenerDatosIniciales() {
-            return fetch(`${basePath}/data`)
+            return fetch("/data")
                 .then(res => res.json())
                 .catch(err => {
                     console.error("❌ Error obteniendo datos iniciales:", err);
@@ -139,7 +137,7 @@
         }
     
         function cargarMapaTiempoReal() {
-            fetch(`${basePath}/api-key`)
+            fetch("/api-key")
                 .then(res => res.json())
                 .then(data => {
                     if (!data.apiKey) {
@@ -161,7 +159,7 @@
                             lng: parseFloat(ubicacion.LONGITUDE)
                         };
     
-                        recorrido = [window.posicionInicial];
+                        recorrido = [window.posicionInicial]; // 🔹 Se inicializa correctamente
                         document.head.appendChild(script);
                     });
                 })
@@ -172,6 +170,8 @@
         }
     
         function initMap() {
+            console.log("✅ Mapa inicializado en:", window.posicionInicial);
+    
             map = new google.maps.Map(document.getElementById("map"), {
                 center: window.posicionInicial,
                 zoom: 15
@@ -206,33 +206,41 @@
                 seguirCentrando = false;
             });
     
-            // 🔄 Inicia la actualización de datos en tiempo real
+            // 🔄 Inicia la actualización en tiempo real
             actualizarDatos();
             intervalId = setInterval(actualizarDatos, 5000);
         }
     
         function actualizarDatos() {
-            fetch(`${basePath}/data`)
+            fetch("/data")
                 .then(res => res.json())
                 .then(data => {
+                    console.log("📡 Nueva ubicación recibida:", data);
+    
+                    if (!data.LATITUDE || !data.LONGITUDE) {
+                        console.warn("⚠ No se recibieron coordenadas válidas.");
+                        return;
+                    }
+    
                     document.getElementById("longitud").textContent = data.LONGITUDE || "N/A";
                     document.getElementById("latitud").textContent = data.LATITUDE || "N/A";
                     document.getElementById("fecha").textContent = data.DATE || "N/A";
                     document.getElementById("tiempo").textContent = data.TIME || "N/A";
     
-                    if (data.LATITUDE && data.LONGITUDE) {
-                        const nuevaPosicion = {
-                            lat: parseFloat(data.LATITUDE),
-                            lng: parseFloat(data.LONGITUDE)
-                        };
+                    const nuevaPosicion = {
+                        lat: parseFloat(data.LATITUDE),
+                        lng: parseFloat(data.LONGITUDE)
+                    };
     
-                        marker.setPosition(nuevaPosicion);
-                        recorrido.push(nuevaPosicion);
-                        polyline.setPath(recorrido);
+                    marker.setPosition(nuevaPosicion);
+                    recorrido.push(nuevaPosicion); // 🔹 Se añade la nueva posición
+                    polyline.setPath(recorrido); // 🔹 Se actualiza la poli línea
     
-                        if (seguirCentrando) {
-                            centrarEnTaxi();
-                        }
+                    console.log("🚕 Marcador actualizado a:", nuevaPosicion);
+                    console.log("📍 Total puntos en la poli línea:", recorrido.length);
+    
+                    if (seguirCentrando) {
+                        centrarEnTaxi();
                     }
                 })
                 .catch(err => {
@@ -247,20 +255,19 @@
             }
         }
     
-        // 🔹 Funcionalidad para cambiar entre las vistas
         document.getElementById("realTimeBtn").addEventListener("click", function() {
             document.getElementById("realTime").classList.add("active");
             document.getElementById("historical").classList.remove("active");
             this.classList.add("active");
             document.getElementById("historicalBtn").classList.remove("active");
     
-            // Si el mapa no está inicializado, lo cargamos
             if (!map) {
+                console.log("🟢 Cargando el mapa de Real Time...");
                 cargarMapaTiempoReal();
             }
     
-            // Reiniciar el intervalo de actualización si se había detenido
             if (!intervalId) {
+                console.log("🔄 Reiniciando la actualización de datos...");
                 intervalId = setInterval(actualizarDatos, 5000);
             }
         });
@@ -271,18 +278,16 @@
             this.classList.add("active");
             document.getElementById("realTimeBtn").classList.remove("active");
     
-            // 🔄 Detener la actualización automática en modo histórico
             if (intervalId) {
+                console.log("🛑 Deteniendo actualización en tiempo real...");
                 clearInterval(intervalId);
                 intervalId = null;
             }
         });
     
-        // 🔹 Cargar el mapa en tiempo real al iniciar
+        // 🔹 Cargar el mapa en tiempo real al inicio
         cargarMapaTiempoReal();
     </script>
-    
-    
 
 </body>
 </html>
