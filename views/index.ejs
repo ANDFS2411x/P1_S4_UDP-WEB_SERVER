@@ -464,76 +464,82 @@
             appState.historical.loaded = true;
         }
 
-            async function loadHistoricalData() {
-        try {
-            const startDate = domElements.startDate.value;
-            const endDate = domElements.endDate.value;
-            
-            if (!startDate || !endDate) {
-                throw new Error("Debe seleccionar ambas fechas");
-            }
-            
-            // Mostrar carga
-            domElements.historicalMap.innerHTML = "Cargando datos históricos...";
-            domElements.historicalError.style.display = "none";
-            
-            // Obtener datos históricos
-            const response = await fetch(`${config.basePath}/historical-data?startDate=${startDate}&endDate=${endDate}`);
-            console.log(startDate)
-            console.log(endDate)
-            if (!response.ok) {
-                throw new Error(`Error del servidor: ${response.status}`);
-            }
-            
-            const result = await response.json();
-            console.log(result)
-            
-            // Verificar estructura de la respuesta
-            if (!result || !result.data || !Array.isArray(result.data)) {
-                throw new Error("Formato de datos incorrecto recibido del servidor");
-            }
-            
-            if (result.data.length === 0) {
-                throw new Error("No hay datos para el rango seleccionado");
-            }
-            
-            // Procesar datos para el mapa
-            const path = result.data.map(item => {
-                if (!item.LATITUDE || !item.LONGITUDE) {
-                    throw new Error("Datos de ubicación incompletos");
-                }
-                return {
-                    lat: parseFloat(item.LATITUDE),
-                    lng: parseFloat(item.LONGITUDE)
-                };
-            });
-            
-            // Limpiar polilínea anterior si existe
-            if (appState.historical.polyline) {
-                appState.historical.polyline.setMap(null);
-            }
-            
-            // Crear nueva polilínea
-            appState.historical.polyline = new google.maps.Polyline({
-                path: path,
-                geodesic: true,
-                strokeColor: "#4285F4",
-                strokeOpacity: 1.0,
-                strokeWeight: 4,
-                map: appState.historical.map
-            });
-            
-            // Ajustar vista para mostrar toda la ruta
-            const bounds = new google.maps.LatLngBounds();
-            path.forEach(point => bounds.extend(point));
-            appState.historical.map.fitBounds(bounds);
-            
-        } catch (error) {
-            console.error('Error cargando datos históricos:', error);
-            domElements.historicalMap.innerHTML = "Error al cargar datos. Intente nuevamente.";
-            showError(domElements.historicalError, error.message);
+        async function loadHistoricalData() {
+    try {
+        const startDate = domElements.startDate.value;
+        const endDate = domElements.endDate.value;
+        
+        if (!startDate || !endDate) {
+            throw new Error("Debe seleccionar ambas fechas");
         }
+        
+        // Mostrar carga
+        domElements.historicalMap.innerHTML = "Cargando datos históricos...";
+        domElements.historicalError.style.display = "none";
+        
+        // Obtener datos históricos
+        const response = await fetch(`${config.basePath}/historical-data?startDate=${startDate}&endDate=${endDate}`);
+        
+        if (!response.ok) {
+            throw new Error(`Error del servidor: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        // Verificar estructura de la respuesta
+        if (!result || !result.data || !Array.isArray(result.data)) {
+            throw new Error("Formato de datos incorrecto recibido del servidor");
+        }
+        
+        if (result.data.length === 0) {
+            throw new Error("No hay datos para el rango seleccionado");
+        }
+        
+        // Asegurarse que el mapa esté inicializado
+        if (!appState.historical.map && appState.mapsLoaded) {
+            initHistoricalMap();
+        }
+        
+        // Procesar datos para el mapa
+        const path = result.data.map(item => {
+            if (!item.LATITUDE || !item.LONGITUDE) {
+                throw new Error("Datos de ubicación incompletos");
+            }
+            return {
+                lat: parseFloat(item.LATITUDE),
+                lng: parseFloat(item.LONGITUDE)
+            };
+        });
+        
+        // Limpiar polilínea anterior si existe
+        if (appState.historical.polyline) {
+            appState.historical.polyline.setMap(null);
+        }
+        
+        // Crear nueva polilínea
+        appState.historical.polyline = new google.maps.Polyline({
+            path: path,
+            geodesic: true,
+            strokeColor: "#4285F4",
+            strokeOpacity: 1.0,
+            strokeWeight: 4,
+            map: appState.historical.map
+        });
+        
+        // Ajustar vista para mostrar toda la ruta
+        const bounds = new google.maps.LatLngBounds();
+        path.forEach(point => bounds.extend(point));
+        appState.historical.map.fitBounds(bounds);
+        
+        // Limpiar mensaje de carga
+        domElements.historicalMap.innerHTML = "";
+        
+    } catch (error) {
+        console.error('Error cargando datos históricos:', error);
+        domElements.historicalMap.innerHTML = "Error al cargar datos. Intente nuevamente.";
+        showError(domElements.historicalError, error.message);
     }
+}
 
         // 🔹 MANEJO DE NAVEGACIÓN 🔹
 
