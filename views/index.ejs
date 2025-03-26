@@ -448,21 +448,44 @@
         }
 
         function initHistoricalMap() {
-            console.log('Inicializando mapa histórico...');
-            
-            // Usar posición inicial del tiempo real o defaults
-            const center = appState.realTime.recorrido.length > 0 ? 
-                appState.realTime.recorrido[0] : 
-                { lat: 4.710989, lng: -74.072092 }; // Bogotá por defecto
-            
-            appState.historical.map = new google.maps.Map(domElements.historicalMap, {
-                center,
-                zoom: 12,
-                streetViewControl: false
-            });
-            
-            appState.historical.loaded = true;
-        }
+    console.log('Inicializando mapa histórico...');
+    
+    // Verificar si Google Maps está cargado
+    if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
+        console.error('Google Maps API no está cargada');
+        domElements.historicalMap.innerHTML = "Error: Google Maps no está disponible";
+        return;
+    }
+
+    // Usar posición inicial del tiempo real o defaults
+    const center = appState.realTime.recorrido.length > 0 ? 
+        appState.realTime.recorrido[0] : 
+        { lat: 4.710989, lng: -74.072092 }; // Bogotá por defecto
+    
+    try {
+        appState.historical.map = new google.maps.Map(domElements.historicalMap, {
+            center,
+            zoom: 12,
+            streetViewControl: false,
+            mapTypeControl: true
+        });
+        
+        console.log('Mapa histórico inicializado correctamente');
+        appState.historical.loaded = true;
+        
+        // Forzar redibujado del mapa
+        setTimeout(() => {
+            if (appState.historical.map) {
+                google.maps.event.trigger(appState.historical.map, 'resize');
+                appState.historical.map.setCenter(center);
+            }
+        }, 100);
+        
+    } catch (error) {
+        console.error('Error al inicializar mapa histórico:', error);
+        domElements.historicalMap.innerHTML = "Error al cargar el mapa";
+    }
+}
 
         async function loadHistoricalData() {
     try {
