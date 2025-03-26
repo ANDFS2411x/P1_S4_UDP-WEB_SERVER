@@ -483,6 +483,7 @@
                 
                 // Obtener datos históricos
                 const historicalData = await fetchData(`/historical-data?startDate=${startDate}&endDate=${endDate}`);
+                console.log(historicalData)
                 
                 if (!historicalData || historicalData.length === 0) {
                     throw new Error("No hay datos para el rango de fechas seleccionado");
