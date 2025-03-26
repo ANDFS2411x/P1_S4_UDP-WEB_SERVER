@@ -9,8 +9,11 @@ const mysql = require("mysql");
 // 🔓 Importamos CORS para permitir que otras páginas puedan hacer peticiones a nuestro servidor
 const cors = require("cors");
 
+const path = require('path');
+
 // 🌿 Cargamos las variables de entorno desde el archivo .env
 require('dotenv').config(); // Carga variables del .env
+console.log("Google Maps API Key:", process.env.GOOGLE_MAPS_API_KEY);
 
 // 🎉 Creamos una aplicación de Express (nuestro servidor)
 const app = express();
@@ -20,6 +23,9 @@ const port = process.env.PORT || 3000;
 
 // 📦 Agregamos el middleware de CORS a nuestra app para aceptar peticiones de otros lugares
 app.use(cors());
+
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
 /* ------------------- 🔴 CONFIGURAMOS LA CONEXIÓN A LA BASE DE DATOS ------------------- */
 const db = mysql.createConnection({
@@ -73,10 +79,66 @@ app.get("/data", (req, res) => {
     });
 });
 
+/* ------------------- 🔧 RUTA PARA DATOS HISTÓRICOS ------------------- */
+app.get("/historical-data", (req, res) => {
+    const { startDate, endDate } = req.query;
+    console.log("StartDate recibido:", startDate);
+    console.log("EndDate recibido:", endDate);
+
+    if (!startDate || !endDate) {
+        return res.status(400).json({ 
+            success: false,
+            error: "Se requieren ambas fechas",
+            data: []
+        });
+    }
+
+    const query = `
+        SELECT * FROM registros 
+        WHERE CONCAT(DATE, ' ', TIME) BETWEEN ? AND ?
+        ORDER BY DATE ASC, TIME ASC
+    `;
+
+    const params = [
+        startDate.replace('T', ' ') + ':00',  // Formato: 'YYYY-MM-DD HH:MM:00'
+        endDate.replace('T', ' ') + ':00'
+    ];
+
+    console.log("Query ejecutado:", query.replace(/\?/g, (_, i) => params[i]));
+
+    db.query(query, params, (err, results) => {
+        if (err) {
+            console.error("❌ Error en la consulta:", err);
+            return res.status(500).json({
+                success: false,
+                error: "Error en la base de datos",
+                data: []
+            });
+        }
+
+        // ✅ Debug: Mostrar resultados de la BD
+        console.log("Respuesta de la BD:", {
+            rowCount: results.length,
+            firstRow: results[0] || null,
+            queryExecuted: query.replace(/\?/g, (_, i) => params[i])
+        });
+
+        res.json({
+            success: true,
+            count: results.length,
+            data: results
+        });
+    });
+});
+
 /* ------------------- 🟢 SERVIR ARCHIVOS ESTÁTICOS ------------------- */
 // Esto sirve archivos estáticos que estén en la carpeta "public", por ejemplo: HTML, CSS, imágenes...
 // Se pone después de las rutas para que no bloquee las APIs que hicimos antes
 app.use("/", express.static("public"));
+
+app.get('/', (req, res) => {
+    res.render('index', { title: process.env.PAGE_TITLE });
+});
 
 /* ------------------- 🚀 INICIAMOS EL SERVIDOR ------------------- */
 // Arrancamos el servidor en el puerto definido y en cualquier IP ('0.0.0.0')
