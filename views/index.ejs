@@ -190,6 +190,7 @@
     
         function cargarMapa() {
             fetch(`${basePath}/api-key`)
+            console.log(`${basePath}/api-key`)
                 .then(res => {
                     if (!res.ok) throw new Error("Error al obtener API key");
                     return res.json();
@@ -270,6 +271,7 @@
     
         function actualizarDatos() {
             fetch(`${basePath}/data`)
+            console.log(`${basePath}/data`)
                 .then(res => {
                     if (!res.ok) throw new Error("Error en la respuesta del servidor");
                     return res.json();
