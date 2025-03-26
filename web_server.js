@@ -79,6 +79,41 @@ app.get("/data", (req, res) => {
     });
 });
 
+/* ------------------- 🔧 RUTA PARA DATOS HISTÓRICOS ------------------- */
+app.get("/historical-data", (req, res) => {
+    const { startDate, endDate } = req.query;
+    
+    // Validar parámetros
+    if (!startDate || !endDate) {
+        return res.status(400).json({ 
+            success: false,
+            error: "Se requieren ambas fechas (startDate y endDate)" 
+        });
+    }
+
+    // Consulta SQL para obtener datos en el rango de fechas
+    const query = `
+        SELECT * FROM registros 
+        WHERE CONCAT(DATE, ' ', TIME) BETWEEN ? AND ?
+        ORDER BY DATE ASC, TIME ASC
+    `;
+    
+    db.query(query, [startDate, endDate], (err, results) => {
+        if (err) {
+            console.error("❌ Error en consulta histórica:", err);
+            return res.status(500).json({ 
+                success: false,
+                error: "Error en la consulta histórica" 
+            });
+        }
+        
+        res.json({ 
+            success: true,
+            data: results 
+        });
+    });
+});
+
 /* ------------------- 🟢 SERVIR ARCHIVOS ESTÁTICOS ------------------- */
 // Esto sirve archivos estáticos que estén en la carpeta "public", por ejemplo: HTML, CSS, imágenes...
 // Se pone después de las rutas para que no bloquee las APIs que hicimos antes

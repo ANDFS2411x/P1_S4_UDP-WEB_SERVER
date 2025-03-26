@@ -52,11 +52,12 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* 🔹 Mapa */
-        #map {
+        /* 🔹 Mapas */
+        .map-container {
             height: 70vh;
             width: 100%;
             border: 1px solid #ccc;
+            margin-bottom: 15px;
         }
 
         /* 🔹 Panel de información */
@@ -77,8 +78,8 @@
             text-align: left;
         }
 
-        /* 🔹 Botón seguir */
-        #seguirBtn {
+        /* 🔹 Botones */
+        .action-button {
             margin: 15px auto;
             padding: 10px 20px;
             background-color: #4CAF50;
@@ -91,7 +92,7 @@
             display: block;
         }
 
-        #seguirBtn:hover {
+        .action-button:hover {
             background-color: #45a049;
         }
 
@@ -100,29 +101,38 @@
             background: white;
             padding: 15px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            display: inline-block;
-            margin-bottom: 15px;
+            margin: 0 auto 15px;
+            max-width: 600px;
+            border-radius: 5px;
         }
 
-        .filter-form label, .filter-form input {
+        .form-group {
+            margin-bottom: 10px;
+            text-align: left;
+        }
+
+        .form-group label {
             display: block;
-            margin: 5px 0;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
             font-size: 16px;
         }
 
-        .filter-form button {
-            margin-top: 10px;
-            padding: 8px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            transition: 0.3s;
-        }
-
-        .filter-form button:hover {
-            background-color: #45a049;
+        /* 🔹 Mensajes de error */
+        .error-message {
+            color: #d32f2f;
+            background-color: #fde8e8;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            display: none;
         }
     </style>
 </head>
@@ -146,206 +156,421 @@
             <p><strong>Hora:</strong> <span id="tiempo">N/A</span></p>
         </div>
         
-        <button id="seguirBtn">Seguir Taxi</button>
-        <div id="map">Cargando mapa en tiempo real...</div>
+        <button id="seguirBtn" class="action-button">Seguir Taxi</button>
+        <div id="realTimeMap" class="map-container">Cargando mapa en tiempo real...</div>
+        <div id="realTimeError" class="error-message"></div>
     </div>
 
     <!-- 🔹 Sección "Historical" -->
     <div id="historical" class="section">
         <h1>Historical Tracking 📅</h1>
+        
         <div class="filter-form">
-            <label for="startDate">Fecha y hora inicial:</label>
-            <input type="datetime-local" id="startDate">
-
-            <label for="endDate">Fecha y hora final:</label>
-            <input type="datetime-local" id="endDate">
-
-            <button id="loadHistory">Cargar Trayectoria</button>
+            <div class="form-group">
+                <label for="startDate">Fecha y hora inicial:</label>
+                <input type="datetime-local" id="startDate">
+            </div>
+            
+            <div class="form-group">
+                <label for="endDate">Fecha y hora final:</label>
+                <input type="datetime-local" id="endDate">
+            </div>
+            
+            <button id="loadHistory" class="action-button">Cargar Trayectoria</button>
         </div>
-        <div id="map">Cargando mapa histórico...</div>
+        
+        <div id="historicalError" class="error-message"></div>
+        <div id="historicalMap" class="map-container">Seleccione un rango de fechas y haga clic en "Cargar Trayectoria"</div>
     </div>
 
     <script>
-        let map;
-        let marker;
-        let seguirCentrando = false;
-        let recorrido = [];
-        let polyline;
-        let updateInterval;
-    
-        // 🔹 Detectamos si estamos en testeo o producción
-        const basePath = window.location.pathname.includes("/test") ? "/test" : "";
-    
-        function obtenerDatosIniciales() {
-            return fetch(`${basePath}/data`)
-                .then(res => {
-                    if (!res.ok) throw new Error("Error en la respuesta del servidor");
-                    return res.json();
-                })
-                .catch(err => {
-                    console.error("❌ Error obteniendo datos iniciales:", err);
-                    return null;
-                });
-        }
-    
-            async function cargarMapa() {
-        try {
-            // 1. Obtener API Key
-            const apiKeyResponse = await fetch(`${basePath}/api-key`);
-            if (!apiKeyResponse.ok) {
-                throw new Error('Error al obtener API key');
-            }
-            const apiKeyData = await apiKeyResponse.json();
+        // Configuración global
+        const config = {
+            basePath: window.location.pathname.includes("/test") ? "/test" : "",
+            updateInterval: 5000
+        };
+
+        // Estado de la aplicación
+        const appState = {
+            // Real Time
+            realTime: {
+                map: null,
+                marker: null,
+                polyline: null,
+                seguirCentrando: false,
+                recorrido: [],
+                intervalId: null
+            },
             
-            if (!apiKeyData.apiKey) {
-                throw new Error('No se recibió la API key');
-            }
+            // Historical
+            historical: {
+                map: null,
+                polyline: null,
+                loaded: false
+            },
+            
+            // Google Maps API
+            mapsLoaded: false
+        };
 
-            // 2. Obtener posición inicial
-            const dataResponse = await fetch(`${basePath}/data`);
-            if (!dataResponse.ok) {
-                throw new Error('Error al obtener datos iniciales');
-            }
-            const ubicacion = await dataResponse.json();
+        // Elementos del DOM
+        const domElements = {
+            // Real Time
+            realTimeBtn: document.getElementById('realTimeBtn'),
+            historicalBtn: document.getElementById('historicalBtn'),
+            realTimeSection: document.getElementById('realTime'),
+            historicalSection: document.getElementById('historical'),
+            realTimeMap: document.getElementById('realTimeMap'),
+            historicalMap: document.getElementById('historicalMap'),
+            seguirBtn: document.getElementById('seguirBtn'),
+            loadHistory: document.getElementById('loadHistory'),
+            startDate: document.getElementById('startDate'),
+            endDate: document.getElementById('endDate'),
+            latitud: document.getElementById('latitud'),
+            longitud: document.getElementById('longitud'),
+            fecha: document.getElementById('fecha'),
+            tiempo: document.getElementById('tiempo'),
+            realTimeError: document.getElementById('realTimeError'),
+            historicalError: document.getElementById('historicalError')
+        };
 
-            if (!ubicacion?.LATITUDE || !ubicacion?.LONGITUDE) {
-                throw new Error('Datos de ubicación incompletos');
-            }
+        // 🔹 FUNCIONES DE UTILIDAD 🔹
 
-            // 3. Configurar posición inicial
-            window.posicionInicial = {
-                lat: parseFloat(ubicacion.LATITUDE),
-                lng: parseFloat(ubicacion.LONGITUDE)
+        function showError(element, message) {
+            element.textContent = message;
+            element.style.display = 'block';
+            setTimeout(() => element.style.display = 'none', 5000);
+        }
+
+        function formatDateTime(dateStr, timeStr) {
+            return `${dateStr}T${timeStr}`;
+        }
+
+        function getCurrentDateTime() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            
+            return {
+                date: `${year}-${month}-${day}`,
+                time: `${hours}:${minutes}`,
+                datetime: `${year}-${month}-${day}T${hours}:${minutes}`
             };
-            recorrido = [window.posicionInicial];
-
-            // 4. Cargar Google Maps
-            const script = document.createElement('script');
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKeyData.apiKey}&callback=initMap`;
-            script.async = true;
-            document.head.appendChild(script);
-        } catch (error) {
-            console.error('Error al cargar el mapa:', error);
-            document.getElementById("map").innerText = `Error: ${error.message}`;
         }
-    }
-    
-        function initMap() {
-            console.log("Inicializando mapa...");
+
+        async function fetchData(endpoint) {
+            try {
+                const response = await fetch(`${config.basePath}${endpoint}`);
+                if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error(`Error fetching ${endpoint}:`, error);
+                throw error;
+            }
+        }
+
+        // 🔹 REAL TIME TRACKING 🔹
+
+        async function initRealTimeTracking() {
+            try {
+                // Obtener API Key
+                const apiKeyData = await fetchData('/api-key');
+                if (!apiKeyData.apiKey) throw new Error("API Key no recibida");
+
+                // Obtener posición inicial
+                const ubicacion = await fetchData('/data');
+                if (!ubicacion?.LATITUDE || !ubicacion?.LONGITUDE) {
+                    throw new Error("Datos de ubicación inicial incompletos");
+                }
+
+                // Actualizar panel de información
+                updateInfoPanel(ubicacion);
+
+                // Configurar posición inicial
+                const posicionInicial = {
+                    lat: parseFloat(ubicacion.LATITUDE),
+                    lng: parseFloat(ubicacion.LONGITUDE)
+                };
+
+                appState.realTime.recorrido = [posicionInicial];
+
+                // Cargar Google Maps API si no está cargada
+                if (!appState.mapsLoaded) {
+                    const script = document.createElement('script');
+                    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKeyData.apiKey}&callback=initRealTimeMap`;
+                    script.async = true;
+                    script.defer = true;
+                    document.head.appendChild(script);
+                    appState.mapsLoaded = true;
+                } else {
+                    initRealTimeMap();
+                }
+            } catch (error) {
+                console.error('Error inicializando Real Time Tracking:', error);
+                domElements.realTimeMap.innerHTML = `Error: ${error.message}`;
+                showError(domElements.realTimeError, error.message);
+            }
+        }
+
+        function initRealTimeMap() {
+            console.log('Inicializando mapa en tiempo real...');
             
-            map = new google.maps.Map(document.getElementById("map"), {
-                center: window.posicionInicial,
-                zoom: 15
+            // Crear mapa
+            appState.realTime.map = new google.maps.Map(domElements.realTimeMap, {
+                center: appState.realTime.recorrido[0],
+                zoom: 15,
+                streetViewControl: false
             });
-    
-            marker = new google.maps.Marker({
-                position: window.posicionInicial,
-                map: map,
+            
+            // Crear marcador
+            appState.realTime.marker = new google.maps.Marker({
+                position: appState.realTime.recorrido[0],
+                map: appState.realTime.map,
                 title: "Taxi 🚕",
                 icon: {
                     url: "https://cdn-icons-png.flaticon.com/128/2401/2401174.png",
                     scaledSize: new google.maps.Size(50, 50)
                 }
             });
-    
-            polyline = new google.maps.Polyline({
-                path: recorrido,
+            
+            // Crear polilínea
+            appState.realTime.polyline = new google.maps.Polyline({
+                path: appState.realTime.recorrido,
                 geodesic: true,
                 strokeColor: "#FF0000",
                 strokeOpacity: 1.0,
                 strokeWeight: 4,
-                map: map
+                map: appState.realTime.map
             });
-    
-            document.getElementById("seguirBtn").addEventListener("click", () => {
-                seguirCentrando = true;
-                centrarEnTaxi();
+            
+            // Configurar botón seguir
+            domElements.seguirBtn.addEventListener('click', () => {
+                appState.realTime.seguirCentrando = true;
+                centerOnTaxi();
             });
-    
-            map.addListener('dragstart', () => {
-                seguirCentrando = false;
+            
+            // Detectar cuando el usuario mueve el mapa
+            appState.realTime.map.addListener('dragstart', () => {
+                appState.realTime.seguirCentrando = false;
             });
-    
+            
             // Iniciar actualización periódica
-            actualizarDatos();
-            updateInterval = setInterval(actualizarDatos, 5000);
+            updateRealTimeData();
+            appState.realTime.intervalId = setInterval(updateRealTimeData, config.updateInterval);
         }
-    
-            async function actualizarDatos() {
-        try {
-            const response = await fetch(`${basePath}/data`);
-            if (!response.ok) {
-                throw new Error('Error en la respuesta del servidor');
-            }
-            const data = await response.json();
 
-            // Actualizar panel de información
-            document.getElementById("longitud").textContent = data.LONGITUDE || "N/A";
-            document.getElementById("latitud").textContent = data.LATITUDE || "N/A";
-            document.getElementById("fecha").textContent = data.DATE || "N/A";
-            document.getElementById("tiempo").textContent = data.TIME || "N/A";
-
-            if (data.LATITUDE && data.LONGITUDE) {
+        async function updateRealTimeData() {
+            try {
+                const data = await fetchData('/data');
+                
+                // Validar datos recibidos
+                if (!data?.LATITUDE || !data?.LONGITUDE) {
+                    throw new Error("Datos de ubicación incompletos");
+                }
+                
+                // Actualizar panel de información
+                updateInfoPanel(data);
+                
+                // Actualizar posición del taxi
                 const nuevaPosicion = {
                     lat: parseFloat(data.LATITUDE),
                     lng: parseFloat(data.LONGITUDE)
                 };
-
-                if (marker) marker.setPosition(nuevaPosicion);
-                recorrido.push(nuevaPosicion);
-                if (polyline) polyline.setPath(recorrido);
-
-                if (seguirCentrando && map) {
-                    map.setCenter(nuevaPosicion);
+                
+                appState.realTime.marker.setPosition(nuevaPosicion);
+                appState.realTime.recorrido.push(nuevaPosicion);
+                appState.realTime.polyline.setPath(appState.realTime.recorrido);
+                
+                if (appState.realTime.seguirCentrando) {
+                    centerOnTaxi();
                 }
+            } catch (error) {
+                console.error('Error actualizando datos en tiempo real:', error);
             }
-        } catch (error) {
-            console.error('Error actualizando datos:', error);
         }
-    }
 
-        function actualizarPanelInformacion(data) {
-            document.getElementById("longitud").textContent = data.LONGITUDE || "N/A";
-            document.getElementById("latitud").textContent = data.LATITUDE || "N/A";
-            document.getElementById("fecha").textContent = data.DATE || "N/A";
-            document.getElementById("tiempo").textContent = data.TIME || "N/A";
-        }
-    
-        function centrarEnTaxi() {
-            if (marker && map) {
-                map.setCenter(marker.getPosition());
+        function centerOnTaxi() {
+            if (appState.realTime.marker && appState.realTime.map) {
+                appState.realTime.map.setCenter(appState.realTime.marker.getPosition());
             }
         }
-    
-        // 🔹 Manejo de la navegación entre "Real Time" e "Historical"
-        document.getElementById("realTimeBtn").addEventListener("click", function() {
-            document.getElementById("realTime").classList.add("active");
-            document.getElementById("historical").classList.remove("active");
-            this.classList.add("active");
-            document.getElementById("historicalBtn").classList.remove("active");
-    
-            // Reiniciar la actualización si se había detenido
-            if (!updateInterval) {
-                actualizarDatos();
-                updateInterval = setInterval(actualizarDatos, 5000);
+
+        function stopRealTimeUpdates() {
+            if (appState.realTime.intervalId) {
+                clearInterval(appState.realTime.intervalId);
+                appState.realTime.intervalId = null;
             }
-        });
-    
-        document.getElementById("historicalBtn").addEventListener("click", function() {
-            document.getElementById("historical").classList.add("active");
-            document.getElementById("realTime").classList.remove("active");
-            this.classList.add("active");
-            document.getElementById("realTimeBtn").classList.remove("active");
-    
-            // Detener la actualización automática
-            if (updateInterval) {
-                clearInterval(updateInterval);
-                updateInterval = null;
+        }
+
+        function updateInfoPanel(data) {
+            domElements.latitud.textContent = data.LATITUDE || "N/A";
+            domElements.longitud.textContent = data.LONGITUDE || "N/A";
+            domElements.fecha.textContent = data.DATE || "N/A";
+            domElements.tiempo.textContent = data.TIME || "N/A";
+        }
+
+        // 🔹 HISTORICAL TRACKING 🔹
+
+        async function initHistoricalTracking() {
+            try {
+                // Configurar fechas por defecto (última hora)
+                const now = new Date();
+                const oneHourAgo = new Date(now.getTime() - (60 * 60 * 1000));
+                
+                domElements.startDate.value = formatDateTimeInput(oneHourAgo);
+                domElements.endDate.value = formatDateTimeInput(now);
+                
+                // Configurar evento del botón
+                domElements.loadHistory.addEventListener('click', loadHistoricalData);
+                
+                // Inicializar mapa si no está inicializado
+                if (!appState.historical.loaded && appState.mapsLoaded) {
+                    initHistoricalMap();
+                }
+            } catch (error) {
+                console.error('Error inicializando Historical Tracking:', error);
+                showError(domElements.historicalError, error.message);
             }
-        });
-    
-        // 🔹 Cargar el mapa al iniciar
-        cargarMapa();
+        }
+
+        function formatDateTimeInput(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+
+        function initHistoricalMap() {
+            console.log('Inicializando mapa histórico...');
+            
+            // Usar posición inicial del tiempo real o defaults
+            const center = appState.realTime.recorrido.length > 0 ? 
+                appState.realTime.recorrido[0] : 
+                { lat: 4.710989, lng: -74.072092 }; // Bogotá por defecto
+            
+            appState.historical.map = new google.maps.Map(domElements.historicalMap, {
+                center,
+                zoom: 12,
+                streetViewControl: false
+            });
+            
+            appState.historical.loaded = true;
+        }
+
+        async function loadHistoricalData() {
+            try {
+                const startDate = domElements.startDate.value;
+                const endDate = domElements.endDate.value;
+                
+                // Validar fechas
+                if (!startDate || !endDate) {
+                    throw new Error("Debe seleccionar ambas fechas");
+                }
+                
+                if (new Date(startDate) > new Date(endDate)) {
+                    throw new Error("La fecha inicial debe ser anterior a la fecha final");
+                }
+                
+                // Mostrar carga
+                domElements.historicalMap.innerHTML = "Cargando datos históricos...";
+                
+                // Obtener datos históricos
+                const historicalData = await fetchData(`/historical-data?startDate=${startDate}&endDate=${endDate}`);
+                
+                if (!historicalData || historicalData.length === 0) {
+                    throw new Error("No hay datos para el rango de fechas seleccionado");
+                }
+                
+                // Procesar datos para el mapa
+                const path = historicalData.map(item => ({
+                    lat: parseFloat(item.LATITUDE),
+                    lng: parseFloat(item.LONGITUDE)
+                }));
+                
+                // Limpiar polilínea anterior si existe
+                if (appState.historical.polyline) {
+                    appState.historical.polyline.setMap(null);
+                }
+                
+                // Crear nueva polilínea
+                appState.historical.polyline = new google.maps.Polyline({
+                    path,
+                    geodesic: true,
+                    strokeColor: "#4285F4",
+                    strokeOpacity: 1.0,
+                    strokeWeight: 4,
+                    map: appState.historical.map
+                });
+                
+                // Ajustar vista para mostrar toda la ruta
+                const bounds = new google.maps.LatLngBounds();
+                path.forEach(point => bounds.extend(point));
+                appState.historical.map.fitBounds(bounds);
+                
+            } catch (error) {
+                console.error('Error cargando datos históricos:', error);
+                domElements.historicalMap.innerHTML = "Error al cargar datos históricos";
+                showError(domElements.historicalError, error.message);
+            }
+        }
+
+        // 🔹 MANEJO DE NAVEGACIÓN 🔹
+
+        function switchToRealTime() {
+            domElements.realTimeSection.classList.add("active");
+            domElements.historicalSection.classList.remove("active");
+            domElements.realTimeBtn.classList.add("active");
+            domElements.historicalBtn.classList.remove("active");
+            
+            // Iniciar actualizaciones si no están activas
+            if (!appState.realTime.intervalId) {
+                updateRealTimeData();
+                appState.realTime.intervalId = setInterval(updateRealTimeData, config.updateInterval);
+            }
+        }
+
+        function switchToHistorical() {
+            domElements.historicalSection.classList.add("active");
+            domElements.realTimeSection.classList.remove("active");
+            domElements.historicalBtn.classList.add("active");
+            domElements.realTimeBtn.classList.remove("active");
+            
+            // Detener actualizaciones de tiempo real
+            stopRealTimeUpdates();
+            
+            // Inicializar mapa histórico si no está inicializado
+            if (!appState.historical.loaded && appState.mapsLoaded) {
+                initHistoricalMap();
+            }
+        }
+
+        // 🔹 INICIALIZACIÓN DE LA APLICACIÓN 🔹
+
+        function initApp() {
+            // Configurar eventos de navegación
+            domElements.realTimeBtn.addEventListener("click", switchToRealTime);
+            domElements.historicalBtn.addEventListener("click", switchToHistorical);
+            
+            // Inicializar Real Time Tracking
+            initRealTimeTracking();
+            
+            // Preparar Historical Tracking
+            initHistoricalTracking();
+        }
+
+        // Iniciar la aplicación cuando el DOM esté listo
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            setTimeout(initApp, 1);
+        } else {
+            document.addEventListener('DOMContentLoaded', initApp);
+        }
     </script>
 </body>
 </html>
