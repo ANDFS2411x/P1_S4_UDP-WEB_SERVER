@@ -120,35 +120,130 @@
     </div>
 
     <script>
-        // 🔹 Funcionalidad para cambiar entre las vistas
-        document.getElementById("realTimeBtn").addEventListener("click", function() {
-            document.getElementById("realTime").classList.add("active");
-            document.getElementById("historical").classList.remove("active");
-            this.classList.add("active");
-            document.getElementById("historicalBtn").classList.remove("active");
-        });
-
-        document.getElementById("historicalBtn").addEventListener("click", function() {
-            document.getElementById("historical").classList.add("active");
-            document.getElementById("realTime").classList.remove("active");
-            this.classList.add("active");
-            document.getElementById("realTimeBtn").classList.remove("active");
-        });
-
-        // 🔹 Evento cuando se carga un historial (aún falta lógica del backend)
-        document.getElementById("loadHistory").addEventListener("click", function() {
-            const startDate = document.getElementById("startDate").value;
-            const endDate = document.getElementById("endDate").value;
-
-            if (!startDate || !endDate) {
-                alert("Por favor selecciona ambas fechas.");
-                return;
+        let map;
+        let marker;
+        let seguirCentrando = false;
+        let recorrido = [];
+        let polyline;
+    
+        const basePath = window.location.pathname.includes("/test") ? "/test" : "";
+    
+        function obtenerDatosIniciales() {
+            return fetch(`${basePath}/data`)
+                .then(res => res.json())
+                .catch(err => {
+                    console.error("❌ Error obteniendo datos iniciales:", err);
+                    return null;
+                });
+        }
+    
+        fetch(`${basePath}/api-key`)
+            .then(res => res.json())
+            .then(data => {
+                if (!data.apiKey) {
+                    throw new Error("No se recibió la API key");
+                }
+    
+                obtenerDatosIniciales().then(ubicacion => {
+                    if (!ubicacion || !ubicacion.LATITUDE || !ubicacion.LONGITUDE) {
+                        document.getElementById("map").innerText = "No se pudo obtener la posición inicial.";
+                        return;
+                    }
+    
+                    const script = document.createElement("script");
+                    script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&callback=initMap`;
+                    script.async = true;
+    
+                    window.posicionInicial = {
+                        lat: parseFloat(ubicacion.LATITUDE),
+                        lng: parseFloat(ubicacion.LONGITUDE)
+                    };
+    
+                    recorrido.push(window.posicionInicial);
+                    document.head.appendChild(script);
+                });
+            })
+            .catch(err => {
+                console.error("❌ Error al obtener la API key:", err);
+                document.getElementById("map").innerText = "No se pudo cargar el mapa.";
+            });
+    
+        function initMap() {
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: window.posicionInicial,
+                zoom: 15
+            });
+    
+            marker = new google.maps.Marker({
+                position: window.posicionInicial,
+                map: map,
+                title: "Taxi 🚕",
+                icon: {
+                    url: "https://cdn-icons-png.flaticon.com/128/2401/2401174.png",
+                    scaledSize: new google.maps.Size(50, 50)
+                }
+            });
+    
+            polyline = new google.maps.Polyline({
+                path: recorrido,
+                geodesic: true,
+                strokeColor: "#FF0000",
+                strokeOpacity: 1.0,
+                strokeWeight: 4,
+            });
+    
+            polyline.setMap(map);
+    
+            document.getElementById("seguirBtn").addEventListener("click", () => {
+                seguirCentrando = true;
+                centrarEnTaxi();
+            });
+    
+            map.addListener('dragstart', () => {
+                seguirCentrando = false;
+            });
+    
+            actualizarDatos();
+            setInterval(actualizarDatos, 5000);
+        }
+    
+        function actualizarDatos() {
+            fetch(`${basePath}/data`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById("longitud").textContent = data.LONGITUDE || "N/A";
+                    document.getElementById("latitud").textContent = data.LATITUDE || "N/A";
+                    document.getElementById("fecha").textContent = data.DATE || "N/A";
+                    document.getElementById("tiempo").textContent = data.TIME || "N/A";
+    
+                    if (data.LATITUDE && data.LONGITUDE) {
+                        const nuevaPosicion = {
+                            lat: parseFloat(data.LATITUDE),
+                            lng: parseFloat(data.LONGITUDE)
+                        };
+    
+                        marker.setPosition(nuevaPosicion);
+                        recorrido.push(nuevaPosicion);
+                        polyline.setPath(recorrido);
+    
+                        if (seguirCentrando) {
+                            centrarEnTaxi();
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.error("❌ Error obteniendo datos:", err);
+                });
+        }
+    
+        function centrarEnTaxi() {
+            const posicion = marker.getPosition();
+            if (posicion) {
+                map.setCenter(posicion);
             }
-
-            alert(`Cargando datos desde ${startDate} hasta ${endDate}`);
-            // Aquí llamaremos al backend cuando lo tengamos implementado
-        });
+        }
     </script>
+    
 
 </body>
 </html>
