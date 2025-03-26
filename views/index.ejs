@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="titulo">Proyecto 2 <%= title %></title>
+    <title id="titulo">Proyecto 2 <%= title %>
+    </title>
     <style>
         /* 🔹 Estilos Generales */
         body {
@@ -30,7 +32,8 @@
             transition: 0.3s;
         }
 
-        .navbar a:hover, .navbar a.active {
+        .navbar a:hover,
+        .navbar a.active {
             background-color: #4CAF50;
             border-radius: 5px;
         }
@@ -48,8 +51,15 @@
 
         /* 🔹 Animación */
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* 🔹 Mapas */
@@ -67,7 +77,7 @@
             margin: 15px auto;
             max-width: 600px;
             border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 10px;
@@ -100,7 +110,7 @@
         .filter-form {
             background: white;
             padding: 15px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             margin: 0 auto 15px;
             max-width: 600px;
             border-radius: 5px;
@@ -136,17 +146,30 @@
         }
 
         #historicalMap {
-        height: 500px !important;
-        width: 100% !important;
-        background-color: #f0f0f0;
-        position: relative;
-    }
-    
-    .map-container {
-        min-height: 500px;
-    }
+            height: 500px !important;
+            width: 100% !important;
+            background-color: #e0e0e0;
+            /* Color temporal para debug */
+            position: relative;
+            overflow: hidden;
+            /* Importante */
+        }
+
+        .gm-style {
+            /* Estilos para Google Maps */
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .map-container {
+            min-height: 500px;
+        }
     </style>
 </head>
+
 <body>
 
     <!-- 🔹 Navbar -->
@@ -158,7 +181,7 @@
     <!-- 🔹 Sección "Real Time" -->
     <div id="realTime" class="section active">
         <h1>Real Time Tracking 🚕</h1>
-        
+
         <!-- Panel de información -->
         <div class="info-panel">
             <p><strong>Latitud:</strong> <span id="latitud">N/A</span></p>
@@ -166,7 +189,7 @@
             <p><strong>Fecha:</strong> <span id="fecha">N/A</span></p>
             <p><strong>Hora:</strong> <span id="tiempo">N/A</span></p>
         </div>
-        
+
         <button id="seguirBtn" class="action-button">Seguir Taxi</button>
         <div id="realTimeMap" class="map-container">Cargando mapa en tiempo real...</div>
         <div id="realTimeError" class="error-message"></div>
@@ -175,23 +198,24 @@
     <!-- 🔹 Sección "Historical" -->
     <div id="historical" class="section">
         <h1>Historical Tracking 📅</h1>
-        
+
         <div class="filter-form">
             <div class="form-group">
                 <label for="startDate">Fecha y hora inicial:</label>
                 <input type="datetime-local" id="startDate">
             </div>
-            
+
             <div class="form-group">
                 <label for="endDate">Fecha y hora final:</label>
                 <input type="datetime-local" id="endDate">
             </div>
-            
+
             <button id="loadHistory" class="action-button">Cargar Trayectoria</button>
         </div>
-        
+
         <div id="historicalError" class="error-message"></div>
-        <div id="historicalMap" class="map-container">Seleccione un rango de fechas y haga clic en "Cargar Trayectoria"</div>
+        <div id="historicalMap" class="map-container">Seleccione un rango de fechas y haga clic en "Cargar Trayectoria"
+        </div>
     </div>
 
     <script>
@@ -212,14 +236,14 @@
                 recorrido: [],
                 intervalId: null
             },
-            
+
             // Historical
             historical: {
                 map: null,
                 polyline: null,
                 loaded: false
             },
-            
+
             // Google Maps API
             mapsLoaded: false
         };
@@ -264,7 +288,7 @@
             const day = String(now.getDate()).padStart(2, '0');
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
-            
+
             return {
                 date: `${year}-${month}-${day}`,
                 time: `${hours}:${minutes}`,
@@ -329,14 +353,14 @@
 
         function initRealTimeMap() {
             console.log('Inicializando mapa en tiempo real...');
-            
+
             // Crear mapa
             appState.realTime.map = new google.maps.Map(domElements.realTimeMap, {
                 center: appState.realTime.recorrido[0],
                 zoom: 15,
                 streetViewControl: false
             });
-            
+
             // Crear marcador
             appState.realTime.marker = new google.maps.Marker({
                 position: appState.realTime.recorrido[0],
@@ -347,7 +371,7 @@
                     scaledSize: new google.maps.Size(50, 50)
                 }
             });
-            
+
             // Crear polilínea
             appState.realTime.polyline = new google.maps.Polyline({
                 path: appState.realTime.recorrido,
@@ -357,18 +381,18 @@
                 strokeWeight: 4,
                 map: appState.realTime.map
             });
-            
+
             // Configurar botón seguir
             domElements.seguirBtn.addEventListener('click', () => {
                 appState.realTime.seguirCentrando = true;
                 centerOnTaxi();
             });
-            
+
             // Detectar cuando el usuario mueve el mapa
             appState.realTime.map.addListener('dragstart', () => {
                 appState.realTime.seguirCentrando = false;
             });
-            
+
             // Iniciar actualización periódica
             updateRealTimeData();
             appState.realTime.intervalId = setInterval(updateRealTimeData, config.updateInterval);
@@ -377,25 +401,25 @@
         async function updateRealTimeData() {
             try {
                 const data = await fetchData('/data');
-                
+
                 // Validar datos recibidos
                 if (!data?.LATITUDE || !data?.LONGITUDE) {
                     throw new Error("Datos de ubicación incompletos");
                 }
-                
+
                 // Actualizar panel de información
                 updateInfoPanel(data);
-                
+
                 // Actualizar posición del taxi
                 const nuevaPosicion = {
                     lat: parseFloat(data.LATITUDE),
                     lng: parseFloat(data.LONGITUDE)
                 };
-                
+
                 appState.realTime.marker.setPosition(nuevaPosicion);
                 appState.realTime.recorrido.push(nuevaPosicion);
                 appState.realTime.polyline.setPath(appState.realTime.recorrido);
-                
+
                 if (appState.realTime.seguirCentrando) {
                     centerOnTaxi();
                 }
@@ -431,13 +455,13 @@
                 // Configurar fechas por defecto (última hora)
                 const now = new Date();
                 const oneHourAgo = new Date(now.getTime() - (60 * 60 * 1000));
-                
+
                 domElements.startDate.value = formatDateTimeInput(oneHourAgo);
                 domElements.endDate.value = formatDateTimeInput(now);
-                
+
                 // Configurar evento del botón
                 domElements.loadHistory.addEventListener('click', loadHistoricalData);
-                
+
                 // Inicializar mapa si no está inicializado
                 if (!appState.historical.loaded && appState.mapsLoaded) {
                     initHistoricalMap();
@@ -454,135 +478,143 @@
             const day = String(date.getDate()).padStart(2, '0');
             const hours = String(date.getHours()).padStart(2, '0');
             const minutes = String(date.getMinutes()).padStart(2, '0');
-            
+
             return `${year}-${month}-${day}T${hours}:${minutes}`;
         }
 
         function initHistoricalMap() {
-    console.log('Inicializando mapa histórico...');
-    
-    // Verificar si Google Maps está cargado
-    if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
-        console.error('Google Maps API no está cargada');
-        domElements.historicalMap.innerHTML = "Error: Google Maps no está disponible";
-        return;
-    }
+            console.log('Inicializando mapa histórico...');
 
-    // Usar posición inicial del tiempo real o defaults
-    const center = appState.realTime.recorrido.length > 0 ? 
-        appState.realTime.recorrido[0] : 
-        { lat: 4.710989, lng: -74.072092 }; // Bogotá por defecto
-    
-    try {
-        appState.historical.map = new google.maps.Map(domElements.historicalMap, {
-            center,
-            zoom: 12,
-            streetViewControl: false,
-            mapTypeControl: true
-        });
-        
-        console.log('Mapa histórico inicializado correctamente');
-        appState.historical.loaded = true;
-        
-        // Forzar redibujado del mapa
-        setTimeout(() => {
-            if (appState.historical.map) {
-                google.maps.event.trigger(appState.historical.map, 'resize');
-                appState.historical.map.setCenter(center);
+            // Verificar si el contenedor es visible
+            if (domElements.historicalMap.offsetParent === null) {
+                console.error('El contenedor del mapa no es visible');
+                return;
             }
-        }, 100);
-        
-    } catch (error) {
-        console.error('Error al inicializar mapa histórico:', error);
-        domElements.historicalMap.innerHTML = "Error al cargar el mapa";
-    }
-}
 
-async function loadHistoricalData() {
-    try {
-        const startDate = domElements.startDate.value;
-        const endDate = domElements.endDate.value;
-        
-        if (!startDate || !endDate) {
-            throw new Error("Debe seleccionar ambas fechas");
-        }
-        
-        // Mostrar carga
-        domElements.historicalMap.innerHTML = "Cargando datos históricos...";
-        domElements.historicalError.style.display = "none";
-        
-        // Asegurar que el mapa esté inicializado
-        if (!appState.historical.loaded) {
-            initHistoricalMap();
-            // Esperar a que el mapa esté listo
-            await new Promise(resolve => setTimeout(resolve, 300));
-        }
-        
-        // Obtener datos históricos
-        const response = await fetch(`${config.basePath}/historical-data?startDate=${startDate}&endDate=${endDate}`);
-        
-        if (!response.ok) {
-            throw new Error(`Error del servidor: ${response.status}`);
-        }
-        
-        const result = await response.json();
-        console.log("Datos recibidos:", result); // Debug
-        
-        // Verificar estructura de la respuesta
-        if (!result || !result.data || !Array.isArray(result.data)) {
-            throw new Error("Formato de datos incorrecto recibido del servidor");
-        }
-        
-        if (result.data.length === 0) {
-            throw new Error("No hay datos para el rango seleccionado");
-        }
-        
-        // Procesar datos para el mapa
-        const path = result.data.map(item => {
-            if (!item.LATITUDE || !item.LONGITUDE) {
-                throw new Error("Datos de ubicación incompletos");
+            const center = appState.realTime.recorrido.length > 0 ?
+                appState.realTime.recorrido[0] :
+                { lat: 4.710989, lng: -74.072092 };
+
+            try {
+                // Limpiar el contenedor primero
+                domElements.historicalMap.innerHTML = '';
+
+                appState.historical.map = new google.maps.Map(domElements.historicalMap, {
+                    center,
+                    zoom: 12,
+                    streetViewControl: false,
+                    mapTypeControl: true
+                });
+
+                console.log('Mapa histórico inicializado correctamente');
+                appState.historical.loaded = true;
+
+                // Forzar redibujado después de un breve retraso
+                setTimeout(() => {
+                    if (appState.historical.map) {
+                        google.maps.event.trigger(appState.historical.map, 'resize');
+                        appState.historical.map.setCenter(center);
+                        console.log('Mapa redibujado');
+                    }
+                }, 300);
+
+            } catch (error) {
+                console.error('Error al inicializar mapa histórico:', error);
+                domElements.historicalMap.innerHTML = "Error al cargar el mapa";
             }
-            return {
-                lat: parseFloat(item.LATITUDE),
-                lng: parseFloat(item.LONGITUDE)
-            };
-        });
-        
-        // Limpiar polilínea anterior si existe
-        if (appState.historical.polyline) {
-            appState.historical.polyline.setMap(null);
         }
-        
-        // Crear nueva polilínea
-        appState.historical.polyline = new google.maps.Polyline({
-            path: path,
-            geodesic: true,
-            strokeColor: "#4285F4",
-            strokeOpacity: 1.0,
-            strokeWeight: 4,
-            map: appState.historical.map
-        });
-        
-        // Ajustar vista para mostrar toda la ruta
-        const bounds = new google.maps.LatLngBounds();
-        path.forEach(point => bounds.extend(point));
-        
-        // Forzar redibujado
-        setTimeout(() => {
-            google.maps.event.trigger(appState.historical.map, 'resize');
-            appState.historical.map.fitBounds(bounds);
-            console.log("Polilínea creada y mapa ajustado"); // Debug
-        }, 100);
-        
-        // Limpiar mensaje de carga
-        domElements.historicalMap.innerHTML = "";
-        
-    } catch (error) {
-        console.error('Error cargando datos históricos:', error);
-        domElements.historicalMap.innerHTML = "Error al cargar datos. Intente nuevamente.";
-        showError(domElements.historicalError, error.message);
-    }
-}
+
+        async function loadHistoricalData() {
+            console.log("Estado del contenedor:", {
+                visible: domElements.historicalMap.offsetParent !== null,
+                width: domElements.historicalMap.offsetWidth,
+                height: domElements.historicalMap.offsetHeight,
+                display: window.getComputedStyle(domElements.historicalMap).display
+            });
+            try {
+                const startDate = domElements.startDate.value;
+                const endDate = domElements.endDate.value;
+
+                if (!startDate || !endDate) {
+                    throw new Error("Debe seleccionar ambas fechas");
+                }
+
+                // Mostrar carga
+                domElements.historicalMap.innerHTML = "Cargando datos históricos...";
+                domElements.historicalError.style.display = "none";
+
+                // Asegurar que el mapa esté inicializado
+                if (!appState.historical.loaded) {
+                    initHistoricalMap();
+                    // Esperar a que el mapa esté listo
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
+
+                // Obtener datos históricos
+                const response = await fetch(`${config.basePath}/historical-data?startDate=${startDate}&endDate=${endDate}`);
+
+                if (!response.ok) {
+                    throw new Error(`Error del servidor: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log("Datos recibidos:", result); // Debug
+
+                // Verificar estructura de la respuesta
+                if (!result || !result.data || !Array.isArray(result.data)) {
+                    throw new Error("Formato de datos incorrecto recibido del servidor");
+                }
+
+                if (result.data.length === 0) {
+                    throw new Error("No hay datos para el rango seleccionado");
+                }
+
+                // Procesar datos para el mapa
+                const path = result.data.map(item => {
+                    if (!item.LATITUDE || !item.LONGITUDE) {
+                        throw new Error("Datos de ubicación incompletos");
+                    }
+                    return {
+                        lat: parseFloat(item.LATITUDE),
+                        lng: parseFloat(item.LONGITUDE)
+                    };
+                });
+
+                // Limpiar polilínea anterior si existe
+                if (appState.historical.polyline) {
+                    appState.historical.polyline.setMap(null);
+                }
+
+                // Crear nueva polilínea
+                appState.historical.polyline = new google.maps.Polyline({
+                    path: path,
+                    geodesic: true,
+                    strokeColor: "#4285F4",
+                    strokeOpacity: 1.0,
+                    strokeWeight: 4,
+                    map: appState.historical.map
+                });
+
+                // Ajustar vista para mostrar toda la ruta
+                const bounds = new google.maps.LatLngBounds();
+                path.forEach(point => bounds.extend(point));
+
+                // Forzar redibujado
+                setTimeout(() => {
+                    google.maps.event.trigger(appState.historical.map, 'resize');
+                    appState.historical.map.fitBounds(bounds);
+                    console.log("Polilínea creada y mapa ajustado"); // Debug
+                }, 100);
+
+                // Limpiar mensaje de carga
+                domElements.historicalMap.innerHTML = "";
+
+            } catch (error) {
+                console.error('Error cargando datos históricos:', error);
+                domElements.historicalMap.innerHTML = "Error al cargar datos. Intente nuevamente.";
+                showError(domElements.historicalError, error.message);
+            }
+        }
 
         // 🔹 MANEJO DE NAVEGACIÓN 🔹
 
@@ -591,7 +623,7 @@ async function loadHistoricalData() {
             domElements.historicalSection.classList.remove("active");
             domElements.realTimeBtn.classList.add("active");
             domElements.historicalBtn.classList.remove("active");
-            
+
             // Iniciar actualizaciones si no están activas
             if (!appState.realTime.intervalId) {
                 updateRealTimeData();
@@ -604,10 +636,10 @@ async function loadHistoricalData() {
             domElements.realTimeSection.classList.remove("active");
             domElements.historicalBtn.classList.add("active");
             domElements.realTimeBtn.classList.remove("active");
-            
+
             // Detener actualizaciones de tiempo real
             stopRealTimeUpdates();
-            
+
             // Inicializar mapa histórico si no está inicializado
             if (!appState.historical.loaded && appState.mapsLoaded) {
                 initHistoricalMap();
@@ -620,10 +652,10 @@ async function loadHistoricalData() {
             // Configurar eventos de navegación
             domElements.realTimeBtn.addEventListener("click", switchToRealTime);
             domElements.historicalBtn.addEventListener("click", switchToHistorical);
-            
+
             // Inicializar Real Time Tracking
             initRealTimeTracking();
-            
+
             // Preparar Historical Tracking
             initHistoricalTracking();
         }
@@ -636,4 +668,5 @@ async function loadHistoricalData() {
         }
     </script>
 </body>
+
 </html>
