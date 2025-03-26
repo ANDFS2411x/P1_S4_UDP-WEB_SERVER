@@ -125,6 +125,7 @@
         let seguirCentrando = false;
         let recorrido = [];
         let polyline;
+        let intervalId = null;
     
         const basePath = window.location.pathname.includes("/test") ? "/test" : "";
     
@@ -137,36 +138,38 @@
                 });
         }
     
-        fetch(`${basePath}/api-key`)
-            .then(res => res.json())
-            .then(data => {
-                if (!data.apiKey) {
-                    throw new Error("No se recibió la API key");
-                }
-    
-                obtenerDatosIniciales().then(ubicacion => {
-                    if (!ubicacion || !ubicacion.LATITUDE || !ubicacion.LONGITUDE) {
-                        document.getElementById("map").innerText = "No se pudo obtener la posición inicial.";
-                        return;
+        function cargarMapaTiempoReal() {
+            fetch(`${basePath}/api-key`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.apiKey) {
+                        throw new Error("No se recibió la API key");
                     }
     
-                    const script = document.createElement("script");
-                    script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&callback=initMap`;
-                    script.async = true;
+                    obtenerDatosIniciales().then(ubicacion => {
+                        if (!ubicacion || !ubicacion.LATITUDE || !ubicacion.LONGITUDE) {
+                            document.getElementById("map").innerText = "No se pudo obtener la posición inicial.";
+                            return;
+                        }
     
-                    window.posicionInicial = {
-                        lat: parseFloat(ubicacion.LATITUDE),
-                        lng: parseFloat(ubicacion.LONGITUDE)
-                    };
+                        const script = document.createElement("script");
+                        script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&callback=initMap`;
+                        script.async = true;
     
-                    recorrido.push(window.posicionInicial);
-                    document.head.appendChild(script);
+                        window.posicionInicial = {
+                            lat: parseFloat(ubicacion.LATITUDE),
+                            lng: parseFloat(ubicacion.LONGITUDE)
+                        };
+    
+                        recorrido = [window.posicionInicial];
+                        document.head.appendChild(script);
+                    });
+                })
+                .catch(err => {
+                    console.error("❌ Error al obtener la API key:", err);
+                    document.getElementById("map").innerText = "No se pudo cargar el mapa.";
                 });
-            })
-            .catch(err => {
-                console.error("❌ Error al obtener la API key:", err);
-                document.getElementById("map").innerText = "No se pudo cargar el mapa.";
-            });
+        }
     
         function initMap() {
             map = new google.maps.Map(document.getElementById("map"), {
@@ -203,8 +206,9 @@
                 seguirCentrando = false;
             });
     
+            // 🔄 Inicia la actualización de datos en tiempo real
             actualizarDatos();
-            setInterval(actualizarDatos, 5000);
+            intervalId = setInterval(actualizarDatos, 5000);
         }
     
         function actualizarDatos() {
@@ -242,7 +246,42 @@
                 map.setCenter(posicion);
             }
         }
+    
+        // 🔹 Funcionalidad para cambiar entre las vistas
+        document.getElementById("realTimeBtn").addEventListener("click", function() {
+            document.getElementById("realTime").classList.add("active");
+            document.getElementById("historical").classList.remove("active");
+            this.classList.add("active");
+            document.getElementById("historicalBtn").classList.remove("active");
+    
+            // Si el mapa no está inicializado, lo cargamos
+            if (!map) {
+                cargarMapaTiempoReal();
+            }
+    
+            // Reiniciar el intervalo de actualización si se había detenido
+            if (!intervalId) {
+                intervalId = setInterval(actualizarDatos, 5000);
+            }
+        });
+    
+        document.getElementById("historicalBtn").addEventListener("click", function() {
+            document.getElementById("historical").classList.add("active");
+            document.getElementById("realTime").classList.remove("active");
+            this.classList.add("active");
+            document.getElementById("realTimeBtn").classList.remove("active");
+    
+            // 🔄 Detener la actualización automática en modo histórico
+            if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+            }
+        });
+    
+        // 🔹 Cargar el mapa en tiempo real al iniciar
+        cargarMapaTiempoReal();
     </script>
+    
     
 
 </body>
