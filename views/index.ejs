@@ -479,7 +479,8 @@
             
             // Obtener datos históricos
             const response = await fetch(`${config.basePath}/historical-data?startDate=${startDate}&endDate=${endDate}`);
-            
+            console.log(startDate)
+            console.log(endDate)
             if (!response.ok) {
                 throw new Error(`Error del servidor: ${response.status}`);
             }
