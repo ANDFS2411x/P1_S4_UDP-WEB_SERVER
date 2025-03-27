@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="titulo">Proyecto 2 <%= title %>
+    </title>
     <style>
         /* 🔹 Estilos Generales */
         body {
@@ -35,6 +36,38 @@
         .navbar a.active {
             background-color: #4CAF50;
             border-radius: 5px;
+        }
+
+        /* 🔹 Secciones */
+        .section {
+            display: none;
+            padding: 20px;
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        /* 🔹 Animación */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 🔹 Mapas */
+        .map-container {
+            height: 70vh;
+            width: 100%;
+            border: 1px solid #ccc;
+            margin-bottom: 15px;
         }
 
         /* 🔹 Panel de información */
@@ -73,12 +106,33 @@
             background-color: #45a049;
         }
 
-        /* 🔹 Mapas */
-        .map-container {
-            height: 70vh;
+        /* 🔹 Formulario Histórico */
+        .filter-form {
+            background: white;
+            padding: 15px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 0 auto 15px;
+            max-width: 600px;
+            border-radius: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input {
             width: 100%;
-            border: 1px solid #ccc;
-            margin-bottom: 15px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
         }
 
         /* 🔹 Mensajes de error */
@@ -89,6 +143,16 @@
             border-radius: 4px;
             margin: 10px 0;
             display: none;
+        }
+
+        #historicalMap {
+            height: 500px !important;
+            width: 100% !important;
+            background-color: #e0e0e0;
+            /* Color temporal para debug */
+            position: relative;
+            overflow: hidden;
+            /* Importante */
         }
 
         .gm-style {
@@ -107,13 +171,15 @@
 </head>
 
 <body>
+
     <!-- 🔹 Navbar -->
     <div class="navbar">
-        <a href="#" class="active">Real Time Tracking</a>
+        <a href="#" id="realTimeBtn" class="active">Real Time</a>
+        <a href="#" id="historicalBtn">Historical</a>
     </div>
 
     <!-- 🔹 Sección "Real Time" -->
-    <div id="realTime">
+    <div id="realTime" class="section active">
         <h1>Real Time Tracking 🚕</h1>
 
         <!-- Panel de información -->
@@ -127,6 +193,29 @@
         <button id="seguirBtn" class="action-button">Seguir Taxi</button>
         <div id="realTimeMap" class="map-container">Cargando mapa en tiempo real...</div>
         <div id="realTimeError" class="error-message"></div>
+    </div>
+
+    <!-- 🔹 Sección "Historical" -->
+    <div id="historical" class="section">
+        <h1>Historical Tracking 📅</h1>
+
+        <div class="filter-form">
+            <div class="form-group">
+                <label for="startDate">Fecha y hora inicial:</label>
+                <input type="datetime-local" id="startDate">
+            </div>
+
+            <div class="form-group">
+                <label for="endDate">Fecha y hora final:</label>
+                <input type="datetime-local" id="endDate">
+            </div>
+
+            <button id="loadHistory" class="action-button">Cargar Trayectoria</button>
+        </div>
+
+        <div id="historicalError" class="error-message"></div>
+        <div id="historicalMap" class="map-container">Seleccione un rango de fechas y haga clic en "Cargar Trayectoria"
+        </div>
     </div>
 
     <script>
@@ -148,19 +237,36 @@
                 intervalId: null
             },
 
+            // Historical
+            historical: {
+                map: null,
+                polyline: null,
+                loaded: false
+            },
+
             // Google Maps API
             mapsLoaded: false
         };
 
         // Elementos del DOM
         const domElements = {
+            // Real Time
+            realTimeBtn: document.getElementById('realTimeBtn'),
+            historicalBtn: document.getElementById('historicalBtn'),
+            realTimeSection: document.getElementById('realTime'),
+            historicalSection: document.getElementById('historical'),
             realTimeMap: document.getElementById('realTimeMap'),
+            historicalMap: document.getElementById('historicalMap'),
             seguirBtn: document.getElementById('seguirBtn'),
+            loadHistory: document.getElementById('loadHistory'),
+            startDate: document.getElementById('startDate'),
+            endDate: document.getElementById('endDate'),
             latitud: document.getElementById('latitud'),
             longitud: document.getElementById('longitud'),
             fecha: document.getElementById('fecha'),
             tiempo: document.getElementById('tiempo'),
-            realTimeError: document.getElementById('realTimeError')
+            realTimeError: document.getElementById('realTimeError'),
+            historicalError: document.getElementById('historicalError')
         };
 
         // 🔹 FUNCIONES DE UTILIDAD 🔹
@@ -169,6 +275,25 @@
             element.textContent = message;
             element.style.display = 'block';
             setTimeout(() => element.style.display = 'none', 5000);
+        }
+
+        function formatDateTime(dateStr, timeStr) {
+            return `${dateStr}T${timeStr}`;
+        }
+
+        function getCurrentDateTime() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+
+            return {
+                date: `${year}-${month}-${day}`,
+                time: `${hours}:${minutes}`,
+                datetime: `${year}-${month}-${day}T${hours}:${minutes}`
+            };
         }
 
         async function fetchData(endpoint) {
@@ -309,6 +434,13 @@
             }
         }
 
+        function stopRealTimeUpdates() {
+            if (appState.realTime.intervalId) {
+                clearInterval(appState.realTime.intervalId);
+                appState.realTime.intervalId = null;
+            }
+        }
+
         function updateInfoPanel(data) {
             domElements.latitud.textContent = data.LATITUDE || "N/A";
             domElements.longitud.textContent = data.LONGITUDE || "N/A";
@@ -316,10 +448,221 @@
             domElements.tiempo.textContent = data.TIME || "N/A";
         }
 
+        // 🔹 HISTORICAL TRACKING 🔹
+
+        async function initHistoricalTracking() {
+            try {
+                // Configurar fechas por defecto (última hora)
+                const now = new Date();
+                const oneHourAgo = new Date(now.getTime() - (60 * 60 * 1000));
+
+                domElements.startDate.value = formatDateTimeInput(oneHourAgo);
+                domElements.endDate.value = formatDateTimeInput(now);
+
+                // Configurar evento del botón
+                domElements.loadHistory.addEventListener('click', loadHistoricalData);
+
+                // Inicializar mapa si no está inicializado
+                if (!appState.historical.loaded && appState.mapsLoaded) {
+                    initHistoricalMap();
+                }
+            } catch (error) {
+                console.error('Error inicializando Historical Tracking:', error);
+                showError(domElements.historicalError, error.message);
+            }
+        }
+
+        function formatDateTimeInput(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+
+        function initHistoricalMap() {
+            console.log('Inicializando mapa histórico...');
+
+            // Verificar si el contenedor es visible
+            if (domElements.historicalMap.offsetParent === null) {
+                console.error('El contenedor del mapa no es visible');
+                return;
+            }
+
+            const center = appState.realTime.recorrido.length > 0 ?
+                appState.realTime.recorrido[0] :
+                { lat: 4.710989, lng: -74.072092 };
+
+            try {
+                // Limpiar el contenedor primero
+                domElements.historicalMap.innerHTML = '';
+
+                appState.historical.map = new google.maps.Map(domElements.historicalMap, {
+                    center,
+                    zoom: 12,
+                    streetViewControl: false,
+                    mapTypeControl: true
+                });
+
+                console.log('Mapa histórico inicializado correctamente');
+                appState.historical.loaded = true;
+
+                // Forzar redibujado después de un breve retraso
+                setTimeout(() => {
+                    if (appState.historical.map) {
+                        google.maps.event.trigger(appState.historical.map, 'resize');
+                        appState.historical.map.setCenter(center);
+                        console.log('Mapa redibujado');
+                    }
+                }, 300);
+
+            } catch (error) {
+                console.error('Error al inicializar mapa histórico:', error);
+                domElements.historicalMap.innerHTML = "Error al cargar el mapa";
+            }
+        }
+
+        async function loadHistoricalData() {
+    try {
+        console.log("Iniciando carga de datos históricos...");
+        
+        const startDate = domElements.startDate.value;
+        const endDate = domElements.endDate.value;
+
+        if (!startDate || !endDate) {
+            throw new Error("Debe seleccionar ambas fechas");
+        }
+
+        // Mostrar carga
+        domElements.historicalMap.innerHTML = "Cargando datos históricos...";
+        domElements.historicalError.style.display = "none";
+
+        // 1. Asegurar que el mapa esté inicializado
+        if (!appState.historical.map) {
+            console.log("Inicializando mapa histórico...");
+            initHistoricalMap();
+            // Esperar a que el mapa esté completamente listo
+            await new Promise(resolve => {
+                const checkMap = setInterval(() => {
+                    if (appState.historical.map) {
+                        clearInterval(checkMap);
+                        resolve();
+                    }
+                }, 100);
+            });
+        }
+
+        // 2. Obtener datos históricos
+        console.log("Obteniendo datos del servidor...");
+        const response = await fetch(`${config.basePath}/historical-data?startDate=${startDate}&endDate=${endDate}`);
+        
+        if (!response.ok) {
+            throw new Error(`Error del servidor: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log("Datos recibidos:", result);
+
+        // 3. Validar datos
+        if (!result?.success || !Array.isArray(result.data)) {
+            throw new Error("Formato de datos incorrecto");
+        }
+
+        if (result.data.length === 0) {
+            throw new Error("No hay datos para el rango seleccionado");
+        }
+
+        // 4. Procesar coordenadas
+        const path = result.data.map(item => ({
+            lat: parseFloat(item.LATITUDE),
+            lng: parseFloat(item.LONGITUDE)
+        }));
+
+        // 5. Limpiar polilínea anterior si existe
+        if (appState.historical.polyline) {
+            appState.historical.polyline.setMap(null);
+        }
+
+        // 6. Crear nueva polilínea
+        console.log("Creando polilínea con", path.length, "puntos");
+        appState.historical.polyline = new google.maps.Polyline({
+            path: path,
+            geodesic: true,
+            strokeColor: "#FF0000", // Rojo para mejor visibilidad
+            strokeOpacity: 1.0,
+            strokeWeight: 4,
+            map: appState.historical.map
+        });
+
+        // 7. Ajustar vista del mapa
+        const bounds = new google.maps.LatLngBounds();
+        path.forEach(point => bounds.extend(point));
+        
+        // Añadir pequeño margen
+        const padding = 100; // pixels
+        appState.historical.map.fitBounds(bounds, padding);
+
+        // 8. Forzar redibujado
+        setTimeout(() => {
+            google.maps.event.trigger(appState.historical.map, 'resize');
+            appState.historical.map.setCenter(bounds.getCenter());
+            console.log("Mapa actualizado correctamente");
+        }, 300);
+
+        // Limpiar mensaje de carga
+        domElements.historicalMap.innerHTML = "";
+
+    } catch (error) {
+        console.error('Error:', error);
+        domElements.historicalMap.innerHTML = `Error: ${error.message}`;
+        showError(domElements.historicalError, error.message);
+    }
+}
+
+        // 🔹 MANEJO DE NAVEGACIÓN 🔹
+
+        function switchToRealTime() {
+            domElements.realTimeSection.classList.add("active");
+            domElements.historicalSection.classList.remove("active");
+            domElements.realTimeBtn.classList.add("active");
+            domElements.historicalBtn.classList.remove("active");
+
+            // Iniciar actualizaciones si no están activas
+            if (!appState.realTime.intervalId) {
+                updateRealTimeData();
+                appState.realTime.intervalId = setInterval(updateRealTimeData, config.updateInterval);
+            }
+        }
+
+        function switchToHistorical() {
+            domElements.historicalSection.classList.add("active");
+            domElements.realTimeSection.classList.remove("active");
+            domElements.historicalBtn.classList.add("active");
+            domElements.realTimeBtn.classList.remove("active");
+
+            // Detener actualizaciones de tiempo real
+            stopRealTimeUpdates();
+
+            // Inicializar mapa histórico si no está inicializado
+            if (!appState.historical.loaded && appState.mapsLoaded) {
+                initHistoricalMap();
+            }
+        }
+
         // 🔹 INICIALIZACIÓN DE LA APLICACIÓN 🔹
+
         function initApp() {
+            // Configurar eventos de navegación
+            domElements.realTimeBtn.addEventListener("click", switchToRealTime);
+            domElements.historicalBtn.addEventListener("click", switchToHistorical);
+
             // Inicializar Real Time Tracking
             initRealTimeTracking();
+
+            // Preparar Historical Tracking
+            initHistoricalTracking();
         }
 
         // Iniciar la aplicación cuando el DOM esté listo
