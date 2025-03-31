@@ -135,18 +135,6 @@ app.get("/historical-data", (req, res) => {
 // Esto sirve archivos estáticos que estén en la carpeta "public", por ejemplo: HTML, CSS, imágenes...
 // Se pone después de las rutas para que no bloquee las APIs que hicimos antes
 
-if (process.env.PORT == 9000) {
-    app.use('/test', express.static(path.join(__dirname, 'public')));
-    console.log('9000')
-}
-
-if (process.env.PORT == 3000) {
-    app.use('/', express.static(path.join(__dirname, 'public')));
-    console.log('3000')
-}
-
-
-
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
