@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -25,9 +26,9 @@
             </div>
             
             <button id="seguirBtn" class="action-button">Seguir Taxi</button>
-            <div id="sharedMapContainer">
-                <div id="sharedMap">Cargando mapa...</div>
-                <div id="loadingMessage" class="loading-message" style="display: none;">Cargando datos...</div>
+            <div id="realTimeMapContainer" class="mapContainer">
+                <div id="realTimeMap" class="map">Cargando mapa...</div>
+                <div id="realTimeLoadingMessage" class="loadingMessage" style="display: none;">Cargando datos...</div>
             </div>
             <div id="realTimeError" class="error-message"></div>
         </div>
@@ -50,10 +51,11 @@
                 <button id="loadHistory" class="action-button">Cargar Trayectoria</button>
             </div>
             
-            <div id="historicalError" class="error-message"></div>
-            <div id="sharedMapContainer">
-                <div id="sharedMap">Seleccione un rango de fechas y haga clic en "Cargar Trayectoria"</div>
-                <div id="loadingMessage" class="loading-message" style="display: none;">Cargando datos históricos...</div>
+            <div id="historicalError" class="errorMessage"></div>
+            <div id="historicalMapContainer" class="mapContainer">
+                <div id="historicalMap" class="map">Seleccione un rango de fechas y haga clic en "Cargar Trayectoria"</div>
+                <div id="historicalLoadingMessage" class="loadingMessage" style="display: none;">Cargando datos históricos...</div>
             </div>
         </div>
 </body>
+</html>

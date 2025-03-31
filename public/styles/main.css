@@ -46,7 +46,7 @@ body {
 }
 
 /* 🔹 Mapa compartido */
-#sharedMapContainer {
+.mapContainer {
     height: 70vh;
     width: 100%;
     border: 1px solid #ccc;
@@ -54,7 +54,7 @@ body {
     position: relative;
 }
 
-#sharedMap {
+.map {
     height: 100%;
     width: 100%;
 }
@@ -125,7 +125,7 @@ body {
 }
 
 /* 🔹 Mensajes de error */
-.error-message {
+.errorMessage {
     color: #d32f2f;
     background-color: #fde8e8;
     padding: 10px;
@@ -134,7 +134,7 @@ body {
     display: none;
 }
 
-.loading-message {
+.loadingMessage {
     position: absolute;
     top: 50%;
     left: 50%;
