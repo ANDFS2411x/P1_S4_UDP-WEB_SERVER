@@ -135,15 +135,7 @@ app.get("/historical-data", (req, res) => {
 // Esto sirve archivos estáticos que estén en la carpeta "public", por ejemplo: HTML, CSS, imágenes...
 // Se pone después de las rutas para que no bloquee las APIs que hicimos antes
 
-app.use(express.static('public', {
-    setHeaders: (res, path) => {
-      if (path.endsWith('.css')) {
-        res.setHeader('Content-Type', 'text/css');
-      }
-    }
-  }));
-
-//app.use("/", express.static("public"));
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
     res.render('main', { title: process.env.PAGE_TITLE });
