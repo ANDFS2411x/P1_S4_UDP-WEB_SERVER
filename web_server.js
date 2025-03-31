@@ -137,7 +137,7 @@ app.get("/historical-data", (req, res) => {
 app.use("/", express.static("public"));
 
 app.get('/', (req, res) => {
-    res.render('index', { title: process.env.PAGE_TITLE });
+    res.render('main', { title: process.env.PAGE_TITLE });
 });
 
 /* ------------------- 🚀 INICIAMOS EL SERVIDOR ------------------- */

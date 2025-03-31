@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="titulo">Proyecto 2 <%= title %></title>
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+    <body>
+
+        <!-- 🔹 Navbar -->
+        <div class="navbar">
+            <a href="#" id="realTimeBtn" class="active">Real Time</a>
+            <a href="#" id="historicalBtn">Historical</a>
+        </div>
+    
+        <!-- 🔹 Sección "Real Time" -->
+        <div id="realTime" class="section active">
+            <h1>Real Time Tracking 🚕</h1>
+            
+            <!-- Panel de información -->
+            <div class="info-panel">
+                <p><strong>Latitud:</strong> <span id="latitud">N/A</span></p>
+                <p><strong>Longitud:</strong> <span id="longitud">N/A</span></p>
+                <p><strong>Fecha:</strong> <span id="fecha">N/A</span></p>
+                <p><strong>Hora:</strong> <span id="tiempo">N/A</span></p>
+            </div>
+            
+            <button id="seguirBtn" class="action-button">Seguir Taxi</button>
+            <div id="sharedMapContainer">
+                <div id="sharedMap">Cargando mapa...</div>
+                <div id="loadingMessage" class="loading-message" style="display: none;">Cargando datos...</div>
+            </div>
+            <div id="realTimeError" class="error-message"></div>
+        </div>
+    
+        <!-- 🔹 Sección "Historical" -->
+        <div id="historical" class="section">
+            <h1>Historical Tracking 📅</h1>
+            
+            <div class="filter-form">
+                <div class="form-group">
+                    <label for="startDate">Fecha y hora inicial:</label>
+                    <input type="datetime-local" id="startDate">
+                </div>
+                
+                <div class="form-group">
+                    <label for="endDate">Fecha y hora final:</label>
+                    <input type="datetime-local" id="endDate">
+                </div>
+                
+                <button id="loadHistory" class="action-button">Cargar Trayectoria</button>
+            </div>
+            
+            <div id="historicalError" class="error-message"></div>
+            <div id="sharedMapContainer">
+                <div id="sharedMap">Seleccione un rango de fechas y haga clic en "Cargar Trayectoria"</div>
+                <div id="loadingMessage" class="loading-message" style="display: none;">Cargando datos históricos...</div>
+            </div>
+        </div>
+</body>
