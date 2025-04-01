@@ -108,7 +108,7 @@ function initMapInstance() {
     });
 
     // Configurar marcador en tiempo real
-    appState.realTime.marker = new google.maps.Marker({
+    appState.realTime.marker = new google.maps.marker.AdvancedMarkerElement ({
         position: center,
         map: appState.map,
         title: "Taxi 🚕",
