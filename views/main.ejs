@@ -66,11 +66,6 @@
         document.getElementById('themeStyles').href = isTesting
             ? '/test/styles/main.css'
             : '/styles/main.css';
-
-        const config = {
-            basePath: window.location.pathname.includes("/test") ? "/test" : "",
-            updateInterval: 5000
-        };
     </script>
     <script src="<%= path %>/js/main.js"></script>
 </body>
