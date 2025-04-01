@@ -59,10 +59,20 @@ function showLoading(show) {
     // En el HTML hay dos elementos de carga diferentes, uno para cada sección
     if (domElements.historicalSection.classList.contains("active")) {
         // Estamos en la sección histórica
-        document.getElementById('historicalLoadingMessage').style.display = show ? 'block' : 'none';
+        const historicalLoadingMessage = document.getElementById('historicalLoadingMessage');
+        if (historicalLoadingMessage) {
+            historicalLoadingMessage.style.display = show ? 'block' : 'none';
+        } else {
+            console.warn('Elemento #historicalLoadingMessage no encontrado');
+        }
     } else {
         // Estamos en la sección de tiempo real
-        document.getElementById('realTimeLoadingMessage').style.display = show ? 'block' : 'none';
+        const realTimeLoadingMessage = document.getElementById('realTimeLoadingMessage');
+        if (realTimeLoadingMessage) {
+            realTimeLoadingMessage.style.display = show ? 'block' : 'none';
+        } else {
+            console.warn('Elemento #realTimeLoadingMessage no encontrado');
+        }
     }
 }
 
