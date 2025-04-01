@@ -21,7 +21,7 @@ const app = express();
 // 🔢 Definimos el puerto en el que va a correr el servidor
 const port = process.env.PORT || 3000;
 
-const basePath = process.env.PORT === 9000 ? "/test" : "/";
+const basePath = process.env.PORT == 9000 ? "/test" : "/";
 
 // 📦 Agregamos el middleware de CORS a nuestra app para aceptar peticiones de otros lugares
 app.use(cors());
