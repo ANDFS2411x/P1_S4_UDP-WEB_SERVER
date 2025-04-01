@@ -20,8 +20,9 @@ const app = express();
 
 // 🔢 Definimos el puerto en el que va a correr el servidor
 const port = process.env.PORT || 3000;
-
-const basePath = process.env.PORT == 9000 ? "/test" : "/";
+console.log(`Puerto: ${port}`);
+const basePath = port == 9000 ? "/test" : "/";
+console.log(`path: ${basePath}`);
 
 // 📦 Agregamos el middleware de CORS a nuestra app para aceptar peticiones de otros lugares
 app.use(cors());
@@ -141,7 +142,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
     res.render('main', { title: process.env.PAGE_TITLE, path: basePath });
-    console.log(basePath);
 });
 
 /* ------------------- 🚀 INICIAMOS EL SERVIDOR ------------------- */
