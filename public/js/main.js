@@ -24,7 +24,8 @@ const domElements = {
     historicalBtn: document.getElementById('historicalBtn'),
     realTimeSection: document.getElementById('realTime'),
     historicalSection: document.getElementById('historical'),
-    sharedMap: document.getElementById('sharedMap'),
+    realMapContainer: document.getElementById('realTimeMapContainer'),
+    historicalMapContainer: document.getElementById('historicalMapContainer'),
     loadingMessage: document.getElementById('loadingMessage'),
     seguirBtn: document.getElementById('seguirBtn'),
     loadHistory: document.getElementById('loadHistory'),
@@ -100,7 +101,7 @@ function initMapInstance() {
         appState.realTime.recorrido[0] : 
         { lat: 4.710989, lng: -74.072092 };
 
-    appState.map = new google.maps.Map(domElements.sharedMap, {
+    appState.map = new google.maps.Map(domElements.realMapContainer, {
         center: center,
         zoom: 15,
         streetViewControl: false
@@ -176,7 +177,7 @@ async function initMap() {
         }
     } catch (error) {
         console.error('Error inicializando mapa:', error);
-        domElements.sharedMap.innerHTML = `Error: ${error.message}`;
+        domElements.realMapContainer.innerHTML = `Error: ${error.message}`;
         showError(domElements.realTimeError, error.message);
     }
 }
