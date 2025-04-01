@@ -1,11 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="titulo">Proyecto 2 <%= title %>
-    </title>
+    <title id="titulo">Proyecto 2 <%= title %></title>
     <style>
         /* 🔹 Estilos Generales */
         body {
@@ -32,8 +30,7 @@
             transition: 0.3s;
         }
 
-        .navbar a:hover,
-        .navbar a.active {
+        .navbar a:hover, .navbar a.active {
             background-color: #4CAF50;
             border-radius: 5px;
         }
@@ -51,23 +48,22 @@
 
         /* 🔹 Animación */
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        /* 🔹 Mapas */
-        .map-container {
+        /* 🔹 Mapa compartido */
+        #sharedMapContainer {
             height: 70vh;
             width: 100%;
             border: 1px solid #ccc;
             margin-bottom: 15px;
+            position: relative;
+        }
+
+        #sharedMap {
+            height: 100%;
+            width: 100%;
         }
 
         /* 🔹 Panel de información */
@@ -77,7 +73,7 @@
             margin: 15px auto;
             max-width: 600px;
             border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 10px;
@@ -110,7 +106,7 @@
         .filter-form {
             background: white;
             padding: 15px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
             margin: 0 auto 15px;
             max-width: 600px;
             border-radius: 5px;
@@ -145,31 +141,18 @@
             display: none;
         }
 
-        #historicalMap {
-            height: 500px !important;
-            width: 100% !important;
-            background-color: #e0e0e0;
-            /* Color temporal para debug */
-            position: relative;
-            overflow: hidden;
-            /* Importante */
-        }
-
-        .gm-style {
-            /* Estilos para Google Maps */
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-        }
-
-        .map-container {
-            min-height: 500px;
+        .loading-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.9);
+            padding: 20px;
+            border-radius: 5px;
+            z-index: 1000;
         }
     </style>
 </head>
-
 <body>
 
     <!-- 🔹 Navbar -->
@@ -181,7 +164,7 @@
     <!-- 🔹 Sección "Real Time" -->
     <div id="realTime" class="section active">
         <h1>Real Time Tracking 🚕</h1>
-
+        
         <!-- Panel de información -->
         <div class="info-panel">
             <p><strong>Latitud:</strong> <span id="latitud">N/A</span></p>
@@ -189,32 +172,37 @@
             <p><strong>Fecha:</strong> <span id="fecha">N/A</span></p>
             <p><strong>Hora:</strong> <span id="tiempo">N/A</span></p>
         </div>
-
+        
         <button id="seguirBtn" class="action-button">Seguir Taxi</button>
-        <div id="realTimeMap" class="map-container">Cargando mapa en tiempo real...</div>
+        <div id="sharedMapContainer">
+            <div id="sharedMap">Cargando mapa...</div>
+            <div id="loadingMessage" class="loading-message" style="display: none;">Cargando datos...</div>
+        </div>
         <div id="realTimeError" class="error-message"></div>
     </div>
 
     <!-- 🔹 Sección "Historical" -->
     <div id="historical" class="section">
         <h1>Historical Tracking 📅</h1>
-
+        
         <div class="filter-form">
             <div class="form-group">
                 <label for="startDate">Fecha y hora inicial:</label>
                 <input type="datetime-local" id="startDate">
             </div>
-
+            
             <div class="form-group">
                 <label for="endDate">Fecha y hora final:</label>
                 <input type="datetime-local" id="endDate">
             </div>
-
+            
             <button id="loadHistory" class="action-button">Cargar Trayectoria</button>
         </div>
-
+        
         <div id="historicalError" class="error-message"></div>
-        <div id="historicalMap" class="map-container">Seleccione un rango de fechas y haga clic en "Cargar Trayectoria"
+        <div id="sharedMapContainer">
+            <div id="sharedMap">Seleccione un rango de fechas y haga clic en "Cargar Trayectoria"</div>
+            <div id="loadingMessage" class="loading-message" style="display: none;">Cargando datos históricos...</div>
         </div>
     </div>
 
@@ -227,36 +215,28 @@
 
         // Estado de la aplicación
         const appState = {
-            // Real Time
+            map: null,              // Mapa compartido
             realTime: {
-                map: null,
-                marker: null,
-                polyline: null,
+                marker: null,       // Marcador en tiempo real
+                polyline: null,     // Polilínea en tiempo real
                 seguirCentrando: false,
                 recorrido: [],
                 intervalId: null
             },
-
-            // Historical
             historical: {
-                map: null,
-                polyline: null,
-                loaded: false
+                polyline: null      // Polilínea histórica
             },
-
-            // Google Maps API
-            mapsLoaded: false
+            mapsLoaded: false       // Estado de la API de Google Maps
         };
 
         // Elementos del DOM
         const domElements = {
-            // Real Time
             realTimeBtn: document.getElementById('realTimeBtn'),
             historicalBtn: document.getElementById('historicalBtn'),
             realTimeSection: document.getElementById('realTime'),
             historicalSection: document.getElementById('historical'),
-            realTimeMap: document.getElementById('realTimeMap'),
-            historicalMap: document.getElementById('historicalMap'),
+            sharedMap: document.getElementById('sharedMap'),
+            loadingMessage: document.getElementById('loadingMessage'),
             seguirBtn: document.getElementById('seguirBtn'),
             loadHistory: document.getElementById('loadHistory'),
             startDate: document.getElementById('startDate'),
@@ -277,40 +257,41 @@
             setTimeout(() => element.style.display = 'none', 5000);
         }
 
-        function formatDateTime(dateStr, timeStr) {
-            return `${dateStr}T${timeStr}`;
+        function showLoading(show) {
+            domElements.loadingMessage.style.display = show ? 'block' : 'none';
         }
 
-        function getCurrentDateTime() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
+        function formatDateTimeInput(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
 
-            return {
-                date: `${year}-${month}-${day}`,
-                time: `${hours}:${minutes}`,
-                datetime: `${year}-${month}-${day}T${hours}:${minutes}`
-            };
+        function updateInfoPanel(data) {
+            domElements.latitud.textContent = data.LATITUDE || "N/A";
+            domElements.longitud.textContent = data.LONGITUDE || "N/A";
+            domElements.fecha.textContent = data.DATE || "N/A";
+            domElements.tiempo.textContent = data.TIME || "N/A";
         }
 
         async function fetchData(endpoint) {
             try {
                 const response = await fetch(`${config.basePath}${endpoint}`);
                 if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
-                const data = await response.json();
-                return data;
+                return await response.json();
             } catch (error) {
                 console.error(`Error fetching ${endpoint}:`, error);
                 throw error;
             }
         }
 
-        // 🔹 REAL TIME TRACKING 🔹
+        // 🔹 MAPA COMPARTIDO 🔹
 
-        async function initRealTimeTracking() {
+        async function initMap() {
             try {
                 // Obtener API Key
                 const apiKeyData = await fetchData('/api-key');
@@ -322,49 +303,51 @@
                     throw new Error("Datos de ubicación inicial incompletos");
                 }
 
-                // Actualizar panel de información
                 updateInfoPanel(ubicacion);
 
-                // Configurar posición inicial
                 const posicionInicial = {
                     lat: parseFloat(ubicacion.LATITUDE),
                     lng: parseFloat(ubicacion.LONGITUDE)
                 };
 
                 appState.realTime.recorrido = [posicionInicial];
+                console.log(posicionInicial);
 
                 // Cargar Google Maps API si no está cargada
                 if (!appState.mapsLoaded) {
                     const script = document.createElement('script');
-                    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKeyData.apiKey}&callback=initRealTimeMap`;
+                    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKeyData.apiKey}&callback=initMapInstance`;
                     script.async = true;
                     script.defer = true;
                     document.head.appendChild(script);
                     appState.mapsLoaded = true;
                 } else {
-                    initRealTimeMap();
+                    initMapInstance();
                 }
             } catch (error) {
-                console.error('Error inicializando Real Time Tracking:', error);
-                domElements.realTimeMap.innerHTML = `Error: ${error.message}`;
+                console.error('Error inicializando mapa:', error);
+                domElements.sharedMap.innerHTML = `Error: ${error.message}`;
                 showError(domElements.realTimeError, error.message);
             }
         }
 
-        function initRealTimeMap() {
-            console.log('Inicializando mapa en tiempo real...');
+        function initMapInstance() {
+            console.log('Inicializando mapa compartido...');
+            
+            const center = appState.realTime.recorrido.length > 0 ? 
+                appState.realTime.recorrido[0] : 
+                { lat: 4.710989, lng: -74.072092 };
 
-            // Crear mapa
-            appState.realTime.map = new google.maps.Map(domElements.realTimeMap, {
-                center: appState.realTime.recorrido[0],
+            appState.map = new google.maps.Map(domElements.sharedMap, {
+                center: center,
                 zoom: 15,
                 streetViewControl: false
             });
 
-            // Crear marcador
+            // Configurar marcador en tiempo real
             appState.realTime.marker = new google.maps.Marker({
-                position: appState.realTime.recorrido[0],
-                map: appState.realTime.map,
+                position: center,
+                map: appState.map,
                 title: "Taxi 🚕",
                 icon: {
                     url: "https://cdn-icons-png.flaticon.com/128/2401/2401174.png",
@@ -372,14 +355,14 @@
                 }
             });
 
-            // Crear polilínea
+            // Configurar polilínea en tiempo real
             appState.realTime.polyline = new google.maps.Polyline({
                 path: appState.realTime.recorrido,
                 geodesic: true,
                 strokeColor: "#FF0000",
                 strokeOpacity: 1.0,
                 strokeWeight: 4,
-                map: appState.realTime.map
+                map: appState.map
             });
 
             // Configurar botón seguir
@@ -389,28 +372,37 @@
             });
 
             // Detectar cuando el usuario mueve el mapa
-            appState.realTime.map.addListener('dragstart', () => {
+            appState.map.addListener('dragstart', () => {
                 appState.realTime.seguirCentrando = false;
             });
 
             // Iniciar actualización periódica
+            startRealTimeUpdates();
+        }
+
+        // 🔹 REAL TIME TRACKING 🔹
+
+        function startRealTimeUpdates() {
             updateRealTimeData();
             appState.realTime.intervalId = setInterval(updateRealTimeData, config.updateInterval);
+        }
+
+        function stopRealTimeUpdates() {
+            if (appState.realTime.intervalId) {
+                clearInterval(appState.realTime.intervalId);
+                appState.realTime.intervalId = null;
+            }
         }
 
         async function updateRealTimeData() {
             try {
                 const data = await fetchData('/data');
-
-                // Validar datos recibidos
                 if (!data?.LATITUDE || !data?.LONGITUDE) {
                     throw new Error("Datos de ubicación incompletos");
                 }
 
-                // Actualizar panel de información
                 updateInfoPanel(data);
 
-                // Actualizar posición del taxi
                 const nuevaPosicion = {
                     lat: parseFloat(data.LATITUDE),
                     lng: parseFloat(data.LONGITUDE)
@@ -429,197 +421,102 @@
         }
 
         function centerOnTaxi() {
-            if (appState.realTime.marker && appState.realTime.map) {
-                appState.realTime.map.setCenter(appState.realTime.marker.getPosition());
+            if (appState.realTime.marker && appState.map) {
+                appState.map.setCenter(appState.realTime.marker.getPosition());
             }
-        }
-
-        function stopRealTimeUpdates() {
-            if (appState.realTime.intervalId) {
-                clearInterval(appState.realTime.intervalId);
-                appState.realTime.intervalId = null;
-            }
-        }
-
-        function updateInfoPanel(data) {
-            domElements.latitud.textContent = data.LATITUDE || "N/A";
-            domElements.longitud.textContent = data.LONGITUDE || "N/A";
-            domElements.fecha.textContent = data.DATE || "N/A";
-            domElements.tiempo.textContent = data.TIME || "N/A";
         }
 
         // 🔹 HISTORICAL TRACKING 🔹
 
-        async function initHistoricalTracking() {
+        function initHistoricalTracking() {
             try {
                 // Configurar fechas por defecto (última hora)
                 const now = new Date();
                 const oneHourAgo = new Date(now.getTime() - (60 * 60 * 1000));
-
+                
                 domElements.startDate.value = formatDateTimeInput(oneHourAgo);
                 domElements.endDate.value = formatDateTimeInput(now);
-
+                
                 // Configurar evento del botón
                 domElements.loadHistory.addEventListener('click', loadHistoricalData);
-
-                // Inicializar mapa si no está inicializado
-                if (!appState.historical.loaded && appState.mapsLoaded) {
-                    initHistoricalMap();
-                }
             } catch (error) {
                 console.error('Error inicializando Historical Tracking:', error);
                 showError(domElements.historicalError, error.message);
             }
         }
 
-        function formatDateTimeInput(date) {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-
-            return `${year}-${month}-${day}T${hours}:${minutes}`;
-        }
-
-        function initHistoricalMap() {
-            console.log('Inicializando mapa histórico...');
-
-            // Verificar si el contenedor es visible
-            if (domElements.historicalMap.offsetParent === null) {
-                console.error('El contenedor del mapa no es visible');
-                return;
-            }
-
-            const center = appState.realTime.recorrido.length > 0 ?
-                appState.realTime.recorrido[0] :
-                { lat: 4.710989, lng: -74.072092 };
-
+        async function loadHistoricalData() {
             try {
-                // Limpiar el contenedor primero
-                domElements.historicalMap.innerHTML = '';
+                const startDate = domElements.startDate.value;
+                const endDate = domElements.endDate.value;
 
-                appState.historical.map = new google.maps.Map(domElements.historicalMap, {
-                    center,
-                    zoom: 12,
-                    streetViewControl: false,
-                    mapTypeControl: true
+                if (!startDate || !endDate) {
+                    throw new Error("Debe seleccionar ambas fechas");
+                }
+
+                showLoading(true);
+                domElements.historicalError.style.display = "none";
+
+                // Limpiar polilínea histórica anterior
+                if (appState.historical.polyline) {
+                    appState.historical.polyline.setMap(null);
+                }
+
+                // Limpiar elementos de tiempo real
+                if (appState.realTime.marker) {
+                    appState.realTime.marker.setMap(null);
+                }
+                if (appState.realTime.polyline) {
+                    appState.realTime.polyline.setMap(null);
+                }
+
+                // Obtener datos históricos
+                const response = await fetch(`${config.basePath}/historical-data?startDate=${startDate}&endDate=${endDate}`);
+                if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
+
+                const result = await response.json();
+                console.log(result)
+                if (!result?.success || !Array.isArray(result.data)) {
+                    throw new Error("Formato de datos incorrecto");
+                }
+                if (result.data.length === 0) {
+                    throw new Error("No hay datos para el rango seleccionado");
+                }
+
+                // Procesar coordenadas
+                const path = result.data.map(item => ({
+                    lat: parseFloat(item.LATITUDE),
+                    lng: parseFloat(item.LONGITUDE)
+                }));
+
+                // Crear nueva polilínea histórica
+                appState.historical.polyline = new google.maps.Polyline({
+                    path: path,
+                    geodesic: true,
+                    strokeColor: "#4285F4",
+                    strokeOpacity: 1.0,
+                    strokeWeight: 4,
+                    map: appState.map
                 });
 
-                console.log('Mapa histórico inicializado correctamente');
-                appState.historical.loaded = true;
+                // Ajustar vista del mapa
+                const bounds = new google.maps.LatLngBounds();
+                path.forEach(point => bounds.extend(point));
+                appState.map.fitBounds(bounds, 100);
 
-                // Forzar redibujado después de un breve retraso
+                // Forzar redibujado
                 setTimeout(() => {
-                    if (appState.historical.map) {
-                        google.maps.event.trigger(appState.historical.map, 'resize');
-                        appState.historical.map.setCenter(center);
-                        console.log('Mapa redibujado');
-                    }
+                    google.maps.event.trigger(appState.map, 'resize');
+                    appState.map.setCenter(bounds.getCenter());
                 }, 300);
 
             } catch (error) {
-                console.error('Error al inicializar mapa histórico:', error);
-                domElements.historicalMap.innerHTML = "Error al cargar el mapa";
+                console.error('Error cargando datos históricos:', error);
+                showError(domElements.historicalError, error.message);
+            } finally {
+                showLoading(false);
             }
         }
-
-        async function loadHistoricalData() {
-    try {
-        console.log("Iniciando carga de datos históricos...");
-        
-        const startDate = domElements.startDate.value;
-        const endDate = domElements.endDate.value;
-
-        if (!startDate || !endDate) {
-            throw new Error("Debe seleccionar ambas fechas");
-        }
-
-        // Mostrar carga
-        domElements.historicalMap.innerHTML = "Cargando datos históricos...";
-        domElements.historicalError.style.display = "none";
-
-        // 1. Asegurar que el mapa esté inicializado
-        if (!appState.historical.map) {
-            console.log("Inicializando mapa histórico...");
-            initHistoricalMap();
-            // Esperar a que el mapa esté completamente listo
-            await new Promise(resolve => {
-                const checkMap = setInterval(() => {
-                    if (appState.historical.map) {
-                        clearInterval(checkMap);
-                        resolve();
-                    }
-                }, 100);
-            });
-        }
-
-        // 2. Obtener datos históricos
-        console.log("Obteniendo datos del servidor...");
-        const response = await fetch(`${config.basePath}/historical-data?startDate=${startDate}&endDate=${endDate}`);
-        
-        if (!response.ok) {
-            throw new Error(`Error del servidor: ${response.status}`);
-        }
-
-        const result = await response.json();
-        console.log("Datos recibidos:", result);
-
-        // 3. Validar datos
-        if (!result?.success || !Array.isArray(result.data)) {
-            throw new Error("Formato de datos incorrecto");
-        }
-
-        if (result.data.length === 0) {
-            throw new Error("No hay datos para el rango seleccionado");
-        }
-
-        // 4. Procesar coordenadas
-        const path = result.data.map(item => ({
-            lat: parseFloat(item.LATITUDE),
-            lng: parseFloat(item.LONGITUDE)
-        }));
-
-        // 5. Limpiar polilínea anterior si existe
-        if (appState.historical.polyline) {
-            appState.historical.polyline.setMap(null);
-        }
-
-        // 6. Crear nueva polilínea
-        console.log("Creando polilínea con", path.length, "puntos");
-        appState.historical.polyline = new google.maps.Polyline({
-            path: path,
-            geodesic: true,
-            strokeColor: "#FF0000", // Rojo para mejor visibilidad
-            strokeOpacity: 1.0,
-            strokeWeight: 4,
-            map: appState.historical.map
-        });
-
-        // 7. Ajustar vista del mapa
-        const bounds = new google.maps.LatLngBounds();
-        path.forEach(point => bounds.extend(point));
-        
-        // Añadir pequeño margen
-        const padding = 100; // pixels
-        appState.historical.map.fitBounds(bounds, padding);
-
-        // 8. Forzar redibujado
-        setTimeout(() => {
-            google.maps.event.trigger(appState.historical.map, 'resize');
-            appState.historical.map.setCenter(bounds.getCenter());
-            console.log("Mapa actualizado correctamente");
-        }, 300);
-
-        // Limpiar mensaje de carga
-        domElements.historicalMap.innerHTML = "";
-
-    } catch (error) {
-        console.error('Error:', error);
-        domElements.historicalMap.innerHTML = `Error: ${error.message}`;
-        showError(domElements.historicalError, error.message);
-    }
-}
 
         // 🔹 MANEJO DE NAVEGACIÓN 🔹
 
@@ -629,10 +526,22 @@
             domElements.realTimeBtn.classList.add("active");
             domElements.historicalBtn.classList.remove("active");
 
-            // Iniciar actualizaciones si no están activas
+            // Restaurar elementos de tiempo real
+            if (appState.realTime.marker) {
+                appState.realTime.marker.setMap(appState.map);
+            }
+            if (appState.realTime.polyline) {
+                appState.realTime.polyline.setMap(appState.map);
+            }
+            
+            // Limpiar polilínea histórica
+            if (appState.historical.polyline) {
+                appState.historical.polyline.setMap(null);
+            }
+
+            // Iniciar actualizaciones
             if (!appState.realTime.intervalId) {
-                updateRealTimeData();
-                appState.realTime.intervalId = setInterval(updateRealTimeData, config.updateInterval);
+                startRealTimeUpdates();
             }
         }
 
@@ -646,9 +555,12 @@
             stopRealTimeUpdates();
             console.log('nous sommes ici')
 
-            // Inicializar mapa histórico si no está inicializado
-            if (!appState.historical.loaded && appState.mapsLoaded) {
-                initHistoricalMap();
+            // Ocultar elementos de tiempo real
+            if (appState.realTime.marker) {
+                appState.realTime.marker.setMap(null);
+            }
+            if (appState.realTime.polyline) {
+                appState.realTime.polyline.setMap(null);
             }
         }
 
@@ -659,8 +571,8 @@
             domElements.realTimeBtn.addEventListener("click", switchToRealTime);
             domElements.historicalBtn.addEventListener("click", switchToHistorical);
 
-            // Inicializar Real Time Tracking
-            initRealTimeTracking();
+            // Inicializar mapa compartido
+            initMap();
 
             // Preparar Historical Tracking
             initHistoricalTracking();
@@ -674,5 +586,4 @@
         }
     </script>
 </body>
-
 </html>
