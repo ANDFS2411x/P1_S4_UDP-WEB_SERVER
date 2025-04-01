@@ -141,6 +141,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
     res.render('main', { title: process.env.PAGE_TITLE, path: basePath });
+    console.log(basePath);
 });
 
 /* ------------------- 🚀 INICIAMOS EL SERVIDOR ------------------- */
