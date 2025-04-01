@@ -108,7 +108,7 @@ function initMapInstance() {
     });
 
     // Configurar marcador en tiempo real
-    appState.realTime.marker = new google.maps.marker.AdvancedMarkerElement ({
+    appState.realTime.marker = new google.maps.Marker({
         position: center,
         map: appState.map,
         title: "Taxi 🚕",
@@ -167,7 +167,7 @@ async function initMap() {
         // Cargar Google Maps API si no está cargada
         if (!appState.mapsLoaded) {
             const script = document.createElement('script');
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKeyData.apiKey}&callback=initMapInstance&libraries=marker`;
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKeyData.apiKey}&callback=initMapInstance`;
             script.async = true;
             script.defer = true;
             document.head.appendChild(script);
