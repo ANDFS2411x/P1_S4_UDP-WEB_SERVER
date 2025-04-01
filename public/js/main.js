@@ -169,7 +169,7 @@ function initRealMapInstance() {
         strokeColor: "#FF0000",
         strokeOpacity: 1.0,
         strokeWeight: 4,
-        map: appState.realtime.map
+        map: appState.realTime.map
     });
 
     // Configurar botón seguir
@@ -179,7 +179,7 @@ function initRealMapInstance() {
     });
 
     // Detectar cuando el usuario mueve el mapa
-    appState.realtime.map.addListener('dragstart', () => {
+    appState.realTime.map.addListener('dragstart', () => {
         appState.realTime.seguirCentrando = false;
     });
 
@@ -209,13 +209,13 @@ async function initMap() {
         appState.realTime.recorrido = [posicionInicial];
 
         // Cargar Google Maps API si no está cargada
-        if (!appState.realtime.mapsLoaded) {
+        if (!appState.realTime.mapsLoaded) {
             const script = document.createElement('script');
             script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKeyData.apiKey}&callback=initMapInstance`;
             script.async = true;
             script.defer = true;
             document.head.appendChild(script);
-            appState.realtime.mapsLoaded = true;
+            appState.realTime.mapsLoaded = true;
         } else {
             initRealMapInstance();
         }
@@ -244,10 +244,10 @@ function switchToRealTime() {
 
     // Restaurar elementos de tiempo real
     if (appState.realTime.marker) {
-        appState.realTime.marker.setMap(appState.realtime.map);
+        appState.realTime.marker.setMap(appState.realTime.map);
     }
     if (appState.realTime.polyline) {
-        appState.realTime.polyline.setMap(appState.realtime.map);
+        appState.realTime.polyline.setMap(appState.realTime.map);
     }
 
     // Limpiar polilínea histórica
