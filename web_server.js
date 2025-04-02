@@ -20,6 +20,9 @@ const app = express();
 
 // 🔢 Definimos el puerto en el que va a correr el servidor
 const port = process.env.PORT || 3000;
+console.log(`Puerto: ${port}`);
+const basePath = port == 9000 ? "/test" : "/";
+console.log(`path: ${basePath}`);
 
 // 📦 Agregamos el middleware de CORS a nuestra app para aceptar peticiones de otros lugares
 app.use(cors());
@@ -134,10 +137,11 @@ app.get("/historical-data", (req, res) => {
 /* ------------------- 🟢 SERVIR ARCHIVOS ESTÁTICOS ------------------- */
 // Esto sirve archivos estáticos que estén en la carpeta "public", por ejemplo: HTML, CSS, imágenes...
 // Se pone después de las rutas para que no bloquee las APIs que hicimos antes
-app.use("/", express.static("public"));
+
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
-    res.render('index', { title: process.env.PAGE_TITLE });
+    res.render('main', { title: process.env.PAGE_TITLE, path: basePath });
 });
 
 /* ------------------- 🚀 INICIAMOS EL SERVIDOR ------------------- */
