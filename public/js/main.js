@@ -750,9 +750,11 @@ function initHistoricalTracking() {
         if (!domElements.clearPointBtn.disabled && domElements.enablePointSelection.checked){
             domElements.loadHistory.textContent = "Consultar registros";
             domElements.loadHistory.style.backgroundColor = "#b103fc";
+            console.log("entra");
         } else {
             domElements.loadHistory.textContent = "Cargar trayectoria";
             domElements.loadHistory.style.backgroundColor = "#5667d8";
+            console.log("else");
         }
 
 
