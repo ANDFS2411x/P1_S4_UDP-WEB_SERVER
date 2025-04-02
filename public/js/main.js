@@ -176,11 +176,11 @@ function initHistoricalMapInstance() {
     
     const centerHistorical = appState.historical.recorrido.length > 0 ? 
         appState.historical.recorrido[0] : 
-        { lat: 4.710989, lng: -74.072092 }; // Coordenadas por defecto para Bogotá
+        { lat: 11.0193213, lng: -74.8601743 }; // Coordenadas por defecto para Bogotá
 
     appState.historical.map = new google.maps.Map(domElements.historicalMapContainer, {
         center: centerHistorical,
-        zoom: 15,
+        zoom: 14,
         streetViewControl: false
     });
 
