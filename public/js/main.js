@@ -747,6 +747,15 @@ function initHistoricalTracking() {
 
         
         // Configurar evento del botón de cargar historia
+        if (domElements.clearPointBtn.isEnabled && domElements.enablePointSelection.checked){
+            domElements.loadHistory.textContent = "Consultar registros";
+            domElements.loadHistory.style.backgroundColor = "#b103fc";
+        } else {
+            domElements.loadHistory.textContent = "Cargar trayectoria";
+            domElements.loadHistory.style.backgroundColor = "#5667d8";
+        }
+
+
         domElements.loadHistory.addEventListener('click', loadHistoricalData);
         
         // Configurar eventos para selección de punto
