@@ -537,6 +537,8 @@ function buildResultsTable(nearbyPoints) {
         button.addEventListener('click', function() {
             const pointIndex = parseInt(this.getAttribute('data-index'));
             highlightPointOnMap(nearbyPoints[pointIndex]);
+            //llevar al usuario al inicio de la pagina
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     });
 }
