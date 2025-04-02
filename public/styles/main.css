@@ -1,11 +1,11 @@
 /*Estilos Generales */
 body {
     font-family: 'Roboto', Arial, sans-serif;
+    text-align: center;
     margin: 0;
     padding: 0;
     background-color: #1e1e2e;
     color: #e0e0e0;
-    overflow-x: hidden;
 }
 
 /*Navbar */
@@ -40,54 +40,17 @@ body {
     box-shadow: 0 0 8px rgba(86, 103, 216, 0.6);
 }
 
-/*Secciones - Layout modificado para barra lateral */
+/*Secciones - Clave para funcionalidad */
 .section {
     display: none; /* Oculta por defecto */
+    padding: 10px;
     height: calc(100vh - 60px);
-    width: 100%;
-    position: relative;
+    flex-direction: column;
 }
 
 .section.active {
     display: flex; /* Solo muestra la sección activa */
     animation: fadeIn 0.5s ease-in-out;
-}
-
-/* Nueva estructura de layout con barra lateral */
-.section-content {
-    display: flex;
-    width: 100%;
-    height: 100%;
-}
-
-/* Contenedor del mapa expandido */
-.map-area {
-    flex: 1;
-    height: 100%;
-    position: relative;
-}
-
-/* Barra lateral para info y formularios */
-.sidebar {
-    width: 350px;
-    height: 100%;
-    background-color: #242438;
-    box-shadow: -5px 0 15px rgba(0,0,0,0.2);
-    overflow-y: auto;
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-/* Título de sección */
-.section-title {
-    color: #b8c0f0;
-    margin: 0 0 15px 0;
-    font-size: 20px;
-    text-align: center;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #3a3a5a;
 }
 
 /*Animación */
@@ -98,11 +61,15 @@ body {
 
 /*Mapa compartido - Main focus */
 .mapContainer {
+    flex: 1;
     width: 100%;
-    height: 100%;
+    min-height: 400px;
+    border: 1px solid #3a3a5a;
+    margin-bottom: 15px;
     position: relative;
-    border-radius: 0;
+    border-radius: 8px;
     overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .map {
@@ -110,15 +77,23 @@ body {
     width: 100%;
 }
 
+h1 {
+    color: #b8c0f0;
+    margin: 10px 0;
+    font-size: 24px;
+}
+
 /*Panel de información */
 .info-panel {
     background: #2a2a40;
     padding: 15px;
+    margin: 10px auto;
+    max-width: 600px;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0,0,0,0.3);
-    display: flex;
-    flex-direction: column;
-    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
 }
 
 .info-panel p {
@@ -130,25 +105,9 @@ body {
     color: #8c96db;
 }
 
-.info-pair {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 5px;
-    border-bottom: 1px solid #3a3a5a;
-    padding-bottom: 5px;
-}
-
-.info-label {
-    font-weight: bold;
-    color: #8c96db;
-}
-
-.info-value {
-    text-align: right;
-}
-
 /*Botones */
 .action-button {
+    margin: 15px auto;
     padding: 12px 24px;
     background-color: #5667d8;
     color: white;
@@ -157,8 +116,8 @@ body {
     cursor: pointer;
     font-size: 16px;
     transition: 0.3s;
+    display: block;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    width: 100%;
 }
 
 .action-button:hover {
@@ -193,8 +152,9 @@ body {
     background: #2a2a40;
     padding: 15px;
     box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    margin: 0 auto 15px;
+    max-width: 600px;
     border-radius: 8px;
-    width: 100%;
 }
 
 .form-group {
@@ -252,13 +212,12 @@ body {
 
 .coordinates-container {
     display: flex;
-    flex-direction: column;
     gap: 10px;
     margin-bottom: 10px;
 }
 
 .coord-group {
-    width: 100%;
+    flex: 1;
 }
 
 .coord-group label {
@@ -305,10 +264,10 @@ body {
     background: #2a2a40;
     padding: 15px;
     box-shadow: 0 0 10px rgba(0,0,0,0.3);
-    margin-top: 15px;
+    margin: 20px auto;
+    max-width: 800px;
     border-radius: 8px;
     display: none; /* Se mostrará solo cuando haya resultados */
-    width: 100%;
 }
 
 .results-container h3 {
@@ -326,8 +285,6 @@ body {
 .results-table {
     width: 100%;
     border-collapse: collapse;
-    overflow-x: auto;
-    display: block;
 }
 
 .results-table table {
@@ -413,23 +370,12 @@ body {
 }
 
 /* Media queries para responsive design */
-@media screen and (max-width: 900px) {
-    .section-content {
-        flex-direction: column;
-    }
-    
-    .map-area {
-        height: 50vh;
-    }
-    
-    .sidebar {
-        width: 100%;
-        height: auto;
-        max-height: 50vh;
-    }
-}
-
 @media screen and (max-width: 768px) {
+    .coordinates-container {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
     .info-panel {
         grid-template-columns: 1fr;
     }
@@ -440,8 +386,8 @@ body {
         margin: 0 5px;
     }
     
-    .section-title {
-        font-size: 18px;
+    h1 {
+        font-size: 20px;
     }
     
     .filter-form, .info-panel, .results-container {
@@ -455,7 +401,7 @@ body {
         font-size: 14px;
     }
     
-    .map-area {
-        height: 40vh;
+    .mapContainer {
+        min-height: 300px;
     }
 }
