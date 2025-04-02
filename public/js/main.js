@@ -180,7 +180,7 @@ function initHistoricalMapInstance() {
 
     appState.historical.map = new google.maps.Map(domElements.historicalMapContainer, {
         center: centerHistorical,
-        zoom: 12,
+        zoom: 14,
         streetViewControl: false
     });
 
