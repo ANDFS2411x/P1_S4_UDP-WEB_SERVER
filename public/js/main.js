@@ -775,6 +775,22 @@ function initHistoricalTracking() {
             }
         });
 
+        const observer = new MutationObserver(() => {
+            if (!domElements.clearPointBtn.disabled && domElements.enablePointSelection.checked) {
+                domElements.loadHistory.textContent = "Consultar registros";
+                domElements.loadHistory.style.backgroundColor = "#b103fc";
+                console.log("entra");
+            } else {
+                domElements.loadHistory.textContent = "Cargar trayectoria";
+                domElements.loadHistory.style.backgroundColor = "#5667d8";
+                console.log("else");
+            }
+        });
+        
+        observer.observe(domElements.clearPointBtn, { attributes: true, attributeFilter: ['disabled'] });
+        
+
+        /*
         domElements.clearPointBtn.addEventListener('change', function() {
             console.log(!domElements.clearPointBtn.disabled);
             console.log(domElements.enablePointSelection.checked);
@@ -788,6 +804,7 @@ function initHistoricalTracking() {
                 console.log("else");
             }
         });
+        */
         
         // Configurar evento para botón de limpiar punto
         domElements.clearPointBtn.addEventListener('click', clearSelectedPoint);
