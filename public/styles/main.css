@@ -12,6 +12,7 @@ body {
 .navbar {
     display: flex;
     justify-content: center;
+    gap: 20px; /* Separación entre botones */
     background-color: #191927;
     padding: 15px 0;
     box-shadow: 0 2px 10px rgba(0,0,0,0.3);
@@ -39,17 +40,16 @@ body {
     box-shadow: 0 0 8px rgba(86, 103, 216, 0.6);
 }
 
-/*Secciones - Map first approach */
+/*Secciones - Clave para funcionalidad */
 .section {
-    display: none;
+    display: none; /* Oculta por defecto */
     padding: 10px;
     height: calc(100vh - 60px);
-    display: flex;
     flex-direction: column;
 }
 
 .section.active {
-    display: flex;
+    display: flex; /* Solo muestra la sección activa */
     animation: fadeIn 0.5s ease-in-out;
 }
 
