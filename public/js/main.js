@@ -715,9 +715,14 @@ function initHistoricalTracking() {
         // Configurar fechas por defecto (última hora)
         const now = new Date();
         const oneHourAgo = new Date(now.getTime() - (60 * 60 * 1000));
+
+        // Obtener la fecha actual en formato compatible con input datetime-local
+        const maxDateTime = formatDateTimeInput(now);
         
         domElements.startDate.value = formatDateTimeInput(oneHourAgo);
         domElements.endDate.value = formatDateTimeInput(now);
+        domElements.startDate.max = maxDateTime;
+        domElements.endDate.max = maxDateTime;
         
         // Configurar evento del botón de cargar historia
         domElements.loadHistory.addEventListener('click', loadHistoricalData);
