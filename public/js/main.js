@@ -723,6 +723,26 @@ function initHistoricalTracking() {
         domElements.endDate.value = formatDateTimeInput(now);
         domElements.startDate.max = maxDateTime;
         domElements.endDate.max = maxDateTime;
+
+       
+        // Restringir fecha de fin mínima a la fecha de inicio
+        domElements.endDate.min = domElements.startDate.value;
+
+        // Eventos para evitar selecciones inválidas
+        domElements.startDate.addEventListener("change", function () {
+            if (domElements.startDate.value > domElements.endDate.value) {
+                domElements.endDate.value = domElements.startDate.value; // Ajusta automáticamente
+            }
+            domElements.endDate.min = domElements.startDate.value; // Restringe la fecha mínima de fin
+        });
+
+        domElements.endDate.addEventListener("change", function () {
+            if (domElements.endDate.value < domElements.startDate.value) {
+                domElements.startDate.value = domElements.endDate.value; // Ajusta automáticamente
+            }
+            domElements.startDate.max = domElements.endDate.value; // Restringe la fecha máxima de inicio
+        });
+
         
         // Configurar evento del botón de cargar historia
         domElements.loadHistory.addEventListener('click', loadHistoricalData);
