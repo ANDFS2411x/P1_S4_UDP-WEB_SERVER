@@ -103,12 +103,11 @@
         document.getElementById('themeStyles').href = isTesting
             ? '/test/styles/main.css'
             : '/styles/main.css';
-        document.getElementById('jsScript').src = isTesting
-            ? '/test/js/main.js'
-            : '/js/main.js';
+        // Create a new script element
+        const script = document.createElement('script');
+        script.src = isTesting ? '/test/js/main.js' : '/js/main.js';
+        document.body.appendChild(script);
 
     </script>
-    <script id="jsScript"></script>
 </body>
-
 </html>
