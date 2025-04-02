@@ -747,7 +747,7 @@ function initHistoricalTracking() {
 
         
         // Configurar evento del botón de cargar historia
-        if (domElements.clearPointBtn.isEnabled && domElements.enablePointSelection.checked){
+        if (!domElements.clearPointBtn.disabled && domElements.enablePointSelection.checked){
             domElements.loadHistory.textContent = "Consultar registros";
             domElements.loadHistory.style.backgroundColor = "#b103fc";
         } else {
