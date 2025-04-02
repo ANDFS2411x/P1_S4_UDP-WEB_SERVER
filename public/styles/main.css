@@ -621,3 +621,8 @@ h1 {
         min-height: 300px;
     }
 }
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 1; /* Asegura que sea visible */
+}
