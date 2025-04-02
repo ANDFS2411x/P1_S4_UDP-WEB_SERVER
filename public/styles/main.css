@@ -150,7 +150,7 @@ h1 {
 /*Formulario Histórico */
 .filter-form {
     background: #2a2a40;
-    padding: 15px;
+    padding: 10px 40px 10px 20px;
     box-shadow: 0 0 10px rgba(0,0,0,0.3);
     margin: 0 auto 15px;
     max-width: 600px;
