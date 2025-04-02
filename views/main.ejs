@@ -51,28 +51,51 @@
                 <input type="datetime-local" id="endDate">
             </div>
 
-            <div id="pointSelectionContainer">
-                <label>
-                    <input type="checkbox" id="enablePointSelection"> Seleccionar punto en el mapa
-                </label>
-                <br>
-                <label>Latitud:</label>
-                <input type="text" id="selectedLat" disabled>
-                <label>Longitud:</label>
-                <input type="text" id="selectedLng" disabled>
-                <br>
-                <label>Radio de búsqueda (metros):</label>
-                <input type="number" id="searchRadius" min="10" value="50">
+            <div id="pointSelectionContainer" class="point-selection-container">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="enablePointSelection">
+                    <label for="enablePointSelection">Seleccionar punto en el mapa</label>
+                    <span class="helper-text">(Haz clic en el mapa para seleccionar un punto)</span>
+                </div>
+                
+                <div class="coordinates-container">
+                    <div class="coord-group">
+                        <label for="selectedLat">Latitud:</label>
+                        <input type="text" id="selectedLat" disabled>
+                    </div>
+                    <div class="coord-group">
+                        <label for="selectedLng">Longitud:</label>
+                        <input type="text" id="selectedLng" disabled>
+                    </div>
+                </div>
+                
+                <div class="radius-container">
+                    <label for="searchRadius">Radio de búsqueda (metros):</label>
+                    <input type="number" id="searchRadius" min="10" max="1000" value="50">
+                </div>
+                
+                <button id="clearPointBtn" class="secondary-button" disabled>Borrar punto</button>
             </div>
 
             <button id="loadHistory" class="action-button">Cargar Trayectoria</button>
         </div>
 
-        <div id="historicalError" class="errorMessage"></div>
+        <div id="historicalError" class="error-message"></div>
         <div id="historicalMapContainer" class="mapContainer">
             <div id="historicalMap" class="map">Seleccione un rango de fechas y haga clic en "Cargar Trayectoria"</div>
             <div id="historicalLoadingMessage" class="loadingMessage" style="display: none;">Cargando datos
                 históricos...</div>
+        </div>
+        
+        <!-- Nuevo contenedor para resultados de búsqueda por punto -->
+        <div id="pointSearchResults" class="results-container">
+            <h3>Resultados de búsqueda por punto</h3>
+            <div class="results-summary">
+                <p id="resultsSummary">Selecciona un punto en el mapa y carga la trayectoria para ver cuándo el taxi pasó por esa ubicación.</p>
+            </div>
+            <div id="resultsTable" class="results-table">
+                <!-- Aquí se cargarán dinámicamente los resultados -->
+            </div>
         </div>
     </div>
     <script>
