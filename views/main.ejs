@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="titulo">Proyecto 2 <%= title %>
-    </title>
+    <title id="titulo">Proyecto 2 <%= title %></title>
     <link rel="stylesheet" id="themeStyles">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
@@ -17,9 +17,13 @@
     </div>
 
     <!-- 🔹 Sección "Real Time" -->
-    <div id="realTime" class="section active">
-        <h1>Real Time Tracking 🚕</h1>
-
+    <div id="realTime" class="section active">        
+        <!-- Map is now first for visual priority -->
+        <div id="realTimeMapContainer" class="mapContainer">
+            <div id="realTimeMap" class="map">Cargando mapa...</div>
+            <div id="realTimeLoadingMessage" class="loadingMessage" style="display: none;">Cargando datos...</div>
+        </div>
+        
         <!-- Panel de información -->
         <div class="info-panel">
             <p><strong>Latitud:</strong> <span id="latitud">N/A</span></p>
@@ -29,16 +33,16 @@
         </div>
 
         <button id="seguirBtn" class="action-button">Seguir Taxi</button>
-        <div id="realTimeMapContainer" class="mapContainer">
-            <div id="realTimeMap" class="map">Cargando mapa...</div>
-            <div id="realTimeLoadingMessage" class="loadingMessage" style="display: none;">Cargando datos...</div>
-        </div>
         <div id="realTimeError" class="error-message"></div>
     </div>
 
     <!-- 🔹 Sección "Historical" -->
-    <div id="historical" class="section">
-        <h1>Historical Tracking 📅</h1>
+    <div id="historical" class="section">        
+        <!-- Map first for visual priority -->
+        <div id="historicalMapContainer" class="mapContainer">
+            <div id="historicalMap" class="map">Seleccione un rango de fechas y haga clic en "Cargar Trayectoria"</div>
+            <div id="historicalLoadingMessage" class="loadingMessage" style="display: none;">Cargando datos históricos...</div>
+        </div>
 
         <div class="filter-form">
             <div class="form-group">
@@ -81,10 +85,16 @@
         </div>
 
         <div id="historicalError" class="error-message"></div>
-        <div id="historicalMapContainer" class="mapContainer">
-            <div id="historicalMap" class="map">Seleccione un rango de fechas y haga clic en "Cargar Trayectoria"</div>
-            <div id="historicalLoadingMessage" class="loadingMessage" style="display: none;">Cargando datos
-                históricos...</div>
+        
+        <!-- Contenedor para resultados de búsqueda por punto -->
+        <div id="pointSearchResults" class="results-container">
+            <h3>Resultados de búsqueda por punto</h3>
+            <div class="results-summary">
+                <p id="resultsSummary">Selecciona un punto en el mapa y carga la trayectoria para ver cuándo el taxi pasó por esa ubicación.</p>
+            </div>
+            <div id="resultsTable" class="results-table">
+                <!-- Aquí se cargarán dinámicamente los resultados -->
+            </div>
         </div>
         
         <!-- Nuevo contenedor para resultados de búsqueda por punto -->
@@ -98,13 +108,17 @@
             </div>
         </div>
     </div>
+    
+    <!-- Scripts loading -->
     <script>
         const isTesting = window.location.pathname.startsWith('/test');
         document.getElementById('themeStyles').href = isTesting
             ? '/test/styles/main.css'
             : '/styles/main.css';
+        // Create a new script element
+        const script = document.createElement('script');
+        script.src = isTesting ? '/test/js/main.js' : '/js/main.js';
+        document.body.appendChild(script);
     </script>
-    <script src="<%= path %>/js/main.js"></script>
 </body>
-
 </html>
