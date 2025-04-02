@@ -747,22 +747,22 @@ function initHistoricalTracking() {
 
         console.log(domElements.clearPointBtn.disabled);
         console.log(domElements.enablePointSelection.checked);
+
         // Configurar evento del botón de cargar historia
-        if (domElements.clearPointBtn.disabled && domElements.enablePointSelection.checked){
-            domElements.loadHistory.textContent = "Consultar registros";
-            domElements.loadHistory.style.backgroundColor = "#b103fc";
-            console.log("entra");
-        } else {
-            domElements.loadHistory.textContent = "Cargar trayectoria";
-            domElements.loadHistory.style.backgroundColor = "#5667d8";
-            console.log("else");
-        }
-
-
         domElements.loadHistory.addEventListener('click', loadHistoricalData);
-        
+
         // Configurar eventos para selección de punto
         domElements.enablePointSelection.addEventListener('change', function() {
+            if (!domElements.clearPointBtn.disabled && domElements.enablePointSelection.checked){
+                domElements.loadHistory.textContent = "Consultar registros";
+                domElements.loadHistory.style.backgroundColor = "#b103fc";
+                console.log("entra");
+            } else {
+                domElements.loadHistory.textContent = "Cargar trayectoria";
+                domElements.loadHistory.style.backgroundColor = "#5667d8";
+                console.log("else");
+            }
+
             const isEnabled = this.checked;
             
             // Habilitar/deshabilitar campos relacionados
@@ -773,6 +773,18 @@ function initHistoricalTracking() {
             if (!isEnabled) {
                 // Si se deshabilita, limpiar el punto
                 clearSelectedPoint();
+            }
+        });
+
+        domElements.clearPointBtn.addEventListener('change', function() {
+            if (!domElements.clearPointBtn.disabled && domElements.enablePointSelection.checked){
+                domElements.loadHistory.textContent = "Consultar registros";
+                domElements.loadHistory.style.backgroundColor = "#b103fc";
+                console.log("entra");
+            } else {
+                domElements.loadHistory.textContent = "Cargar trayectoria";
+                domElements.loadHistory.style.backgroundColor = "#5667d8";
+                console.log("else");
             }
         });
         
