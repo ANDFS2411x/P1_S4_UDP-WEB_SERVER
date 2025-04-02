@@ -16,85 +16,91 @@
         <a href="#" id="historicalBtn">Historical</a>
     </div>
 
-    <!-- Sección Real Time -->
-<div id="realTimeSection" class="section active">
-    <div class="section-content">
-        <div class="map-area">
-            <div class="mapContainer">
-                <div id="realTimeMap" class="map"></div>
-            </div>
+    <!-- 🔹 Sección "Real Time" -->
+    <div id="realTime" class="section active">
+        <h1>Real Time Tracking 🚕</h1>
+        
+        <!-- Map is now first for visual priority -->
+        <div id="realTimeMapContainer" class="mapContainer">
+            <div id="realTimeMap" class="map">Cargando mapa...</div>
+            <div id="realTimeLoadingMessage" class="loadingMessage" style="display: none;">Cargando datos...</div>
         </div>
-        <div class="sidebar">
-            <h2 class="section-title">Real Time Tracking 🚕</h2>
-            <div class="info-panel">
-                <div class="info-pair">
-                    <span class="info-label">Latitud:</span>
-                    <span class="info-value" id="rtLatitud">10.430194</span>
-                </div>
-                <div class="info-pair">
-                    <span class="info-label">Longitud:</span>
-                    <span class="info-value" id="rtLongitud">-75.547287</span>
-                </div>
-                <div class="info-pair">
-                    <span class="info-label">Fecha:</span>
-                    <span class="info-value" id="rtFecha">2025-04-02T00:00:00.000Z</span>
-                </div>
-                <div class="info-pair">
-                    <span class="info-label">Hora:</span>
-                    <span class="info-value" id="rtHora">08:29:40</span>
-                </div>
-            </div>
-            <button class="action-button" id="seguirTaxi">Seguir Taxi</button>
+        
+        <!-- Panel de información -->
+        <div class="info-panel">
+            <p><strong>Latitud:</strong> <span id="latitud">N/A</span></p>
+            <p><strong>Longitud:</strong> <span id="longitud">N/A</span></p>
+            <p><strong>Fecha:</strong> <span id="fecha">N/A</span></p>
+            <p><strong>Hora:</strong> <span id="tiempo">N/A</span></p>
         </div>
-    </div>
-</div>
 
-<!-- Sección Historical -->
-<div id="historicalSection" class="section">
-    <div class="section-content">
-        <div class="map-area">
-            <div class="mapContainer">
-                <div id="historicalMap" class="map"></div>
+        <button id="seguirBtn" class="action-button">Seguir Taxi</button>
+        <div id="realTimeError" class="error-message"></div>
+    </div>
+
+    <!-- 🔹 Sección "Historical" -->
+    <div id="historical" class="section">
+        <h1>Historical Tracking 📅</h1>
+        
+        <!-- Map first for visual priority -->
+        <div id="historicalMapContainer" class="mapContainer">
+            <div id="historicalMap" class="map">Seleccione un rango de fechas y haga clic en "Cargar Trayectoria"</div>
+            <div id="historicalLoadingMessage" class="loadingMessage" style="display: none;">Cargando datos históricos...</div>
+        </div>
+
+        <div class="filter-form">
+            <div class="form-group">
+                <label for="startDate">Fecha y hora inicial:</label>
+                <input type="datetime-local" id="startDate">
+            </div>
+
+            <div class="form-group">
+                <label for="endDate">Fecha y hora final:</label>
+                <input type="datetime-local" id="endDate">
+            </div>
+
+            <div id="pointSelectionContainer" class="point-selection-container">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="enablePointSelection">
+                    <label for="enablePointSelection">Seleccionar punto en el mapa</label>
+                    <span class="helper-text">(Haz clic en el mapa para seleccionar un punto)</span>
+                </div>
+                
+                <div class="coordinates-container">
+                    <div class="coord-group">
+                        <label for="selectedLat">Latitud:</label>
+                        <input type="text" id="selectedLat" disabled>
+                    </div>
+                    <div class="coord-group">
+                        <label for="selectedLng">Longitud:</label>
+                        <input type="text" id="selectedLng" disabled>
+                    </div>
+                </div>
+                
+                <div class="radius-container">
+                    <label for="searchRadius">Radio de búsqueda (metros):</label>
+                    <input type="number" id="searchRadius" min="10" max="1000" value="50">
+                </div>
+                
+                <button id="clearPointBtn" class="secondary-button" disabled>Borrar punto</button>
+            </div>
+
+            <button id="loadHistory" class="action-button">Cargar Trayectoria</button>
+        </div>
+
+        <div id="historicalError" class="error-message"></div>
+        
+        <!-- Contenedor para resultados de búsqueda por punto -->
+        <div id="pointSearchResults" class="results-container">
+            <h3>Resultados de búsqueda por punto</h3>
+            <div class="results-summary">
+                <p id="resultsSummary">Selecciona un punto en el mapa y carga la trayectoria para ver cuándo el taxi pasó por esa ubicación.</p>
+            </div>
+            <div id="resultsTable" class="results-table">
+                <!-- Aquí se cargarán dinámicamente los resultados -->
             </div>
         </div>
-        <div class="sidebar">
-            <h2 class="section-title">Historical Tracking 📅</h2>
-            <form class="filter-form" id="historicalForm">
-                <div class="form-group">
-                    <label for="fechaInicio">Fecha y hora inicial:</label>
-                    <input type="datetime-local" id="fechaInicio" required>
-                </div>
-                <div class="form-group">
-                    <label for="fechaFin">Fecha y hora final:</label>
-                    <input type="datetime-local" id="fechaFin" required>
-                </div>
-                <div class="point-selection-container">
-                    <div class="checkbox-container">
-                        <input type="checkbox" id="selectPoint">
-                        <label for="selectPoint">Seleccionar punto en el mapa</label>
-                        <span class="helper-text">(Haz clic en el mapa para seleccionar un punto)</span>
-                    </div>
-                    <div class="coordinates-container">
-                        <div class="coord-group">
-                            <label for="latitud">Latitud:</label>
-                            <input type="text" id="latitud" readonly>
-                        </div>
-                        <div class="coord-group">
-                            <label for="longitud">Longitud:</label>
-                            <input type="text" id="longitud" readonly>
-                        </div>
-                    </div>
-                    <div class="radius-container">
-                        <label for="radio">Radio de búsqueda (metros):</label>
-                        <input type="number" id="radio" value="50" min="10" max="1000">
-                    </div>
-                    <button type="button" class="secondary-button" id="borrarPunto">Borrar punto</button>
-                </div>
-                <button type="submit" class="action-button" id="cargarTrayectoria">Cargar Trayectoria</button>
-            </form>
-        </div>
     </div>
-</div>
     
     <!-- Scripts loading -->
     <script>
