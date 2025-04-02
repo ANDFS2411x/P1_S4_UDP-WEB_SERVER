@@ -18,7 +18,10 @@ const appState = {
         map: null,
         recorrido: [],
         polyline: null, // Polilínea histórica
-        mapsLoaded: false      
+        mapsLoaded: false,
+        pointMarker: null,  // Marcador para punto seleccionado
+        pointCircle: null,  // Círculo para radio de búsqueda
+        pointSelected: false // Estado de selección de punto      
     },
 };
 
@@ -39,7 +42,16 @@ const domElements = {
     fecha: document.getElementById('fecha'),
     tiempo: document.getElementById('tiempo'),
     realTimeError: document.getElementById('realTimeError'),
-    historicalError: document.getElementById('historicalError')
+    historicalError: document.getElementById('historicalError'),
+    // Nuevos elementos para selección de punto
+    enablePointSelection: document.getElementById('enablePointSelection'),
+    selectedLat: document.getElementById('selectedLat'),
+    selectedLng: document.getElementById('selectedLng'),
+    searchRadius: document.getElementById('searchRadius'),
+    clearPointBtn: document.getElementById('clearPointBtn'),
+    pointSearchResults: document.getElementById('pointSearchResults'),
+    resultsSummary: document.getElementById('resultsSummary'),
+    resultsTable: document.getElementById('resultsTable')
 };  
 
 function updateInfoPanel(data) {
@@ -181,7 +193,107 @@ function initHistoricalMapInstance() {
         map: appState.historical.map
     });
     
+    // Configurar evento de clic en el mapa para selección de punto
+    appState.historical.map.addListener('click', function(event) {
+        handleMapClick(event);
+    });
+    
     console.log('Mapa histórico inicializado');
+}
+
+function handleMapClick(event) {
+    // Verificar si la selección de punto está habilitada
+    if (!domElements.enablePointSelection.checked) {
+        return;
+    }
+    
+    const clickPosition = {
+        lat: event.latLng.lat(),
+        lng: event.latLng.lng()
+    };
+    
+    // Mostrar las coordenadas en los campos
+    domElements.selectedLat.value = clickPosition.lat.toFixed(6);
+    domElements.selectedLng.value = clickPosition.lng.toFixed(6);
+    
+    // Crear o actualizar el marcador
+    if (!appState.historical.pointMarker) {
+        appState.historical.pointMarker = new google.maps.Marker({
+            position: clickPosition,
+            map: appState.historical.map,
+            title: "Punto seleccionado",
+            animation: google.maps.Animation.DROP,
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 8,
+                fillColor: "#4CAF50",
+                fillOpacity: 1,
+                strokeColor: "#45a049",
+                strokeWeight: 2
+            }
+        });
+    } else {
+        appState.historical.pointMarker.setPosition(clickPosition);
+        appState.historical.pointMarker.setMap(appState.historical.map);
+    }
+    
+    // Crear o actualizar el círculo para representar el radio de búsqueda
+    const radius = parseInt(domElements.searchRadius.value);
+    
+    if (!appState.historical.pointCircle) {
+        appState.historical.pointCircle = new google.maps.Circle({
+            strokeColor: "#4CAF50",
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: "#4CAF50",
+            fillOpacity: 0.2,
+            map: appState.historical.map,
+            center: clickPosition,
+            radius: radius
+        });
+    } else {
+        appState.historical.pointCircle.setCenter(clickPosition);
+        appState.historical.pointCircle.setRadius(radius);
+        appState.historical.pointCircle.setMap(appState.historical.map);
+    }
+    
+    // Añadir breve animación de pulso
+    appState.historical.pointMarker.setAnimation(google.maps.Animation.BOUNCE);
+    setTimeout(() => {
+        appState.historical.pointMarker.setAnimation(null);
+    }, 1500);
+    
+    // Actualizar estado y botones
+    appState.historical.pointSelected = true;
+    domElements.clearPointBtn.disabled = false;
+}
+
+function clearSelectedPoint() {
+    if (appState.historical.pointMarker) {
+        appState.historical.pointMarker.setMap(null);
+    }
+    
+    if (appState.historical.pointCircle) {
+        appState.historical.pointCircle.setMap(null);
+    }
+    
+    domElements.selectedLat.value = '';
+    domElements.selectedLng.value = '';
+    domElements.clearPointBtn.disabled = true;
+    appState.historical.pointSelected = false;
+    
+    // Ocultar resultados de búsqueda por punto
+    domElements.pointSearchResults.style.display = 'none';
+}
+
+function initRadiusChangeHandler() {
+    domElements.searchRadius.addEventListener('change', function() {
+        // Si hay un punto seleccionado, actualizar el radio del círculo
+        if (appState.historical.pointSelected && appState.historical.pointCircle) {
+            const radius = parseInt(this.value);
+            appState.historical.pointCircle.setRadius(radius);
+        }
+    });
 }
 
 function initRealMapInstance() {
@@ -332,6 +444,145 @@ function switchToHistorical() {
     }
 }
 
+// Función para calcular la distancia entre dos puntos en metros
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371000; // Radio de la Tierra en metros
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+        Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+// Función para encontrar puntos cercanos al punto seleccionado
+function findPointsNearby(point, data, radius) {
+    // Convertir coordenadas del punto seleccionado
+    const lat = parseFloat(point.lat);
+    const lng = parseFloat(point.lng);
+    
+    // Filtrar datos para encontrar puntos dentro del radio especificado
+    return data.filter(item => {
+        const itemLat = parseFloat(item.LATITUDE);
+        const itemLng = parseFloat(item.LONGITUDE);
+        
+        // Verificar si las coordenadas son válidas
+        if (isNaN(itemLat) || isNaN(itemLng)) {
+            return false;
+        }
+        
+        // Calcular distancia
+        const distance = calculateDistance(lat, lng, itemLat, itemLng);
+        
+        // Determinar si está dentro del radio
+        return distance <= radius;
+    });
+}
+
+// Función para construir la tabla de resultados
+function buildResultsTable(nearbyPoints) {
+    // Si no hay puntos cercanos, mostrar mensaje
+    if (nearbyPoints.length === 0) {
+        domElements.resultsSummary.textContent = "No se encontraron registros cercanos al punto seleccionado.";
+        domElements.resultsTable.innerHTML = '<div class="no-results">Sin resultados</div>';
+        return;
+    }
+    
+    // Actualizar resumen
+    domElements.resultsSummary.textContent = `Se encontraron ${nearbyPoints.length} registros cercanos al punto seleccionado.`;
+    
+    // Construir tabla
+    let tableHTML = `
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Latitud</th>
+                    <th>Longitud</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    // Agregar filas
+    nearbyPoints.forEach((point, index) => {
+        tableHTML += `
+            <tr>
+                <td>${point.DATE || 'N/A'}</td>
+                <td>${point.TIME || 'N/A'}</td>
+                <td>${point.LATITUDE || 'N/A'}</td>
+                <td>${point.LONGITUDE || 'N/A'}</td>
+                <td>
+                    <button class="secondary-button highlight-btn" data-index="${index}">Resaltar</button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tableHTML += `
+            </tbody>
+        </table>
+    `;
+    
+    // Insertar tabla en el DOM
+    domElements.resultsTable.innerHTML = tableHTML;
+    
+    // Agregar manejadores de eventos para los botones de resaltar
+    const highlightButtons = domElements.resultsTable.querySelectorAll('.highlight-btn');
+    highlightButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const pointIndex = parseInt(this.getAttribute('data-index'));
+            highlightPointOnMap(nearbyPoints[pointIndex]);
+        });
+    });
+}
+
+// Función para resaltar un punto en el mapa
+function highlightPointOnMap(point) {
+    const position = {
+        lat: parseFloat(point.LATITUDE),
+        lng: parseFloat(point.LONGITUDE)
+    };
+    
+    // Crear marcador temporal
+    const highlightMarker = new google.maps.Marker({
+        position: position,
+        map: appState.historical.map,
+        icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 10,
+            fillColor: "#FF4500",
+            fillOpacity: 1,
+            strokeColor: "#FF0000",
+            strokeWeight: 2
+        },
+        zIndex: 1000,
+        animation: google.maps.Animation.BOUNCE
+    });
+    
+    // Centrar mapa en este punto
+    appState.historical.map.setCenter(position);
+    
+    // Añadir etiqueta con fecha y hora
+    const infoWindow = new google.maps.InfoWindow({
+        content: `<div class="point-marker-label">Fecha: ${point.DATE}<br>Hora: ${point.TIME}</div>`
+    });
+    infoWindow.open(appState.historical.map, highlightMarker);
+    
+    // Eliminar marcador después de unos segundos
+    setTimeout(() => {
+        highlightMarker.setAnimation(null);
+        setTimeout(() => {
+            highlightMarker.setMap(null);
+            infoWindow.close();
+        }, 2000);
+    }, 3000);
+}
+
 async function loadHistoricalData() {
     try {
         const startDate = domElements.startDate.value;
@@ -416,6 +667,38 @@ async function loadHistoricalData() {
         path.forEach(point => bounds.extend(point));
         appState.historical.map.fitBounds(bounds);
 
+        // Verificar si hay un punto seleccionado para filtrar
+        if (appState.historical.pointSelected && domElements.enablePointSelection.checked) {
+            const selectedPoint = {
+                lat: parseFloat(domElements.selectedLat.value),
+                lng: parseFloat(domElements.selectedLng.value)
+            };
+            
+            const radius = parseInt(domElements.searchRadius.value);
+            
+            // Encontrar puntos cercanos
+            const nearbyPoints = findPointsNearby(selectedPoint, result.data, radius);
+            
+            // Mostrar resultados en la tabla
+            domElements.pointSearchResults.style.display = 'block';
+            buildResultsTable(nearbyPoints);
+            
+            // Resaltar visualmente en el mapa los puntos encontrados
+            if (nearbyPoints.length > 0) {
+                setTimeout(() => {
+                    const firstPoint = {
+                        lat: parseFloat(nearbyPoints[0].LATITUDE),
+                        lng: parseFloat(nearbyPoints[0].LONGITUDE)
+                    };
+                    appState.historical.map.setCenter(firstPoint);
+                    appState.historical.map.setZoom(16);
+                }, 500);
+            }
+        } else {
+            // Si no hay punto seleccionado, ocultar sección de resultados
+            domElements.pointSearchResults.style.display = 'none';
+        }
+
         // Forzar redibujado
         google.maps.event.trigger(appState.historical.map, 'resize');
 
@@ -436,8 +719,29 @@ function initHistoricalTracking() {
         domElements.startDate.value = formatDateTimeInput(oneHourAgo);
         domElements.endDate.value = formatDateTimeInput(now);
         
-        // Configurar evento del botón
+        // Configurar evento del botón de cargar historia
         domElements.loadHistory.addEventListener('click', loadHistoricalData);
+        
+        // Configurar eventos para selección de punto
+        domElements.enablePointSelection.addEventListener('change', function() {
+            const isEnabled = this.checked;
+            
+            // Habilitar/deshabilitar campos relacionados
+            domElements.selectedLat.disabled = !isEnabled;
+            domElements.selectedLng.disabled = !isEnabled;
+            domElements.searchRadius.disabled = !isEnabled;
+            
+            if (!isEnabled) {
+                // Si se deshabilita, limpiar el punto
+                clearSelectedPoint();
+            }
+        });
+        
+        // Configurar evento para botón de limpiar punto
+        domElements.clearPointBtn.addEventListener('click', clearSelectedPoint);
+        
+        // Inicializar handler para cambio de radio
+        initRadiusChangeHandler();
     } catch (error) {
         console.error('Error inicializando Historical Tracking:', error);
         showError(domElements.historicalError, error.message);
