@@ -53,6 +53,10 @@
             <div class="form-group">
                 <label for="endDate">Fecha y hora final:</label>
                 <input type="datetime-local" id="endDate">
+                <input type="date" id="fecha" name="fecha">
+                <script>
+                    document.getElementById("fecha").max = new Date().toISOString().split("T")[0];
+                </script>
             </div>
 
             <div id="pointSelectionContainer" class="point-selection-container">
