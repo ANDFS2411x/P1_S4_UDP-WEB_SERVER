@@ -406,8 +406,10 @@ function mapsApiLoaded() {
 function switchToRealTime() {
     domElements.realTimeSection.classList.add("active");
     domElements.historicalSection.classList.remove("active");
+    domElements.membersSection.classList.remove("active");
     domElements.realTimeBtn.classList.add("active");
     domElements.historicalBtn.classList.remove("active");
+    domElements.membersBtn.classList.remove("active");
 
     // Restaurar elementos de tiempo real
     if (appState.realTime.marker) {
@@ -431,8 +433,10 @@ function switchToRealTime() {
 function switchToHistorical() {
     domElements.historicalSection.classList.add("active");
     domElements.realTimeSection.classList.remove("active");
+    domElements.membersSection.classList.remove("active");
     domElements.historicalBtn.classList.add("active");
     domElements.realTimeBtn.classList.remove("active");
+    domElements.membersBtn.classList.remove("active");
 
     // Detener actualizaciones de tiempo real para ahorrar recursos
     stopRealTimeUpdates();
@@ -444,6 +448,15 @@ function switchToHistorical() {
     if (appState.realTime.polyline) {
         appState.realTime.polyline.setMap(null);
     }
+}
+
+function switchToMembers() {
+    domElements.historicalSection.classList.remove("active");
+    domElements.realTimeSection.classList.remove("active");
+    domElements.membersSection.classList.add("active");
+    domElements.historicalBtn.classList.remove("active");
+    domElements.realTimeBtn.classList.remove("active");
+    domElements.membersBtn.classList.add("active");
 }
 
 // Función para calcular la distancia entre dos puntos en metros
@@ -823,6 +836,7 @@ function initApp() {
     // Configurar eventos para cambiar entre las secciones
     domElements.realTimeBtn.addEventListener("click", switchToRealTime);
     domElements.historicalBtn.addEventListener("click", switchToHistorical);
+    domElements.membersBtn.addEventListener("click", switchToMembers);
 
     // Inicializar mapas
     initMap();
