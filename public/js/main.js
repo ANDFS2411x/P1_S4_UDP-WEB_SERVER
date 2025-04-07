@@ -28,8 +28,10 @@ const appState = {
 const domElements = {
     realTimeBtn: document.getElementById('realTimeBtn'),
     historicalBtn: document.getElementById('historicalBtn'),
+    membersBtn: document.getElementById('membersBtn'),
     realTimeSection: document.getElementById('realTime'),
     historicalSection: document.getElementById('historical'),
+    membersSection: document.getElementById('members'),
     realMapContainer: document.getElementById('realTimeMapContainer'),
     historicalMapContainer: document.getElementById('historicalMapContainer'),
     loadingMessage: document.getElementById('loadingMessage'),
