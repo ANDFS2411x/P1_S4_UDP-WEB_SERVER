@@ -8,6 +8,12 @@ body {
     color: #e0e0e0;
 }
 
+.logo {
+    width: 100px; /* o lo que uses */
+    height: auto;
+  }
+  
+
 /*Navbar */
 .navbar {
     display: flex;
