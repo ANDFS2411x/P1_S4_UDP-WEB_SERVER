@@ -140,6 +140,7 @@ app.get("/historical-data", (req, res) => {
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+
 app.get('/', (req, res) => {
     res.render('main', { title: process.env.PAGE_TITLE, path: basePath });
 });
