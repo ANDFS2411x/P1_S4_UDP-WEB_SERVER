@@ -28,6 +28,7 @@ console.log(`path: ${basePath}`);
 app.use(cors());
 
 app.set('view engine', 'ejs');
+console.log(__dirname)
 app.set('views', path.join(__dirname, 'views'));
 
 /* ------------------- 🔴 CONFIGURAMOS LA CONEXIÓN A LA BASE DE DATOS ------------------- */
