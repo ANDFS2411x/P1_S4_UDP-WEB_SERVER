@@ -40,7 +40,7 @@ body {
 }
 
 /*Navbar */
-.navbar {
+#navbar {
     display: flex;
     justify-content: center;
     gap: 20px; /* Separación entre botones */
@@ -52,7 +52,7 @@ body {
     z-index: 1000;
 }
 
-.navbar a {
+#navbar a {
     color: #e0e0e0;
     text-decoration: none;
     padding: 15px 25px;
@@ -62,11 +62,11 @@ body {
     border-radius: 5px;
 }
 
-.navbar a:hover {
+#navbar a:hover {
     background-color: #4a5ac9;
 }
 
-.navbar a.active {
+#navbar a.active {
     background-color: #5667d8;
     box-shadow: 0 0 8px rgba(86, 103, 216, 0.6);
 }

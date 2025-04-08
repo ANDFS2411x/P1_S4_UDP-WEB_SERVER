@@ -406,10 +406,8 @@ function mapsApiLoaded() {
 function switchToRealTime() {
     domElements.realTimeSection.classList.add("active");
     domElements.historicalSection.classList.remove("active");
-    domElements.membersSection.classList.remove("active");
     domElements.realTimeBtn.classList.add("active");
     domElements.historicalBtn.classList.remove("active");
-    domElements.membersBtn.classList.remove("active");
 
     // Restaurar elementos de tiempo real
     if (appState.realTime.marker) {
@@ -433,10 +431,8 @@ function switchToRealTime() {
 function switchToHistorical() {
     domElements.historicalSection.classList.add("active");
     domElements.realTimeSection.classList.remove("active");
-    domElements.membersSection.classList.remove("active");
     domElements.historicalBtn.classList.add("active");
     domElements.realTimeBtn.classList.remove("active");
-    domElements.membersBtn.classList.remove("active");
 
     // Detener actualizaciones de tiempo real para ahorrar recursos
     stopRealTimeUpdates();

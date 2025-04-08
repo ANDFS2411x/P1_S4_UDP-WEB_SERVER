@@ -12,18 +12,21 @@
 <body>
     <!-- Encabezado con logo y título del proyecto -->
     <header class="main-header">
-        <img alt="Project logo" class="logo" id="logo">
-        <h1 class="project-title">SnapMap</h1>
-        <div id="about-div">
-        <a id="about">About us</a>
-        </div>  
-    </header>
+        <a id="btn-logo">
+            <img alt="Project logo" class="logo" id="logo">
+        </a>
 
-    <!-- 🔹 Navbar -->
-    <div class="navbar">
-        <a href="#" id="realTimeBtn" class="active">Real Time</a>
-        <a href="#" id="historicalBtn">Historical</a>
-    </div>
+        <h1 class="project-title">SnapMap</h1>
+
+        <div id="navbar">
+            <a href="#" id="realTimeBtn" class="active">Real Time</a>
+            <a href="#" id="historicalBtn">Historical</a>
+        </div>
+
+        <div id="about-div">
+            <a id="about">About us</a>
+        </div>
+    </header>
 
     <!-- 🔹 Sección "Real Time" -->
     <div id="realTime" class="section active">        
@@ -128,9 +131,13 @@
             ? '/test/styles/main.css'
             : '/styles/main.css';
 
-        document.getElementById('logo').src = isTesting
+        document.getElementById('btn-logo').href = isTesting
+            ? '/test/'
+            : '/';
+        const logo = document.getElementById('logo');
+        logo.src = isTesting
             ? '/test/images/logo.png'
-            : '/images/logo.png';
+            : '/images/logo.png';        
 
         document.getElementById('about').href = isTesting
             ? '/test/aboutUs'
