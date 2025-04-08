@@ -1,12 +1,11 @@
 /*Estilos Generales */
 
 .main-header {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
     padding: 10px 20px;
     background-color: #1e1e2e;
-    position: relative;
-    justify-content: space-between;
 }
 
 #about-div{
@@ -24,11 +23,13 @@
     font-size: 3em;
     font-weight: 700;
     color: #ffffff;
+    grid-column: 1;
+    justify-self: start;
+    margin-left: 7em; /* Ajusta según sea necesario */
 }
 
-.main-header a#btn-logo, 
-.main-header .project-title {
-    margin-right: 0;
+.main-header a#btn-logo {
+    justify-self: start;
 }
 
 .main-header a {
@@ -47,20 +48,21 @@ body {
 }
 
 #about-div {
+    grid-column: 3;
+    justify-self: end;
     margin-right: 0;
     position: static;
 }
 
 /*Navbar */
 #navbar {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
+    grid-column: 2;
     display: flex;
     gap: 20px;
     background-color: transparent;
     box-shadow: none;
     padding: 0;
+    justify-self: center;
 }
 
 #navbar a {
@@ -69,7 +71,6 @@ body {
     padding: 15px 25px;
     font-size: 16px;
     transition: 0.3s;
-    margin: 0 10px;
     border-radius: 5px;
 }
 
