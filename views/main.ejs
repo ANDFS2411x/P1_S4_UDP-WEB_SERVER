@@ -7,39 +7,20 @@
     <title id="titulo">SnapMap ~ <%= title %></title>
     <link rel="stylesheet" id="themeStyles">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <style>
-        .main-header {
-            display: flex;
-            align-items: center;
-            padding: 10px 20px;
-            background-color: #323232;
-        }
-
-        .main-header .logo {
-            height: auto;
-            margin-right: 20px;
-        }
-
-        .main-header .project-title {
-            font-size: 48px;
-            font-weight: 700;
-            color: #333;
-        }
-    </style>
 </head>
 
 <body>
     <!-- Encabezado con logo y título del proyecto -->
     <header class="main-header">
-        <img src="/images/logo.png" alt="Project logo" class="logo">
+        <img alt="Project logo" class="logo" id="logo">
         <h1 class="project-title">SnapMap</h1>
+        <a href="#" id="about">About us</a>
     </header>
 
     <!-- 🔹 Navbar -->
     <div class="navbar">
         <a href="#" id="realTimeBtn" class="active">Real Time</a>
         <a href="#" id="historicalBtn">Historical</a>
-        <a href="#" id="membersBtn">Members</a>
     </div>
 
     <!-- 🔹 Sección "Real Time" -->
@@ -176,6 +157,10 @@
     <script>
         const isTesting = window.location.pathname.startsWith('/test');
         document.getElementById('themeStyles').href = isTesting
+            ? '/test/styles/main.css'
+            : '/styles/main.css';
+
+        document.getElementById('logo').src = isTesting
             ? '/test/styles/main.css'
             : '/styles/main.css';
         // Create a new script element

@@ -1,4 +1,30 @@
 /*Estilos Generales */
+
+.main-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #1e1e2e;
+    border-bottom: #ffffff;
+    border-bottom-width: 20px;
+}
+
+.main-header .logo {
+    height: auto;
+    margin-right: 20px;
+}
+
+.main-header .project-title {
+    font-size: 25px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.main-header a {
+    float:right;
+    margin-right: 20px;
+}
+
 body {
     font-family: 'Roboto', Arial, sans-serif;
     text-align: center;
@@ -7,11 +33,6 @@ body {
     background-color: #1e1e2e;
     color: #e0e0e0;
 }
-
-.logo {
-    width: 100px; /* o lo que uses */
-    height: auto;
-  }
 
 /*Navbar */
 .navbar {
