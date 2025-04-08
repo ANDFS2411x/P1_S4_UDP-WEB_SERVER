@@ -5,6 +5,8 @@
     align-items: center;
     padding: 10px 20px;
     background-color: #1e1e2e;
+    position: relative;
+    justify-content: space-between;
 }
 
 #about-div{
@@ -24,6 +26,11 @@
     color: #ffffff;
 }
 
+.main-header a#btn-logo, 
+.main-header .project-title {
+    margin-right: 0;
+}
+
 .main-header a {
     font-weight: 700;
     font-size: 1.5em;
@@ -39,17 +46,21 @@ body {
     color: #e0e0e0;
 }
 
+#about-div {
+    margin-right: 0;
+    position: static;
+}
+
 /*Navbar */
 #navbar {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
-    justify-content: center;
-    gap: 20px; /* Separación entre botones */
-    background-color: #191927;
-    padding: 15px 0;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+    gap: 20px;
+    background-color: transparent;
+    box-shadow: none;
+    padding: 0;
 }
 
 #navbar a {
