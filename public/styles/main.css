@@ -8,8 +8,9 @@
 }
 
 #about-div{
-    float: right;
     margin-right: 20px;
+    position: absolute;
+    right: 0px;
 }
 
 .main-header .logo {
