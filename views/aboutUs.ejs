@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="titulo">SnapMap ~ <%= title %></title>
     <link rel="stylesheet" id="themeStyles">
+    <link rel="icon" type="image/x-icon" id="icono"/>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 </head>
 
@@ -69,7 +70,12 @@
         const logo = document.getElementById('logo');
         logo.src = isTesting
             ? '/test/images/logo.png'
-            : '/images/logo.png';        
+            : '/images/logo.png';  
+            
+        const logo = document.getElementById('icono');
+        logo.src = isTesting
+            ? '/test/images/favicon.ico'
+            : '/images/favicon.ico'; 
 
         document.getElementById('about').href = isTesting
             ? '/test/aboutUs'
