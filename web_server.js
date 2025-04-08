@@ -147,7 +147,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/aboutUs', (req, res) => {
-    res.render('aboutUs');
+    res.render('aboutUs', { title: process.env.PAGE_TITLE, path: basePath });
   });
 
 /* ------------------- 🚀 INICIAMOS EL SERVIDOR ------------------- */
