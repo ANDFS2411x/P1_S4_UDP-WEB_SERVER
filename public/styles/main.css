@@ -1,5 +1,9 @@
 /*Estilos Generales */
 
+body {
+    background-color: #1e1e2e;
+}
+
 .main-header {
     display: flex;
     align-items: center;
@@ -256,6 +260,7 @@
     padding: 10px;
     height: calc(100vh - 60px);
     flex-direction: column;
+    background-color: #1e1e2e;
 }
 
 .section.active {
@@ -309,6 +314,7 @@ h1 {
 .info-panel p {
     margin: 5px 0;
     text-align: left;
+    color: white;
 }
 
 .info-panel strong {
