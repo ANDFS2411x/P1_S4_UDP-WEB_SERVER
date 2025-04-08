@@ -523,10 +523,10 @@ function buildResultsTable(nearbyPoints) {
     nearbyPoints.forEach((point, index) => {
         tableHTML += `
             <tr>
-                <td>${point.DATE || 'N/A'}</td>
-                <td>${point.TIME || 'N/A'}</td>
-                <td>${point.LATITUDE || 'N/A'}</td>
-                <td>${point.LONGITUDE || 'N/A'}</td>
+                <td class="white">${point.DATE || 'N/A'}</td>
+                <td class="white">${point.TIME || 'N/A'}</td>
+                <td class="white">${point.LATITUDE || 'N/A'}</td>
+                <td class="white">${point.LONGITUDE || 'N/A'}</td>
                 <td>
                     <button class="secondary-button highlight-btn" data-index="${index}">Resaltar</button>
                 </td>
