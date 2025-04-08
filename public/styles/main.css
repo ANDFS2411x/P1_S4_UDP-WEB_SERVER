@@ -23,6 +23,8 @@
     margin-right: 4em;
     position: absolute;
     right: 0px;
+    margin-right: 0;
+    position: static;
 }
 
 .main-header .logo {
@@ -50,6 +52,70 @@
     color: white;
 }
 
+@media screen and (max-width: 1200px) {
+    .main-header .logo {
+        width: 5em;
+    }
+    .main-header .project-title {
+        font-size: 2.5em;
+    }
+}
+
+@media screen and (max-width: 992px) {
+    .main-header .logo {
+        width: 4em;
+    }
+    .main-header .project-title {
+        font-size: 2em;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .main-header .logo {
+        width: 3.5em;
+    }
+    .main-header .project-title {
+        font-size: 1.8em;
+    }
+    #about-div {
+        margin-right: 2em;
+    }
+}
+
+@media screen and (max-width: 576px) {
+    .main-header .logo {
+        width: 3em;
+        margin-right: 10px;
+    }
+    .main-header .project-title {
+        font-size: 1.5em;
+        margin-left: 10px;
+    }
+    #about-div {
+        margin-right: 1em;
+    }
+    .main-header a {
+        font-size: 1.2em;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .main-header .logo {
+        width: 2.5em;
+        margin-right: 8px;
+    }
+    .main-header .project-title {
+        font-size: 1.3em;
+        margin-left: 8px;
+    }
+    #about-div {
+        margin-right: 0.5em;
+    }
+    .main-header a {
+        font-size: 1em;
+    }
+}
+
 body {
     font-family: 'Roboto', Arial, sans-serif;
     text-align: center;
@@ -57,11 +123,6 @@ body {
     padding: 0;
     background-color: #1e1e2e;
     color: #e0e0e0;
-}
-
-#about-div {
-    margin-right: 0;
-    position: static;
 }
 
 /*Navbar */
