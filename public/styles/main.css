@@ -5,24 +5,28 @@
     align-items: center;
     padding: 10px 20px;
     background-color: #1e1e2e;
-    border-bottom: #ffffff;
-    border-bottom-width: 20px;
+}
+
+#about-div{
+    float: right;
+    margin-right: 20px;
 }
 
 .main-header .logo {
-    height: 10%;
+    width: 6em;
     margin-right: 20px;
 }
 
 .main-header .project-title {
-    font-size: 25px;
+    font-size: 3em;
     font-weight: 700;
     color: #ffffff;
 }
 
 .main-header a {
-    float:right;
-    margin-right: 20px;
+    font-weight: 700;
+    font-size: 1.5em;
+    color: white;
 }
 
 body {
