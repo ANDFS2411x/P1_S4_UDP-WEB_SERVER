@@ -9,6 +9,16 @@
     justify-content: space-between;
 }
 
+#brand {
+    display: flex;
+    align-items: center;
+}
+
+#brand a#btn-logo {
+    display: inline-flex;
+    align-items: center;
+}
+
 #about-div{
     margin-right: 4em;
     position: absolute;
@@ -21,6 +31,9 @@
 }
 
 .main-header .project-title {
+    display: inline-block;
+    margin-left: 15px; /* Add some spacing between logo and title */
+    vertical-align: middle;
     font-size: 3em;
     font-weight: 700;
     color: #ffffff;
