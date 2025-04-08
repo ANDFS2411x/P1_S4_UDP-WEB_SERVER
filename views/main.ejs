@@ -15,8 +15,8 @@
         <img alt="Project logo" class="logo" id="logo">
         <h1 class="project-title">SnapMap</h1>
         <div id="about-div">
-        <a href="#" id="about">About us</a>
-        </div>
+        <a href="/aboutUs.ejs" id="about">About us</a>
+        </div>  
     </header>
 
     <!-- 🔹 Navbar -->
@@ -120,40 +120,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Sección "Equipo" -->
-    </div id="members" class="team section">
-        <h2>Meet the Team</h2>
-        <div class="team-members">
-            <div class="member">
-                <img src="/images/luciana.jpg" alt="Luciana">
-                <h3>Luciana De La Rosa</h3>
-                <p>Desarrolladora Frontend</p>
-            </div>
-            <div class="member">
-                <img src="/images/gabriela.jpg" alt="Gabriela">
-                <h3>Gabriela </h3>
-                <p>Desarrolladora Frontend</p>
-            </div>
-            <div class="member">
-                <img src="/images/andres.jpg" alt="AndresN">
-                <h3>Andres Narvaes</h3>
-                <p>Desarrolladora Frontend</p>
-            </div>
-
-            <div class="member">
-                <img src="/images/andresito.jpg" alt="AndresF">
-                <h3>Andres Fabregas</h3>
-                <p>Desarrolladora Frontend</p>
-            </div>
-
-            <div class="member">
-                <img src="/images/ali.jpg" alt="Ali">
-                <h3>Ali Rada</h3>
-                <p>Desarrolladora Frontend</p>
-            </div>
-        </div>
-    </section>
     
     <!-- Scripts loading -->
     <script>
@@ -165,6 +131,10 @@
         document.getElementById('logo').src = isTesting
             ? '/test/images/logo.png'
             : '/images/logo.png';
+
+        document.getElementById("about").href = isTesting
+            ? '/test/aboutUs.ejs'
+            : '/aboutUs.ejs';
         // Create a new script element
         const script = document.createElement('script');
         script.src = isTesting ? '/test/js/main.js' : '/js/main.js';
