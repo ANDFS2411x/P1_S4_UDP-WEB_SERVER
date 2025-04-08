@@ -15,7 +15,7 @@
         <img alt="Project logo" class="logo" id="logo">
         <h1 class="project-title">SnapMap</h1>
         <div id="about-div">
-        <a href="/aboutUs.ejs" id="about">About us</a>
+        <a href="/aboutUs" id="about">About us</a>
         </div>  
     </header>
 
@@ -132,9 +132,6 @@
             ? '/test/images/logo.png'
             : '/images/logo.png';
 
-        document.getElementById("about").href = isTesting
-            ? '/test/aboutUs.ejs'
-            : '/aboutUs.ejs';
         // Create a new script element
         const script = document.createElement('script');
         script.src = isTesting ? '/test/js/main.js' : '/js/main.js';

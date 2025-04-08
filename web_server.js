@@ -145,6 +145,10 @@ app.get('/', (req, res) => {
     res.render('main', { title: process.env.PAGE_TITLE, path: basePath });
 });
 
+app.get('/about', (req, res) => {
+    res.render('aboutUs');
+  });
+
 /* ------------------- 🚀 INICIAMOS EL SERVIDOR ------------------- */
 // Arrancamos el servidor en el puerto definido y en cualquier IP ('0.0.0.0')
 app.listen(port, '0.0.0.0', () => {
