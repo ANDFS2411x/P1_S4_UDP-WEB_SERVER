@@ -146,7 +146,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/about', (req, res) => {
-    res.render('aboutUs');
+    res.render('/test/aboutUs');
   });
 
 /* ------------------- 🚀 INICIAMOS EL SERVIDOR ------------------- */
