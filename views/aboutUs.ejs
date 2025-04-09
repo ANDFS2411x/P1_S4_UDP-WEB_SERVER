@@ -7,8 +7,8 @@
     <title id="titulo">SnapMap ~ <%= title %></title>
     <link rel="stylesheet" id="themeStyles">
     <link rel="icon" type="image/x-icon" id="icono"/>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 </head>
+
 
 <body>
     <header class="main-header">
@@ -24,40 +24,70 @@
         </div>
     </header>
 
-    <!-- Sección "Equipo" -->
-    </div id="members" class="team section">
-        <h2>Meet the Team</h2>
-        <div class="team-members">
-            <div class="member">
-                <img src="/images/luciana.jpg" alt="Luciana">
-                <h3>Luciana De La Rosa</h3>
-                <p>Desarrolladora Frontend</p>
-            </div>
-            <div class="member">
-                <img src="/images/gabriela.jpg" alt="Gabriela">
-                <h3>Gabriela </h3>
-                <p>Desarrolladora Frontend</p>
-            </div>
-            <div class="member">
-                <img src="/images/andres.jpg" alt="AndresN">
-                <h3>Andres Narvaes</h3>
-                <p>Desarrolladora Frontend</p>
-            </div>
+    <div class="container">
+        <!-- Contenedor principal con border-radius -->
+        
+        <!-- Sección About Us -->
+        <div class="about-us">
+            <h1>About Us</h1>
+            <div class="about-us-container">
+                <!-- Contenedor para las 3 columnas -->
+                <div class="about-us-content">
+                    <h2>Qué es SnapMap</h2>
+                    <p>SnapMap es una innovadora aplicación de seguimiento de taxis en tiempo real, 
+                        diseñada para mejorar la experiencia de los usuarios al proporcionar información precisa 
+                        y actualizada sobre la ubicación de los vehículos. Con un enfoque en la usabilidad y 
+                        la eficiencia, SnapMap permite a los usuarios rastrear taxis en su área, 
+                        asegurando un servicio más rápido y confiable.</p>
+                </div>
 
-            <div class="member">
-                <img src="/images/andresito.jpg" alt="AndresF">
-                <h3>Andres Fabregas</h3>
-                <p>Desarrolladora Frontend</p>
-            </div>
+                <div class="about-us-content">
+                    <h2>Nuestra Misión</h2>
+                    <p>Nuestra misión es transformar la forma en que las personas interactúan con el transporte público, 
+                        ofreciendo una solución tecnológica que optimiza el tiempo de espera y mejora la seguridad de los pasajeros.
+                        Con un equipo apasionado y comprometido, SnapMap está dedicado a brindar un servicio excepcional 
+                        y a contribuir al desarrollo de ciudades más inteligentes y conectadas.</p>
+                </div>
 
-            <div class="member">
-                <img src="/images/ali.jpg" alt="Ali">
-                <h3>Ali Rada</h3>
-                <p>Desarrolladora Frontend</p>
+                <div class="about-us-content">
+                    <h2>Nuestra Visión</h2>
+                    <p>En SnapMap, visualizamos un futuro donde la movilidad urbana sea más eficiente y accesible para todos. 
+                        Creemos que la tecnología puede ser un catalizador para mejorar la calidad de vida en las ciudades, 
+                        facilitando el acceso al transporte público y reduciendo la congestión del tráfico. 
+                        Nuestro objetivo es ser líderes en soluciones de movilidad inteligente, 
+                        impulsando la innovación y la sostenibilidad en cada paso del camino.</p>
+                </div>
             </div>
         </div>
-    </section>
-    
+
+        <!-- Sección "Equipo" -->
+        <div id="members" class="team section">
+            <h1>Meet the Team</h1>
+            <div class="team-members">
+                <div class="member">
+                    <h3>Luciana De La Rosa</h3>
+                    <p>Desarrolladora Frontend</p>
+                </div>
+                <div class="member">
+                    <h3>Gabriela</h3>
+                    <p>Desarrolladora Frontend</p>
+                </div>
+                <div class="member">
+                    <h3>Andres Narvaes</h3>
+                    <p>Desarrolladora Frontend</p>
+                </div>
+                <div class="member">
+                    <h3>Andres Fabregas</h3>
+                    <p>Desarrolladora Frontend</p>
+                </div>
+                <div class="member center">
+                    <h3>Ali Rada</h3>
+                    <p>Desarrolladora Frontend</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts loading -->
     <script>
         const isTesting = window.location.pathname.startsWith('/test');
@@ -83,4 +113,3 @@
             : '/aboutUs';
     </script>
 </body>
-</html>
