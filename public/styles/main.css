@@ -1,43 +1,260 @@
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
 /*Estilos Generales */
+
 body {
-    font-family: 'Roboto', Arial, sans-serif;
-    text-align: center;
-    margin: 0;
-    padding: 0;
     background-color: #1e1e2e;
-    color: #e0e0e0;
+    font-family: 'Exo 2', sans-serif;;
+}
+
+.main-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #1e1e2e;
+    position: relative;
+    justify-content: space-between;
+}
+
+#brand {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0; /* Evita que el logo se encoja */
+}
+
+#brand a#btn-logo {
+    display: inline-flex;
+    align-items: center;
+}
+
+#about-div{
+    margin-right: 0;
+    flex-shrink: 0; /* Evita que se encoja */
+}
+
+.main-header .logo {
+    width: 6em;
+    margin-right: 20px;
+}
+
+.main-header .project-title {
+    display: inline-block;
+    margin-left: 15px; /* Add some spacing between logo and title */
+    vertical-align: middle;
+    font-size: 3em;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.main-header a#btn-logo, 
+.main-header .project-title {
+    margin-right: 0;
+}
+
+.main-header a {
+    font-weight: 700;
+    font-size: 1.5em;
+    color: white;
+    white-space: nowrap; /* Evita que el texto se rompa */
 }
 
 /*Navbar */
-.navbar {
+#navbar {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
-    justify-content: center;
-    gap: 20px; /* Separación entre botones */
-    background-color: #191927;
-    padding: 15px 0;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+    gap: 20px;
+    background-color: transparent;
+    box-shadow: none;
+    padding: 0;
+    z-index: 1;
 }
 
-.navbar a {
+#navbar a {
     color: #e0e0e0;
     text-decoration: none;
     padding: 15px 25px;
-    font-size: 16px;
+    font-size: 1em;
     transition: 0.3s;
     margin: 0 10px;
     border-radius: 5px;
 }
 
-.navbar a:hover {
+#navbar a:hover {
     background-color: #4a5ac9;
 }
 
-.navbar a.active {
+#navbar a.active {
     background-color: #5667d8;
     box-shadow: 0 0 8px rgba(86, 103, 216, 0.6);
+}
+
+@media screen and (max-width: 1200px) {
+    .main-header .logo {
+        width: 5em;
+    }
+    .main-header .project-title {
+        font-size: 2.5em;
+    }
+}
+
+@media screen and (max-width: 992px) {
+    .main-header .logo {
+        width: 4em;
+    }
+    .main-header .project-title {
+        font-size: 2em;
+    }
+}
+
+@media screen and (max-width: 800px) {
+    .main-header {
+        flex-wrap: wrap;
+        justify-content: space-between;
+        padding: 10px;
+    }
+    
+    #brand {
+        flex: 1;
+        margin-right: 10px;
+    }
+    
+    #about-div {
+        flex: 0;
+        margin-right: 0;
+    }
+    
+    #navbar {
+        position: relative;
+        left: auto;
+        transform: none;
+        order: 3;
+        flex-basis: 100%;
+        justify-content: center;
+        margin-top: 10px;
+        gap: 10px;
+    }
+    
+    .main-header .logo {
+        width: 3.5em;
+    }
+    
+    .main-header .project-title {
+        font-size: 1.8em;
+    }
+    
+    #about-div {
+        margin-right: 0;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .main-header .logo {
+        width: 3em;
+    }
+    .main-header .project-title {
+        font-size: 1.6em;
+    }
+    
+    #navbar a {
+        padding: 8px 15px;
+        font-size: 14px;
+        margin: 0 5px;
+    }
+    
+    .coordinates-container {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .info-panel {
+        grid-template-columns: 1fr;
+    }
+    
+    h1 {
+        font-size: 20px;
+    }
+    
+    .filter-form, .info-panel, .results-container {
+        padding: 10px;
+    }
+}
+
+@media screen and (max-width: 576px) {
+    .main-header {
+        padding: 8px 10px;
+    }
+    
+    .main-header .logo {
+        width: 2.5em;
+        margin-right: 10px;
+    }
+    
+    .main-header .project-title {
+        font-size: 1.3em;
+        margin-left: 10px;
+    }
+    
+    #navbar {
+        gap: 5px;
+    }
+    
+    #navbar a {
+        padding: 6px 10px;
+        font-size: 12px;
+        margin: 0 2px;
+    }
+    
+    .main-header a {
+        font-size: 0.9em;
+    }
+    
+    #about-div {
+        font-size: 0.9em;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .main-header .logo {
+        width: 2.2em;
+        margin-right: 8px;
+    }
+    
+    .main-header .project-title {
+        font-size: 1.1em;
+        margin-left: 8px;
+    }
+    
+    .action-button {
+        padding: 10px 15px;
+        font-size: 14px;
+    }
+    
+    .mapContainer {
+        min-height: 300px;
+    }
+}
+
+/* Para pantallas muy pequeñas */
+@media screen and (max-width: 360px) {
+    .main-header .project-title {
+        font-size: 0.9em;
+    }
+    
+    .main-header .logo {
+        width: 1.8em;
+        margin-right: 5px;
+    }
+    
+    #navbar a {
+        padding: 5px 8px;
+        font-size: 11px;
+    }
+    
+    #about-div {
+        font-size: 0.8em;
+    }
 }
 
 /*Secciones - Clave para funcionalidad */
@@ -46,6 +263,7 @@ body {
     padding: 10px;
     height: calc(100vh - 60px);
     flex-direction: column;
+    background-color: #1e1e2e;
 }
 
 .section.active {
@@ -99,6 +317,7 @@ h1 {
 .info-panel p {
     margin: 5px 0;
     text-align: left;
+    color: white;
 }
 
 .info-panel strong {
@@ -202,6 +421,10 @@ h1 {
 .checkbox-container input {
     margin-right: 10px;
     accent-color: #5667d8;
+}
+
+.white {
+    color: white;
 }
 
 .helper-text {
@@ -369,39 +592,11 @@ h1 {
     }
 }
 
-/* Media queries para responsive design */
-@media screen and (max-width: 768px) {
-    .coordinates-container {
-        flex-direction: column;
-        gap: 5px;
-    }
-    
-    .info-panel {
-        grid-template-columns: 1fr;
-    }
-    
-    .navbar a {
-        padding: 10px 15px;
-        font-size: 14px;
-        margin: 0 5px;
-    }
-    
-    h1 {
-        font-size: 20px;
-    }
-    
-    .filter-form, .info-panel, .results-container {
-        padding: 10px;
-    }
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 1; /* Asegura que sea visible */
 }
 
-@media screen and (max-width: 480px) {
-    .action-button {
-        padding: 10px 15px;
-        font-size: 14px;
-    }
-    
-    .mapContainer {
-        min-height: 300px;
-    }
+#seguirBtn #loadHistory {
+    font-family: 'Exo 2', sans-serif;
 }

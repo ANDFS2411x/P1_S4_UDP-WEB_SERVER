@@ -28,6 +28,7 @@ console.log(`path: ${basePath}`);
 app.use(cors());
 
 app.set('view engine', 'ejs');
+console.log(__dirname)
 app.set('views', path.join(__dirname, 'views'));
 
 /* ------------------- 🔴 CONFIGURAMOS LA CONEXIÓN A LA BASE DE DATOS ------------------- */
@@ -140,9 +141,14 @@ app.get("/historical-data", (req, res) => {
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+
 app.get('/', (req, res) => {
     res.render('main', { title: process.env.PAGE_TITLE, path: basePath });
 });
+
+app.get('/aboutUs', (req, res) => {
+    res.render('aboutUs', { title: process.env.PAGE_TITLE, path: basePath });
+  });
 
 /* ------------------- 🚀 INICIAMOS EL SERVIDOR ------------------- */
 // Arrancamos el servidor en el puerto definido y en cualquier IP ('0.0.0.0')

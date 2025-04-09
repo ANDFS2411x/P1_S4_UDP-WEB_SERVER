@@ -28,8 +28,10 @@ const appState = {
 const domElements = {
     realTimeBtn: document.getElementById('realTimeBtn'),
     historicalBtn: document.getElementById('historicalBtn'),
+    membersBtn: document.getElementById('membersBtn'),
     realTimeSection: document.getElementById('realTime'),
     historicalSection: document.getElementById('historical'),
+    membersSection: document.getElementById('members'),
     realMapContainer: document.getElementById('realTimeMapContainer'),
     historicalMapContainer: document.getElementById('historicalMapContainer'),
     loadingMessage: document.getElementById('loadingMessage'),
@@ -176,11 +178,11 @@ function initHistoricalMapInstance() {
     
     const centerHistorical = appState.historical.recorrido.length > 0 ? 
         appState.historical.recorrido[0] : 
-        { lat: 4.710989, lng: -74.072092 }; // Coordenadas por defecto para Bogotá
+        { lat: 11.0193213, lng: -74.8601743 }; // Coordenadas por defecto para Bogotá
 
     appState.historical.map = new google.maps.Map(domElements.historicalMapContainer, {
         center: centerHistorical,
-        zoom: 15,
+        zoom: 14,
         streetViewControl: false
     });
 
@@ -444,6 +446,15 @@ function switchToHistorical() {
     }
 }
 
+function switchToMembers() {
+    domElements.historicalSection.classList.remove("active");
+    domElements.realTimeSection.classList.remove("active");
+    domElements.membersSection.classList.add("active");
+    domElements.historicalBtn.classList.remove("active");
+    domElements.realTimeBtn.classList.remove("active");
+    domElements.membersBtn.classList.add("active");
+}
+
 // Función para calcular la distancia entre dos puntos en metros
 function calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371000; // Radio de la Tierra en metros
@@ -512,10 +523,10 @@ function buildResultsTable(nearbyPoints) {
     nearbyPoints.forEach((point, index) => {
         tableHTML += `
             <tr>
-                <td>${point.DATE || 'N/A'}</td>
-                <td>${point.TIME || 'N/A'}</td>
-                <td>${point.LATITUDE || 'N/A'}</td>
-                <td>${point.LONGITUDE || 'N/A'}</td>
+                <td class="white">${point.DATE || 'N/A'}</td>
+                <td class="white">${point.TIME || 'N/A'}</td>
+                <td class="white">${point.LATITUDE || 'N/A'}</td>
+                <td class="white">${point.LONGITUDE || 'N/A'}</td>
                 <td>
                     <button class="secondary-button highlight-btn" data-index="${index}">Resaltar</button>
                 </td>
@@ -537,6 +548,8 @@ function buildResultsTable(nearbyPoints) {
         button.addEventListener('click', function() {
             const pointIndex = parseInt(this.getAttribute('data-index'));
             highlightPointOnMap(nearbyPoints[pointIndex]);
+            //llevar al usuario al inicio de la pagina
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     });
 }
@@ -715,15 +728,51 @@ function initHistoricalTracking() {
         // Configurar fechas por defecto (última hora)
         const now = new Date();
         const oneHourAgo = new Date(now.getTime() - (60 * 60 * 1000));
+
+        // Obtener la fecha actual en formato compatible con input datetime-local
+        const maxDateTime = formatDateTimeInput(now);
         
         domElements.startDate.value = formatDateTimeInput(oneHourAgo);
         domElements.endDate.value = formatDateTimeInput(now);
-        
+        domElements.startDate.max = maxDateTime;
+        domElements.endDate.max = maxDateTime;
+
+       
+        // Restringir fecha de fin mínima a la fecha de inicio
+        domElements.endDate.min = domElements.startDate.value;
+
+        // Eventos para evitar selecciones inválidas
+        domElements.startDate.addEventListener("change", function () {
+            if (domElements.startDate.value > domElements.endDate.value) {
+                domElements.endDate.value = domElements.startDate.value; // Ajusta automáticamente
+            }
+            domElements.endDate.min = domElements.startDate.value; // Restringe la fecha mínima de fin
+        });
+
+        domElements.endDate.addEventListener("change", function () {
+            if (domElements.endDate.value < domElements.startDate.value) {
+                domElements.startDate.value = domElements.endDate.value; // Ajusta automáticamente
+            }
+            domElements.startDate.max = domElements.endDate.value; // Restringe la fecha máxima de inicio
+        });
+
         // Configurar evento del botón de cargar historia
         domElements.loadHistory.addEventListener('click', loadHistoricalData);
-        
+
         // Configurar eventos para selección de punto
         domElements.enablePointSelection.addEventListener('change', function() {
+            console.log(!domElements.clearPointBtn.disabled);
+            console.log(domElements.enablePointSelection.checked);
+            if (!domElements.clearPointBtn.disabled && domElements.enablePointSelection.checked){
+                domElements.loadHistory.textContent = "Consultar registros";
+                domElements.loadHistory.style.backgroundColor = "#b103fc";
+                console.log("entra");
+            } else {
+                domElements.loadHistory.textContent = "Cargar trayectoria";
+                domElements.loadHistory.style.backgroundColor = "#5667d8";
+                console.log("else");
+            }
+
             const isEnabled = this.checked;
             
             // Habilitar/deshabilitar campos relacionados
@@ -736,6 +785,37 @@ function initHistoricalTracking() {
                 clearSelectedPoint();
             }
         });
+
+        const observer = new MutationObserver(() => {
+            if (!domElements.clearPointBtn.disabled && domElements.enablePointSelection.checked) {
+                domElements.loadHistory.textContent = "Consultar registros";
+                domElements.loadHistory.style.backgroundColor = "#b103fc";
+                console.log("entra");
+            } else {
+                domElements.loadHistory.textContent = "Cargar trayectoria";
+                domElements.loadHistory.style.backgroundColor = "#5667d8";
+                console.log("else");
+            }
+        });
+        
+        observer.observe(domElements.clearPointBtn, { attributes: true, attributeFilter: ['disabled'] });
+        
+
+        /*
+        domElements.clearPointBtn.addEventListener('change', function() {
+            console.log(!domElements.clearPointBtn.disabled);
+            console.log(domElements.enablePointSelection.checked);
+            if (!domElements.clearPointBtn.disabled && !domElements.enablePointSelection.checked){
+                domElements.loadHistory.textContent = "Consultar registros";
+                domElements.loadHistory.style.backgroundColor = "#b103fc";
+                console.log("entra");
+            } else {
+                domElements.loadHistory.textContent = "Cargar trayectoria";
+                domElements.loadHistory.style.backgroundColor = "#5667d8";
+                console.log("else");
+            }
+        });
+        */
         
         // Configurar evento para botón de limpiar punto
         domElements.clearPointBtn.addEventListener('click', clearSelectedPoint);
@@ -752,6 +832,7 @@ function initApp() {
     // Configurar eventos para cambiar entre las secciones
     domElements.realTimeBtn.addEventListener("click", switchToRealTime);
     domElements.historicalBtn.addEventListener("click", switchToHistorical);
+    //domElements.membersBtn.addEventListener("click", switchToMembers);
 
     // Inicializar mapas
     initMap();

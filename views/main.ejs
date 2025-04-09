@@ -4,17 +4,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="titulo">Proyecto 2 <%= title %></title>
+    <title id="titulo">SnapMap ~ <%= title %></title>
     <link rel="stylesheet" id="themeStyles">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" id="icono"/>
 </head>
 
 <body>
-    <!-- 🔹 Navbar -->
-    <div class="navbar">
-        <a href="#" id="realTimeBtn" class="active">Real Time</a>
-        <a href="#" id="historicalBtn">Historical</a>
-    </div>
+    <!-- Encabezado con logo y título del proyecto -->
+    <header class="main-header">
+        <div id="brand">
+            <a id="btn-logo">
+                <img alt="Project logo" class="logo" id="logo">
+            </a>
+            <h1 class="project-title">SnapMap</h1>
+        </div>
+        <div id="navbar">
+            <a href="#" id="realTimeBtn" class="active">Real Time</a>
+            <a href="#" id="historicalBtn">Historical</a>
+        </div>
+
+        <div id="about-div">
+            <a id="about">About us</a>
+        </div>
+    </header>
 
     <!-- 🔹 Sección "Real Time" -->
     <div id="realTime" class="section active">        
@@ -53,12 +65,15 @@
             <div class="form-group">
                 <label for="endDate">Fecha y hora final:</label>
                 <input type="datetime-local" id="endDate">
+                <script>
+                    document.getElementById("fecha").max = new Date().toISOString().split("T")[0];
+                </script>
             </div>
 
             <div id="pointSelectionContainer" class="point-selection-container">
                 <div class="checkbox-container">
                     <input type="checkbox" id="enablePointSelection">
-                    <label for="enablePointSelection">Seleccionar punto en el mapa</label>
+                    <label class="white" for="enablePointSelection">Seleccionar punto en el mapa</label>
                     <span class="helper-text">(Haz clic en el mapa para seleccionar un punto)</span>
                 </div>
                 
@@ -96,6 +111,17 @@
                 <!-- Aquí se cargarán dinámicamente los resultados -->
             </div>
         </div>
+        
+        <!-- Nuevo contenedor para resultados de búsqueda por punto -->
+        <div id="pointSearchResults" class="results-container">
+            <h3>Resultados de búsqueda por punto</h3>
+            <div class="results-summary">
+                <p id="resultsSummary">Selecciona un punto en el mapa y carga la trayectoria para ver cuándo el taxi pasó por esa ubicación.</p>
+            </div>
+            <div id="resultsTable" class="results-table">
+                <!-- Aquí se cargarán dinámicamente los resultados -->
+            </div>
+        </div>
     </div>
     
     <!-- Scripts loading -->
@@ -104,6 +130,24 @@
         document.getElementById('themeStyles').href = isTesting
             ? '/test/styles/main.css'
             : '/styles/main.css';
+
+        document.getElementById('btn-logo').href = isTesting
+            ? '/test/'
+            : '/';
+        const logo = document.getElementById('logo');
+        logo.src = isTesting
+            ? '/test/images/logo.png'
+            : '/images/logo.png';
+
+        const icono = document.getElementById('icono');
+        icono.href = isTesting
+            ? '/test/images/favicon.ico'
+            : '/images/favicon.ico';        
+
+        document.getElementById('about').href = isTesting
+            ? '/test/aboutUs'
+            : '/aboutUs';
+
         // Create a new script element
         const script = document.createElement('script');
         script.src = isTesting ? '/test/js/main.js' : '/js/main.js';
