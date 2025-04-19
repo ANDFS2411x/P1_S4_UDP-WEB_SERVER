@@ -601,107 +601,103 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     font-family: 'Exo 2', sans-serif;
 }
 
-/* Estilos para el slider de puntos históricos */
-.slider-container {
-    width: 100%;
+/* Estilos para el resumen de datos históricos */
+.data-summary {
+    background: #2a2a40;
     padding: 20px;
-    background: var(--secondary-bg);
+    margin: 20px auto;
     border-radius: 8px;
-    margin: 15px 0;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
 }
 
-.slider {
-    width: 100%;
-    height: 8px;
-    -webkit-appearance: none;
-    appearance: none;
-    background: var(--accent-color);
-    outline: none;
-    border-radius: 4px;
-    opacity: 0.7;
-    transition: opacity 0.2s;
+.data-summary h3 {
+    color: #b8c0f0;
+    margin: 0 0 15px 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #3a3a5a;
 }
 
-.slider:hover {
-    opacity: 1;
+.time-groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
 }
 
-.slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 20px;
-    height: 20px;
-    background: var(--primary-color);
-    border-radius: 50%;
-    cursor: pointer;
+.time-group {
+    background: #343450;
+    padding: 15px;
+    border-radius: 6px;
+    border-left: 4px solid;
     transition: transform 0.2s;
 }
 
-.slider::-webkit-slider-thumb:hover {
-    transform: scale(1.2);
+.time-group:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
-.slider-labels {
+.time-header {
     display: flex;
     justify-content: space-between;
-    margin-top: 10px;
-    color: var(--text-color);
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.time-hour {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #e0e0e0;
+}
+
+.point-count {
+    background: rgba(255,255,255,0.1);
+    padding: 4px 8px;
+    border-radius: 12px;
     font-size: 0.9em;
+    color: #8c96db;
 }
 
-/* Estilos para la tabla de resultados con scroll */
-.results-table-container {
-    max-height: 300px;
-    overflow-y: auto;
-    margin: 15px 0;
-    border-radius: 8px;
-    background: var(--secondary-bg);
+.time-details {
+    font-size: 0.9em;
+    color: #8c96db;
 }
 
-.results-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: var(--secondary-bg);
+.time-details div {
+    margin: 5px 0;
 }
 
-.results-table thead {
-    position: sticky;
-    top: 0;
-    background: var(--primary-color);
-    color: white;
-}
-
-.results-table th,
-.results-table td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.results-table tbody tr:hover {
-    background: var(--hover-color);
-}
-
-.results-table tbody tr.active {
-    background: var(--accent-color);
-    color: white;
-}
-
-/* Estilos para el scroll de la tabla */
-.results-table-container::-webkit-scrollbar {
-    width: 8px;
-}
-
-.results-table-container::-webkit-scrollbar-track {
-    background: var(--secondary-bg);
+.point-info {
+    padding: 10px;
+    background: #2a2a40;
     border-radius: 4px;
+    color: #e0e0e0;
 }
 
-.results-table-container::-webkit-scrollbar-thumb {
-    background: var(--accent-color);
-    border-radius: 4px;
+.point-info strong {
+    color: #b8c0f0;
 }
 
-.results-table-container::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-color);
+/* Ajustes para el mapa */
+#historicalMapContainer {
+    margin-bottom: 20px;
+}
+
+/* Animación para los marcadores */
+@keyframes markerPulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.6;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+}
+
+.marker-pulse {
+    animation: markerPulse 2s infinite;
 }

@@ -21,7 +21,8 @@ const appState = {
         mapsLoaded: false,
         pointMarker: null,  // Marcador para punto seleccionado
         pointCircle: null,  // Círculo para radio de búsqueda
-        pointSelected: false // Estado de selección de punto      
+        pointSelected: false, // Estado de selección de punto      
+        markers: []
     },
 };
 
@@ -55,11 +56,6 @@ const domElements = {
     resultsSummary: document.getElementById('resultsSummary'),
     resultsTable: document.getElementById('resultsTable')
 };  
-
-// Variables globales para el manejo de puntos históricos
-let historicalPoints = [];
-let currentPointIndex = 0;
-let historicalMarker = null;
 
 function updateInfoPanel(data) {
     domElements.latitud.textContent = data.LATITUDE || "N/A";
@@ -601,102 +597,6 @@ function highlightPointOnMap(point) {
     }, 3000);
 }
 
-// Función para actualizar la visualización de puntos históricos
-function updateHistoricalDisplay(points) {
-    historicalPoints = points;
-    const slider = document.getElementById('pointSlider');
-    const currentPointSpan = document.getElementById('currentPoint');
-    const pointTimeSpan = document.getElementById('pointTime');
-    const resultsTable = document.getElementById('resultsTable').getElementsByTagName('tbody')[0];
-    
-    // Actualizar el slider
-    slider.max = points.length - 1;
-    slider.value = 0;
-    
-    // Limpiar la tabla
-    resultsTable.innerHTML = '';
-    
-    // Llenar la tabla con los puntos
-    points.forEach((point, index) => {
-        const row = resultsTable.insertRow();
-        row.className = index === 0 ? 'active' : '';
-        
-        const date = new Date(point.fecha);
-        const time = point.hora;
-        
-        row.innerHTML = `
-            <td>${date.toLocaleDateString()}</td>
-            <td>${time}</td>
-            <td>${point.latitud}</td>
-            <td>${point.longitud}</td>
-            <td><button class="highlight-btn" data-index="${index}">Resaltar</button></td>
-        `;
-    });
-    
-    // Actualizar la información del punto actual
-    updateCurrentPointInfo(0);
-    
-    // Mostrar el primer punto en el mapa
-    showPointOnMap(points[0]);
-}
-
-// Función para actualizar la información del punto actual
-function updateCurrentPointInfo(index) {
-    const point = historicalPoints[index];
-    const currentPointSpan = document.getElementById('currentPoint');
-    const pointTimeSpan = document.getElementById('pointTime');
-    
-    currentPointSpan.textContent = `Punto ${index + 1} de ${historicalPoints.length}`;
-    pointTimeSpan.textContent = `Hora: ${point.hora}`;
-    
-    // Actualizar la fila activa en la tabla
-    const rows = document.querySelectorAll('#resultsTable tbody tr');
-    rows.forEach((row, i) => {
-        row.className = i === index ? 'active' : '';
-    });
-}
-
-// Función para mostrar un punto en el mapa
-function showPointOnMap(point) {
-    if (historicalMarker) {
-        historicalMarker.setMap(null);
-    }
-    
-    const position = {
-        lat: parseFloat(point.latitud),
-        lng: parseFloat(point.longitud)
-    };
-    
-    historicalMarker = new google.maps.Marker({
-        position: position,
-        map: appState.historical.map,
-        title: `Fecha: ${point.fecha}, Hora: ${point.hora}`
-    });
-    
-    appState.historical.map.setCenter(position);
-    appState.historical.map.setZoom(18);
-}
-
-// Event listeners para el slider
-document.getElementById('pointSlider').addEventListener('input', function(e) {
-    const index = parseInt(e.target.value);
-    currentPointIndex = index;
-    updateCurrentPointInfo(index);
-    showPointOnMap(historicalPoints[index]);
-});
-
-// Event listeners para los botones de resaltar
-document.getElementById('resultsTable').addEventListener('click', function(e) {
-    if (e.target.classList.contains('highlight-btn')) {
-        const index = parseInt(e.target.dataset.index);
-        currentPointIndex = index;
-        document.getElementById('pointSlider').value = index;
-        updateCurrentPointInfo(index);
-        showPointOnMap(historicalPoints[index]);
-    }
-});
-
-// Modificar la función existente que carga los datos históricos
 async function loadHistoricalData() {
     try {
         const startDate = domElements.startDate.value;
@@ -712,10 +612,14 @@ async function loadHistoricalData() {
         // Detener actualizaciones en tiempo real si están activas
         stopRealTimeUpdates();
 
-        // Limpiar polilínea histórica anterior
+        // Limpiar polilínea histórica anterior y marcadores
         if (appState.historical.polyline) {
             appState.historical.polyline.setPath([]);
         }
+        if (appState.historical.markers) {
+            appState.historical.markers.forEach(marker => marker.setMap(null));
+        }
+        appState.historical.markers = [];
 
         // Ocultar elementos de tiempo real
         if (appState.realTime.marker) {
@@ -739,27 +643,68 @@ async function loadHistoricalData() {
         if (!result?.success || !Array.isArray(result.data)) {
             throw new Error("Formato de datos incorrecto");
         }
-        
+
         if (result.data.length === 0) {
             throw new Error("No hay datos para el rango seleccionado");
         }
 
-        // Procesar coordenadas
-        const path = result.data.map(item => ({
-            lat: parseFloat(item.LATITUDE),
-            lng: parseFloat(item.LONGITUDE)
-        })).filter(coord => !isNaN(coord.lat) && !isNaN(coord.lng));
+        // Procesar coordenadas y crear marcadores
+        const path = [];
+        const markers = [];
+        const timeGroups = {};
+        
+        result.data.forEach((item, index) => {
+            const lat = parseFloat(item.LATITUDE);
+            const lng = parseFloat(item.LONGITUDE);
+            
+            if (!isNaN(lat) && !isNaN(lng)) {
+                path.push({ lat, lng });
+                
+                // Agrupar por hora
+                const date = new Date(item.DATE + 'T' + item.TIME);
+                const hourKey = date.getHours();
+                if (!timeGroups[hourKey]) {
+                    timeGroups[hourKey] = [];
+                }
+                timeGroups[hourKey].push(item);
+                
+                // Crear marcador con color según la hora
+                const marker = new google.maps.Marker({
+                    position: { lat, lng },
+                    map: appState.historical.map,
+                    title: `Fecha: ${item.DATE} Hora: ${item.TIME}`,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 6,
+                        fillColor: getColorForHour(hourKey),
+                        fillOpacity: 0.8,
+                        strokeColor: "#FFFFFF",
+                        strokeWeight: 1
+                    }
+                });
+                
+                // Añadir InfoWindow con detalles
+                const infoWindow = new google.maps.InfoWindow({
+                    content: `
+                        <div class="point-info">
+                            <strong>Fecha:</strong> ${item.DATE}<br>
+                            <strong>Hora:</strong> ${item.TIME}<br>
+                            <strong>Latitud:</strong> ${lat.toFixed(6)}<br>
+                            <strong>Longitud:</strong> ${lng.toFixed(6)}
+                        </div>
+                    `
+                });
+                
+                marker.addListener('click', () => {
+                    infoWindow.open(appState.historical.map, marker);
+                });
+                
+                markers.push(marker);
+            }
+        });
 
-        if (path.length === 0) {
-            throw new Error("No hay coordenadas válidas en los datos recibidos");
-        }
-
-        console.log(`Procesadas ${path.length} coordenadas válidas`);
-
-        // Verificar si el mapa histórico está inicializado
-        if (!appState.historical.map) {
-            initHistoricalMapInstance();
-        }
+        // Guardar marcadores en el estado
+        appState.historical.markers = markers;
 
         // Crear nueva polilínea histórica o actualizar la existente
         if (!appState.historical.polyline) {
@@ -767,8 +712,8 @@ async function loadHistoricalData() {
                 path: path,
                 geodesic: true,
                 strokeColor: "#4285F4",
-                strokeOpacity: 1.0,
-                strokeWeight: 4,
+                strokeOpacity: 0.5,
+                strokeWeight: 3,
                 map: appState.historical.map
             });
         } else {
@@ -781,40 +726,8 @@ async function loadHistoricalData() {
         path.forEach(point => bounds.extend(point));
         appState.historical.map.fitBounds(bounds);
 
-        // Verificar si hay un punto seleccionado para filtrar
-        if (appState.historical.pointSelected && domElements.enablePointSelection.checked) {
-            const selectedPoint = {
-                lat: parseFloat(domElements.selectedLat.value),
-                lng: parseFloat(domElements.selectedLng.value)
-            };
-            
-            const radius = parseInt(domElements.searchRadius.value);
-            
-            // Encontrar puntos cercanos
-            const nearbyPoints = findPointsNearby(selectedPoint, result.data, radius);
-            
-            // Mostrar resultados en la tabla
-            domElements.pointSearchResults.style.display = 'block';
-            buildResultsTable(nearbyPoints);
-            
-            // Resaltar visualmente en el mapa los puntos encontrados
-            if (nearbyPoints.length > 0) {
-                setTimeout(() => {
-                    const firstPoint = {
-                        lat: parseFloat(nearbyPoints[0].LATITUDE),
-                        lng: parseFloat(nearbyPoints[0].LONGITUDE)
-                    };
-                    appState.historical.map.setCenter(firstPoint);
-                    appState.historical.map.setZoom(16);
-                }, 500);
-            }
-        } else {
-            // Si no hay punto seleccionado, ocultar sección de resultados
-            domElements.pointSearchResults.style.display = 'none';
-        }
-
-        // Forzar redibujado
-        google.maps.event.trigger(appState.historical.map, 'resize');
+        // Mostrar resumen de datos
+        showDataSummary(timeGroups);
 
     } catch (error) {
         console.error('Error cargando datos históricos:', error);
@@ -822,6 +735,57 @@ async function loadHistoricalData() {
     } finally {
         showLoading(false);
     }
+}
+
+// Función auxiliar para obtener color según la hora
+function getColorForHour(hour) {
+    const colors = {
+        0: '#FF0000', // Rojo para medianoche
+        6: '#FFA500', // Naranja para amanecer
+        12: '#FFFF00', // Amarillo para mediodía
+        18: '#00FF00', // Verde para atardecer
+        23: '#0000FF'  // Azul para noche
+    };
+    
+    // Encontrar el color más cercano
+    const hourKeys = Object.keys(colors).map(Number);
+    const closestHour = hourKeys.reduce((prev, curr) => {
+        return Math.abs(curr - hour) < Math.abs(prev - hour) ? curr : prev;
+    });
+    
+    return colors[closestHour];
+}
+
+// Función para mostrar resumen de datos
+function showDataSummary(timeGroups) {
+    const summaryContainer = document.createElement('div');
+    summaryContainer.className = 'data-summary';
+    
+    let summaryHTML = '<h3>Resumen de Registros por Hora</h3>';
+    summaryHTML += '<div class="time-groups">';
+    
+    Object.entries(timeGroups).sort(([hourA], [hourB]) => Number(hourA) - Number(hourB)).forEach(([hour, points]) => {
+        const color = getColorForHour(Number(hour));
+        summaryHTML += `
+            <div class="time-group" style="border-left-color: ${color}">
+                <div class="time-header">
+                    <span class="time-hour">${hour}:00</span>
+                    <span class="point-count">${points.length} puntos</span>
+                </div>
+                <div class="time-details">
+                    <div>Primer punto: ${points[0].TIME}</div>
+                    <div>Último punto: ${points[points.length - 1].TIME}</div>
+                </div>
+            </div>
+        `;
+    });
+    
+    summaryHTML += '</div>';
+    summaryContainer.innerHTML = summaryHTML;
+    
+    // Insertar el resumen después del mapa
+    const mapContainer = document.getElementById('historicalMapContainer');
+    mapContainer.parentNode.insertBefore(summaryContainer, mapContainer.nextSibling);
 }
 
 function initHistoricalTracking() {

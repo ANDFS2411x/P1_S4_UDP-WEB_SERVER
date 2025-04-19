@@ -107,32 +107,19 @@
             <div class="results-summary">
                 <p id="resultsSummary">Selecciona un punto en el mapa y carga la trayectoria para ver cuándo el taxi pasó por esa ubicación.</p>
             </div>
-            
-            <!-- Nuevo slider para navegar por los puntos -->
-            <div class="slider-container">
-                <input type="range" id="pointSlider" min="0" max="0" value="0" class="slider">
-                <div class="slider-labels">
-                    <span id="currentPoint">Punto 0 de 0</span>
-                    <span id="pointTime">Hora: --:--:--</span>
-                </div>
+            <div id="resultsTable" class="results-table">
+                <!-- Aquí se cargarán dinámicamente los resultados -->
             </div>
-
-            <!-- Contenedor para la tabla de resultados con scroll -->
-            <div class="results-table-container">
-                <table id="resultsTable" class="results-table">
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Hora</th>
-                            <th>Latitud</th>
-                            <th>Longitud</th>
-                            <th>Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Los resultados se cargarán dinámicamente aquí -->
-                    </tbody>
-                </table>
+        </div>
+        
+        <!-- Nuevo contenedor para resultados de búsqueda por punto -->
+        <div id="pointSearchResults" class="results-container">
+            <h3>Resultados de búsqueda por punto</h3>
+            <div class="results-summary">
+                <p id="resultsSummary">Selecciona un punto en el mapa y carga la trayectoria para ver cuándo el taxi pasó por esa ubicación.</p>
+            </div>
+            <div id="resultsTable" class="results-table">
+                <!-- Aquí se cargarán dinámicamente los resultados -->
             </div>
         </div>
     </div>
