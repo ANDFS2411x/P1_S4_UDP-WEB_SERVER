@@ -7,6 +7,9 @@
     <title id="titulo">SnapMap ~ <%= title %></title>
     <link rel="stylesheet" id="themeStyles">
     <link rel="icon" type="image/x-icon" id="icono"/>
+    <!-- Precargar el script de Google Maps -->
+    <link rel="preconnect" href="https://maps.googleapis.com">
+    <link rel="preconnect" href="https://maps.gstatic.com">
 </head>
 
 <body>
@@ -33,7 +36,9 @@
         <!-- Map is now first for visual priority -->
         <div id="realTimeMapContainer" class="mapContainer">
             <div id="realTimeMap" class="map">Cargando mapa...</div>
-            <div id="realTimeLoadingMessage" class="loadingMessage" style="display: none;">Cargando datos...</div>
+            <div id="realTimeLoadingMessage" class="loadingMessage" style="display: none;">
+                <span>Cargando datos...</span>
+            </div>
         </div>
         
         <!-- Panel de información -->
@@ -53,7 +58,9 @@
         <!-- Map first for visual priority -->
         <div id="historicalMapContainer" class="mapContainer">
             <div id="historicalMap" class="map">Seleccione un rango de fechas y haga clic en "Cargar Trayectoria"</div>
-            <div id="historicalLoadingMessage" class="loadingMessage" style="display: none;">Cargando datos históricos...</div>
+            <div id="historicalLoadingMessage" class="loadingMessage" style="display: none;">
+                <span>Cargando datos históricos...</span>
+            </div>
             
             <!-- Timeline controls -->
             <div id="timelineControls" class="timeline-controls" style="display: none;">
@@ -155,12 +162,8 @@
         document.getElementById('about').href = isTesting
             ? '/test/aboutUs'
             : '/aboutUs';
-
-        // Create a new script element
-        const script = document.createElement('script');
-        script.src = isTesting ? '/test/js/main.js' : '/js/main.js';
-        document.body.appendChild(script);
     </script>
     <script src="js/timeline-animation.js"></script>
+    <script defer src="js/main.js"></script>
 </body>
 </html>
