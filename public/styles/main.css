@@ -600,3 +600,108 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 #seguirBtn #loadHistory {
     font-family: 'Exo 2', sans-serif;
 }
+
+/* Timeline Controls */
+.timeline-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    width: 80%;
+    max-width: 600px;
+}
+
+.timeline-slider-container {
+    margin-bottom: 10px;
+}
+
+.timeline-slider {
+    width: 100%;
+    height: 4px;
+    -webkit-appearance: none;
+    background: #ddd;
+    outline: none;
+    border-radius: 2px;
+    margin-bottom: 8px;
+}
+
+.timeline-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #024abf;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.timeline-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.timeline-label {
+    text-align: center;
+    font-size: 0.9em;
+    color: #333;
+    margin-top: 5px;
+}
+
+.timeline-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    align-items: center;
+}
+
+.timeline-btn {
+    background: #024abf;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.timeline-btn:hover {
+    background: #0235a3;
+}
+
+.timeline-speed {
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+}
+
+/* Marker Animation */
+.animated-marker {
+    transition: all 0.5s ease-in-out;
+}
+
+/* Point Info Window */
+.point-info {
+    padding: 10px;
+    max-width: 200px;
+}
+
+.point-info p {
+    margin: 5px 0;
+    font-size: 0.9em;
+}
+
+.point-info-timestamp {
+    font-weight: bold;
+    color: #024abf;
+}

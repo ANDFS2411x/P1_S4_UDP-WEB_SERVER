@@ -6,9 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="titulo">SnapMap ~ <%= title %></title>
     <link rel="stylesheet" id="themeStyles">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <link rel="stylesheet" href="/styles/timeline.css">
     <link rel="icon" type="image/x-icon" id="icono"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 
 <body>
@@ -56,6 +55,28 @@
         <div id="historicalMapContainer" class="mapContainer">
             <div id="historicalMap" class="map">Seleccione un rango de fechas y haga clic en "Cargar Trayectoria"</div>
             <div id="historicalLoadingMessage" class="loadingMessage" style="display: none;">Cargando datos históricos...</div>
+            
+            <!-- Timeline Controls -->
+            <div id="timelineControls" class="timeline-controls" style="display: none;">
+                <div class="timeline-slider-container">
+                    <input type="range" id="timelineSlider" min="0" max="100" value="0" class="timeline-slider">
+                    <div id="timelineLabel" class="timeline-label"></div>
+                </div>
+                <div class="timeline-buttons">
+                    <button id="playPauseBtn" class="timeline-btn">
+                        <i class="fas fa-play"></i>
+                    </button>
+                    <button id="resetTimelineBtn" class="timeline-btn">
+                        <i class="fas fa-undo"></i>
+                    </button>
+                    <select id="playbackSpeed" class="timeline-speed">
+                        <option value="1">1x</option>
+                        <option value="2">2x</option>
+                        <option value="4">4x</option>
+                        <option value="8">8x</option>
+                    </select>
+                </div>
+            </div>
         </div>
 
         <div class="filter-form">
@@ -72,10 +93,58 @@
                 </script>
             </div>
 
+            <div id="pointSelectionContainer" class="point-selection-container">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="enablePointSelection">
+                    <label class="white" for="enablePointSelection">Seleccionar punto en el mapa</label>
+                    <span class="helper-text">(Haz clic en el mapa para seleccionar un punto)</span>
+                </div>
+                
+                <div class="coordinates-container">
+                    <div class="coord-group">
+                        <label for="selectedLat">Latitud:</label>
+                        <input type="text" id="selectedLat" disabled>
+                    </div>
+                    <div class="coord-group">
+                        <label for="selectedLng">Longitud:</label>
+                        <input type="text" id="selectedLng" disabled>
+                    </div>
+                </div>
+                
+                <div class="radius-container">
+                    <label for="searchRadius">Radio de búsqueda (metros):</label>
+                    <input type="number" id="searchRadius" min="10" max="1000" value="50">
+                </div>
+                
+                <button id="clearPointBtn" class="secondary-button" disabled>Borrar punto</button>
+            </div>
+
             <button id="loadHistory" class="action-button">Cargar Trayectoria</button>
         </div>
 
         <div id="historicalError" class="error-message"></div>
+        
+        <!-- Contenedor para resultados de búsqueda por punto -->
+        <div id="pointSearchResults" class="results-container">
+            <h3>Resultados de búsqueda por punto</h3>
+            <div class="results-summary">
+                <p id="resultsSummary">Selecciona un punto en el mapa y carga la trayectoria para ver cuándo el taxi pasó por esa ubicación.</p>
+            </div>
+            <div id="resultsTable" class="results-table">
+                <!-- Aquí se cargarán dinámicamente los resultados -->
+            </div>
+        </div>
+        
+        <!-- Nuevo contenedor para resultados de búsqueda por punto -->
+        <div id="pointSearchResults" class="results-container">
+            <h3>Resultados de búsqueda por punto</h3>
+            <div class="results-summary">
+                <p id="resultsSummary">Selecciona un punto en el mapa y carga la trayectoria para ver cuándo el taxi pasó por esa ubicación.</p>
+            </div>
+            <div id="resultsTable" class="results-table">
+                <!-- Aquí se cargarán dinámicamente los resultados -->
+            </div>
+        </div>
     </div>
     
     <!-- Scripts loading -->
@@ -101,9 +170,11 @@
         document.getElementById('about').href = isTesting
             ? '/test/aboutUs'
             : '/aboutUs';
+
+        // Create a new script element
+        const script = document.createElement('script');
+        script.src = isTesting ? '/test/js/main.js' : '/js/main.js';
+        document.body.appendChild(script);
     </script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=mapsApiLoaded" async defer></script>
-    <script src="/js/timeline.js"></script>
-    <script src="/js/main.js"></script>
 </body>
 </html>
