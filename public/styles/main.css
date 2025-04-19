@@ -604,7 +604,7 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 /* Timeline controls */
 .timeline-controls {
     background: #2a2a40;
-    padding: 15px;
+    padding: 20px;
     border-radius: 8px;
     width: 80%;
     max-width: 600px;
@@ -612,15 +612,33 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     box-shadow: 0 0 10px rgba(0,0,0,0.3);
 }
 
+.timeline-header {
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.timeline-header h3 {
+    color: #fff;
+    margin: 0 0 10px 0;
+    font-size: 1.2em;
+}
+
+.timeline-description {
+    color: #8c96db;
+    font-size: 0.9em;
+    margin: 0 0 15px 0;
+}
+
 .timeline-slider {
     width: 100%;
     height: 20px;
-    -webkit-appearance: none;
+    
     background: #3a3a5a;
     outline: none;
     border-radius: 10px;
     overflow: hidden;
     box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+    margin-bottom: 15px;
 }
 
 .timeline-slider::-webkit-slider-thumb {
@@ -635,8 +653,25 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 }
 
 .timeline-info {
-    text-align: center;
-    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     color: #fff;
     font-size: 14px;
+    padding: 10px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 4px;
+}
+
+.timeline-info span {
+    padding: 5px 10px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+}
+
+/* Eliminar estilos antiguos de la tabla */
+.results-container,
+.results-table,
+.results-summary {
+    display: none;
 }
