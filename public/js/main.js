@@ -21,14 +21,18 @@ const appState = {
         mapsLoaded: false,
         pointMarker: null,  // Marcador para punto seleccionado
         pointCircle: null,  // Círculo para radio de búsqueda
-        pointSelected: false, // Estado de selección de punto
-        // Nuevas propiedades para la animación
-        animationMarker: null,
-        animationPath: [],
-        isPlaying: false,
-        currentIndex: 0,
-        animationSpeed: 1000, // Velocidad en milisegundos
-        animationInterval: null
+        pointSelected: false, // Estado de selección de punto      
+        // Nuevo estado para la línea de tiempo
+        timeline: {
+            isPlaying: false,
+            currentIndex: 0,
+            animationId: null,
+            playbackSpeed: 1,
+            marker: null,
+            path: [],
+            startTime: null,
+            endTime: null
+        }
     },
 };
 
@@ -60,12 +64,7 @@ const domElements = {
     clearPointBtn: document.getElementById('clearPointBtn'),
     pointSearchResults: document.getElementById('pointSearchResults'),
     resultsSummary: document.getElementById('resultsSummary'),
-    resultsTable: document.getElementById('resultsTable'),
-    // Nuevos elementos para la animación
-    timelineSlider: document.getElementById('timelineSlider'),
-    playPauseBtn: document.getElementById('playPauseBtn'),
-    speedControl: document.getElementById('speedControl'),
-    currentTimeDisplay: document.getElementById('currentTimeDisplay'),
+    resultsTable: document.getElementById('resultsTable')
 };  
 
 function updateInfoPanel(data) {
@@ -608,6 +607,131 @@ function highlightPointOnMap(point) {
     }, 3000);
 }
 
+// Función para inicializar la línea de tiempo
+function initTimelineControls() {
+    const timelineSlider = document.getElementById('timelineSlider');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const playbackSpeed = document.getElementById('playbackSpeed');
+    const currentTimeSpan = document.getElementById('currentTime');
+    const totalTimeSpan = document.getElementById('totalTime');
+
+    // Evento para el slider
+    timelineSlider.addEventListener('input', function() {
+        if (appState.historical.timeline.path.length === 0) return;
+        
+        const index = Math.floor((this.value / 100) * (appState.historical.timeline.path.length - 1));
+        updateTimelinePosition(index);
+    });
+
+    // Evento para el botón de play/pause
+    playPauseBtn.addEventListener('click', function() {
+        if (appState.historical.timeline.path.length === 0) return;
+        
+        if (appState.historical.timeline.isPlaying) {
+            pauseTimeline();
+            this.innerHTML = '<i class="fas fa-play"></i>';
+        } else {
+            playTimeline();
+            this.innerHTML = '<i class="fas fa-pause"></i>';
+        }
+    });
+
+    // Evento para el botón de reset
+    resetBtn.addEventListener('click', function() {
+        resetTimeline();
+    });
+
+    // Evento para el selector de velocidad
+    playbackSpeed.addEventListener('change', function() {
+        appState.historical.timeline.playbackSpeed = parseFloat(this.value);
+    });
+}
+
+// Función para actualizar la posición en la línea de tiempo
+function updateTimelinePosition(index) {
+    if (index < 0 || index >= appState.historical.timeline.path.length) return;
+    
+    appState.historical.timeline.currentIndex = index;
+    const point = appState.historical.timeline.path[index];
+    
+    // Actualizar el marcador de posición actual
+    if (!appState.historical.timeline.marker) {
+        appState.historical.timeline.marker = new google.maps.Marker({
+            position: point,
+            map: appState.historical.map,
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 8,
+                fillColor: "#FF4500",
+                fillOpacity: 1,
+                strokeColor: "#FF0000",
+                strokeWeight: 2
+            }
+        });
+    } else {
+        appState.historical.timeline.marker.setPosition(point);
+    }
+    
+    // Actualizar la polilínea hasta el punto actual
+    const path = appState.historical.timeline.path.slice(0, index + 1);
+    appState.historical.polyline.setPath(path);
+    
+    // Actualizar el tiempo actual
+    const currentTime = new Date(point.timestamp);
+    document.getElementById('currentTime').textContent = formatTime(currentTime);
+}
+
+// Función para reproducir la línea de tiempo
+function playTimeline() {
+    if (appState.historical.timeline.isPlaying) return;
+    
+    appState.historical.timeline.isPlaying = true;
+    const animate = () => {
+        if (!appState.historical.timeline.isPlaying) return;
+        
+        const nextIndex = appState.historical.timeline.currentIndex + 1;
+        if (nextIndex >= appState.historical.timeline.path.length) {
+            pauseTimeline();
+            return;
+        }
+        
+        updateTimelinePosition(nextIndex);
+        document.getElementById('timelineSlider').value = 
+            (nextIndex / (appState.historical.timeline.path.length - 1)) * 100;
+        
+        const delay = 1000 / appState.historical.timeline.playbackSpeed;
+        appState.historical.timeline.animationId = setTimeout(animate, delay);
+    };
+    
+    animate();
+}
+
+// Función para pausar la línea de tiempo
+function pauseTimeline() {
+    appState.historical.timeline.isPlaying = false;
+    if (appState.historical.timeline.animationId) {
+        clearTimeout(appState.historical.timeline.animationId);
+    }
+}
+
+// Función para reiniciar la línea de tiempo
+function resetTimeline() {
+    pauseTimeline();
+    updateTimelinePosition(0);
+    document.getElementById('timelineSlider').value = 0;
+    document.getElementById('playPauseBtn').innerHTML = '<i class="fas fa-play"></i>';
+}
+
+// Función para formatear el tiempo
+function formatTime(date) {
+    return date.toLocaleTimeString('es-ES', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+}
+
 async function loadHistoricalData() {
     try {
         const startDate = domElements.startDate.value;
@@ -655,17 +779,27 @@ async function loadHistoricalData() {
             throw new Error("No hay datos para el rango seleccionado");
         }
 
-        // Procesar coordenadas
+        // Procesar coordenadas y timestamps
         const path = result.data.map(item => ({
             lat: parseFloat(item.LATITUDE),
-            lng: parseFloat(item.LONGITUDE)
+            lng: parseFloat(item.LONGITUDE),
+            timestamp: new Date(item.DATE + 'T' + item.TIME)
         })).filter(coord => !isNaN(coord.lat) && !isNaN(coord.lng));
 
         if (path.length === 0) {
             throw new Error("No hay coordenadas válidas en los datos recibidos");
         }
 
-        console.log(`Procesadas ${path.length} coordenadas válidas`);
+        // Inicializar la línea de tiempo
+        appState.historical.timeline.path = path;
+        appState.historical.timeline.startTime = path[0].timestamp;
+        appState.historical.timeline.endTime = path[path.length - 1].timestamp;
+        
+        // Actualizar etiquetas de tiempo
+        document.getElementById('totalTime').textContent = formatTime(appState.historical.timeline.endTime);
+        
+        // Inicializar controles de la línea de tiempo
+        initTimelineControls();
 
         // Verificar si el mapa histórico está inicializado
         if (!appState.historical.map) {
@@ -726,13 +860,6 @@ async function loadHistoricalData() {
 
         // Forzar redibujado
         google.maps.event.trigger(appState.historical.map, 'resize');
-
-        // Después de cargar los datos, inicializar los controles de la línea de tiempo
-        if (appState.historical.recorrido.length > 0) {
-            domElements.timelineSlider.max = appState.historical.recorrido.length - 1;
-            domElements.timelineSlider.value = 0;
-            updateAnimationPosition(0);
-        }
 
     } catch (error) {
         console.error('Error cargando datos históricos:', error);
@@ -847,141 +974,20 @@ function initHistoricalTracking() {
     }
 }
 
-// Funciones para la animación de la línea de tiempo
-function initTimelineControls() {
-    if (!domElements.timelineSlider || !domElements.playPauseBtn || !domElements.speedControl) {
-        console.warn('Elementos de control de línea de tiempo no encontrados');
-        return;
-    }
-
-    // Inicializar el slider
-    domElements.timelineSlider.addEventListener('input', function() {
-        const index = parseInt(this.value);
-        updateAnimationPosition(index);
-    });
-
-    // Control de reproducción
-    domElements.playPauseBtn.addEventListener('click', function() {
-        if (appState.historical.isPlaying) {
-            pauseAnimation();
-        } else {
-            playAnimation();
-        }
-    });
-
-    // Control de velocidad
-    domElements.speedControl.addEventListener('change', function() {
-        const speed = parseInt(this.value);
-        updateAnimationSpeed(speed);
-    });
-}
-
-function updateAnimationPosition(index) {
-    if (!appState.historical.recorrido[index]) return;
-    
-    appState.historical.currentIndex = index;
-    const point = appState.historical.recorrido[index];
-    
-    // Actualizar marcador de posición actual
-    if (!appState.historical.animationMarker) {
-        appState.historical.animationMarker = new google.maps.Marker({
-            map: appState.historical.map,
-            icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 8,
-                fillColor: "#FF0000",
-                fillOpacity: 1,
-                strokeColor: "#FFFFFF",
-                strokeWeight: 2
-            }
-        });
-    }
-    
-    appState.historical.animationMarker.setPosition(point);
-    
-    // Actualizar la polilínea hasta el punto actual
-    appState.historical.polyline.setPath(appState.historical.recorrido.slice(0, index + 1));
-    
-    // Actualizar el display de tiempo
-    if (domElements.currentTimeDisplay) {
-        const date = new Date(point.timestamp);
-        domElements.currentTimeDisplay.textContent = date.toLocaleString();
-    }
-}
-
-function playAnimation() {
-    if (appState.historical.isPlaying) return;
-    
-    appState.historical.isPlaying = true;
-    domElements.playPauseBtn.textContent = '⏸️ Pausar';
-    
-    appState.historical.animationInterval = setInterval(() => {
-        if (appState.historical.currentIndex < appState.historical.recorrido.length - 1) {
-            appState.historical.currentIndex++;
-            updateAnimationPosition(appState.historical.currentIndex);
-            domElements.timelineSlider.value = appState.historical.currentIndex;
-        } else {
-            pauseAnimation();
-        }
-    }, appState.historical.animationSpeed);
-}
-
-function pauseAnimation() {
-    if (!appState.historical.isPlaying) return;
-    
-    appState.historical.isPlaying = false;
-    domElements.playPauseBtn.textContent = '▶️ Reproducir';
-    clearInterval(appState.historical.animationInterval);
-}
-
-function updateAnimationSpeed(speed) {
-    appState.historical.animationSpeed = speed;
-    if (appState.historical.isPlaying) {
-        pauseAnimation();
-        playAnimation();
-    }
-}
-
 function initApp() {
-    // Inicializar los mapas cuando la API de Google Maps esté lista
-    if (window.google && window.google.maps) {
-        initMap();
-    } else {
-        // Si la API aún no está lista, esperar a que se cargue
-        window.mapsApiLoaded = initMap;
-    }
+    // Configurar eventos para cambiar entre las secciones
+    domElements.realTimeBtn.addEventListener("click", switchToRealTime);
+    domElements.historicalBtn.addEventListener("click", switchToHistorical);
+    //domElements.membersBtn.addEventListener("click", switchToMembers);
 
-    // Inicializar los controles de la línea de tiempo
-    initTimelineControls();
+    // Inicializar mapas
+    initMap();
 
-    // Configurar los manejadores de eventos para los botones de navegación
-    domElements.realTimeBtn.addEventListener('click', switchToRealTime);
-    domElements.historicalBtn.addEventListener('click', switchToHistorical);
-    domElements.membersBtn.addEventListener('click', switchToMembers);
-
-    // Configurar el botón de seguir taxi
-    domElements.seguirBtn.addEventListener('click', function() {
-        appState.realTime.seguirCentrando = !appState.realTime.seguirCentrando;
-        this.textContent = appState.realTime.seguirCentrando ? 'Dejar de seguir' : 'Seguir Taxi';
-    });
-
-    // Configurar el botón de cargar datos históricos
-    domElements.loadHistory.addEventListener('click', loadHistoricalData);
-
-    // Configurar el botón de borrar punto seleccionado
-    domElements.clearPointBtn.addEventListener('click', clearSelectedPoint);
-
-    // Configurar el cambio de radio de búsqueda
-    initRadiusChangeHandler();
-
-    // Configurar el cambio de selección de punto
-    domElements.enablePointSelection.addEventListener('change', function() {
-        const isEnabled = this.checked;
-        domElements.selectedLat.disabled = !isEnabled;
-        domElements.selectedLng.disabled = !isEnabled;
-        domElements.clearPointBtn.disabled = !isEnabled;
-        domElements.searchRadius.disabled = !isEnabled;
-    });
+    // Inicializar seguimiento histórico
+    initHistoricalTracking();
+    
+    // Hacer que la función mapsApiLoaded sea global para que Google Maps pueda llamarla
+    window.mapsApiLoaded = mapsApiLoaded;
 }
 
 // Iniciar la aplicación cuando el DOM esté listo

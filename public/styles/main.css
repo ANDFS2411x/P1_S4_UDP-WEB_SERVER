@@ -601,97 +601,113 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     font-family: 'Exo 2', sans-serif;
 }
 
-/* Estilos para los controles de la línea de tiempo */
+/* Estilos para la línea de tiempo animada */
 .timeline-controls {
     position: absolute;
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(42, 42, 64, 0.9);
     padding: 15px;
     border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     width: 80%;
     max-width: 600px;
     z-index: 1000;
 }
 
-.timeline-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-#currentTimeDisplay {
-    font-family: monospace;
-    font-size: 1.1em;
-    color: #333;
-}
-
-.timeline-button {
-    background: #4CAF50;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9em;
-    transition: background-color 0.3s;
-}
-
-.timeline-button:hover {
-    background: #45a049;
-}
-
 .timeline-slider-container {
-    margin: 10px 0;
+    margin-bottom: 10px;
 }
 
 .timeline-slider {
     width: 100%;
     height: 6px;
     -webkit-appearance: none;
-    background: #ddd;
+    background: #3a3a5a;
     border-radius: 3px;
     outline: none;
+    margin-bottom: 5px;
 }
 
 .timeline-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
+    appearance: none;
     width: 16px;
     height: 16px;
-    background: #4CAF50;
+    background: #b103fc;
     border-radius: 50%;
     cursor: pointer;
-    transition: background 0.3s;
+    transition: background 0.2s;
 }
 
 .timeline-slider::-webkit-slider-thumb:hover {
-    background: #45a049;
+    background: #8a02c3;
 }
 
-.timeline-speed-control {
+.timeline-labels {
+    display: flex;
+    justify-content: space-between;
+    color: #8c96db;
+    font-size: 12px;
+}
+
+.timeline-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    align-items: center;
+}
+
+.timeline-btn {
+    background: #343450;
+    border: none;
+    color: #b8c0f0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: center;
+    transition: all 0.2s;
 }
 
-.timeline-speed-control label {
-    color: #666;
-    font-size: 0.9em;
+.timeline-btn:hover {
+    background: #424260;
+    transform: scale(1.1);
 }
 
-.timeline-speed-control select {
-    padding: 4px 8px;
-    border: 1px solid #ddd;
+.timeline-select {
+    background: #343450;
+    color: #b8c0f0;
+    border: 1px solid #3a3a5a;
+    padding: 5px 10px;
     border-radius: 4px;
-    background: white;
-    color: #333;
-    font-size: 0.9em;
+    cursor: pointer;
 }
 
-/* Ajuste para el contenedor del mapa histórico */
-#historicalMapContainer {
-    position: relative;
+.timeline-select:focus {
+    outline: none;
+    border-color: #b103fc;
+}
+
+/* Animación para el marcador de posición actual */
+.current-position-marker {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
