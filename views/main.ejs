@@ -63,66 +63,52 @@
             </div>
         </div>
 
-        <!-- Historical Controls -->
+        <!-- Timeline controls - Moved outside mapContainer for better visibility -->
+        <div id="timelineControls" class="timeline-controls" style="display: none;">
+            <input type="range" id="timelineSlider" min="0" max="100" value="0" class="timeline-slider">
+            <div class="timeline-info">
+                <span id="currentTimeInfo">--:--:--</span>
+            </div>
+        </div>
+
         <div class="filter-form">
-            <div class="visualization-mode">
-                <label class="mode-switch">
-                    <input type="radio" name="visualizationMode" value="timeline" checked> 
-                    Ver trayectoria en el tiempo
-                </label>
-                <label class="mode-switch">
-                    <input type="radio" name="visualizationMode" value="point"> 
-                    Buscar por punto
-                </label>
+            <div class="form-group">
+                <label for="startDate">Fecha y hora inicial:</label>
+                <input type="datetime-local" id="startDate">
             </div>
 
-            <!-- Timeline Mode Controls -->
-            <div id="timelineMode">
-                <div class="form-group">
-                    <label for="startDate">Fecha y hora inicial:</label>
-                    <input type="datetime-local" id="startDate">
-                </div>
-
-                <div class="form-group">
-                    <label for="endDate">Fecha y hora final:</label>
-                    <input type="datetime-local" id="endDate">
-                </div>
-
-                <div id="timelineControls" class="timeline-controls" style="display: none;">
-                    <input type="range" id="timelineSlider" min="0" max="100" value="0" class="timeline-slider">
-                    <div class="timeline-info">
-                        <span id="currentTimeInfo">--:--:--</span>
-                    </div>
-                </div>
+            <div class="form-group">
+                <label for="endDate">Fecha y hora final:</label>
+                <input type="datetime-local" id="endDate">
+                <script>
+                    document.getElementById("fecha").max = new Date().toISOString().split("T")[0];
+                </script>
             </div>
 
-            <!-- Point Search Mode Controls -->
-            <div id="pointMode" style="display: none;">
-                <div id="pointSelectionContainer" class="point-selection-container">
-                    <div class="checkbox-container">
-                        <input type="checkbox" id="enablePointSelection">
-                        <label class="white" for="enablePointSelection">Seleccionar punto en el mapa</label>
-                        <span class="helper-text">(Haz clic en el mapa para seleccionar un punto)</span>
-                    </div>
-                    
-                    <div class="coordinates-container">
-                        <div class="coord-group">
-                            <label for="selectedLat">Latitud:</label>
-                            <input type="text" id="selectedLat" disabled>
-                        </div>
-                        <div class="coord-group">
-                            <label for="selectedLng">Longitud:</label>
-                            <input type="text" id="selectedLng" disabled>
-                        </div>
-                    </div>
-                    
-                    <div class="radius-container">
-                        <label for="searchRadius">Radio de búsqueda (metros):</label>
-                        <input type="number" id="searchRadius" min="10" max="1000" value="50">
-                    </div>
-                    
-                    <button id="clearPointBtn" class="secondary-button" disabled>Borrar punto</button>
+            <div id="pointSelectionContainer" class="point-selection-container">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="enablePointSelection">
+                    <label class="white" for="enablePointSelection">Seleccionar punto en el mapa</label>
+                    <span class="helper-text">(Haz clic en el mapa para seleccionar un punto)</span>
                 </div>
+                
+                <div class="coordinates-container">
+                    <div class="coord-group">
+                        <label for="selectedLat">Latitud:</label>
+                        <input type="text" id="selectedLat" disabled>
+                    </div>
+                    <div class="coord-group">
+                        <label for="selectedLng">Longitud:</label>
+                        <input type="text" id="selectedLng" disabled>
+                    </div>
+                </div>
+                
+                <div class="radius-container">
+                    <label for="searchRadius">Radio de búsqueda (metros):</label>
+                    <input type="number" id="searchRadius" min="10" max="1000" value="50">
+                </div>
+                
+                <button id="clearPointBtn" class="secondary-button" disabled>Borrar punto</button>
             </div>
 
             <button id="loadHistory" class="action-button">Cargar Trayectoria</button>
@@ -130,8 +116,19 @@
 
         <div id="historicalError" class="error-message"></div>
         
-        <!-- Results Container -->
-        <div id="pointSearchResults" class="results-container" style="display: none;">
+        <!-- Contenedor para resultados de búsqueda por punto -->
+        <div id="pointSearchResults" class="results-container">
+            <h3>Resultados de búsqueda por punto</h3>
+            <div class="results-summary">
+                <p id="resultsSummary">Selecciona un punto en el mapa y carga la trayectoria para ver cuándo el taxi pasó por esa ubicación.</p>
+            </div>
+            <div id="resultsTable" class="results-table">
+                <!-- Aquí se cargarán dinámicamente los resultados -->
+            </div>
+        </div>
+        
+        <!-- Nuevo contenedor para resultados de búsqueda por punto -->
+        <div id="pointSearchResults" class="results-container">
             <h3>Resultados de búsqueda por punto</h3>
             <div class="results-summary">
                 <p id="resultsSummary">Selecciona un punto en el mapa y carga la trayectoria para ver cuándo el taxi pasó por esa ubicación.</p>

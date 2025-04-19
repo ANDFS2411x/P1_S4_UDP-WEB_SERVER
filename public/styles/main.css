@@ -615,10 +615,7 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 .timeline-slider {
     width: 100%;
     height: 20px;
-    /* Reset default appearance */
     -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
     background: #3a3a5a;
     outline: none;
     border-radius: 10px;
@@ -626,10 +623,8 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
 }
 
-/* Webkit (Chrome, Safari, newer versions of Opera) */
 .timeline-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
-    appearance: none;
     width: 20px;
     height: 20px;
     border-radius: 50%;
@@ -637,58 +632,6 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     cursor: pointer;
     border: 4px solid #fff;
     box-shadow: -407px 0 0 400px #FF0000;
-}
-
-/* Mozilla Firefox */
-.timeline-slider::-moz-range-thumb {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: #FF0000;
-    cursor: pointer;
-    border: 4px solid #fff;
-    box-shadow: -407px 0 0 400px #FF0000;
-}
-
-/* Microsoft Edge and IE */
-.timeline-slider::-ms-thumb {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: #FF0000;
-    cursor: pointer;
-    border: 4px solid #fff;
-    box-shadow: -407px 0 0 400px #FF0000;
-}
-
-/* Track styles for different browsers */
-.timeline-slider::-webkit-slider-runnable-track {
-    height: 20px;
-    background: #3a3a5a;
-    border-radius: 10px;
-}
-
-.timeline-slider::-moz-range-track {
-    height: 20px;
-    background: #3a3a5a;
-    border-radius: 10px;
-}
-
-.timeline-slider::-ms-track {
-    height: 20px;
-    background: transparent;
-    border-color: transparent;
-    color: transparent;
-}
-
-.timeline-slider::-ms-fill-lower {
-    background: #FF0000;
-    border-radius: 10px;
-}
-
-.timeline-slider::-ms-fill-upper {
-    background: #3a3a5a;
-    border-radius: 10px;
 }
 
 .timeline-info {
@@ -698,32 +641,20 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     font-size: 14px;
 }
 
-/* Visualization Mode Selector */
-.visualization-mode {
-    margin-bottom: 20px;
+.info-message {
+    background: rgba(76, 175, 80, 0.9);
+    color: white;
     padding: 15px;
-    background: rgba(42, 42, 64, 0.5);
     border-radius: 8px;
-    display: flex;
-    justify-content: space-around;
+    margin: 15px auto;
+    max-width: 600px;
+    text-align: center;
+    animation: fadeInOut 5s ease-in-out;
 }
 
-.mode-switch {
-    color: #fff;
-    cursor: pointer;
-    padding: 10px 20px;
-    border-radius: 4px;
-    transition: background-color 0.3s;
-}
-
-.mode-switch:hover {
-    background-color: rgba(86, 103, 216, 0.3);
-}
-
-.mode-switch input[type="radio"] {
-    margin-right: 8px;
-}
-
-.mode-switch input[type="radio"]:checked + span {
-    color: #5667d8;
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(-20px); }
+    10% { opacity: 1; transform: translateY(0); }
+    90% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-20px); }
 }
