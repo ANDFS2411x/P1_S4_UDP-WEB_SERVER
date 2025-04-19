@@ -26,36 +26,49 @@ const appState = {
     },
 };
 
+// Función auxiliar para obtener elementos del DOM de forma segura
+function getElement(id) {
+    const element = document.getElementById(id);
+    if (!element) {
+        console.warn(`Elemento #${id} no encontrado`);
+    }
+    return element;
+}
+
 const domElements = {
-    realTimeBtn: document.getElementById('realTimeBtn'),
-    historicalBtn: document.getElementById('historicalBtn'),
-    membersBtn: document.getElementById('membersBtn'),
-    realTimeSection: document.getElementById('realTime'),
-    historicalSection: document.getElementById('historical'),
-    membersSection: document.getElementById('members'),
-    realMapContainer: document.getElementById('realTimeMapContainer'),
-    historicalMapContainer: document.getElementById('historicalMapContainer'),
-    loadingMessage: document.getElementById('loadingMessage'),
-    seguirBtn: document.getElementById('seguirBtn'),
-    loadHistory: document.getElementById('loadHistory'),
-    startDate: document.getElementById('startDate'),
-    endDate: document.getElementById('endDate'),
-    latitud: document.getElementById('latitud'),
-    longitud: document.getElementById('longitud'),
-    fecha: document.getElementById('fecha'),
-    tiempo: document.getElementById('tiempo'),
-    realTimeError: document.getElementById('realTimeError'),
-    historicalError: document.getElementById('historicalError'),
-    // Nuevos elementos para selección de punto
-    enablePointSelection: document.getElementById('enablePointSelection'),
-    selectedLat: document.getElementById('selectedLat'),
-    selectedLng: document.getElementById('selectedLng'),
-    searchRadius: document.getElementById('searchRadius'),
-    clearPointBtn: document.getElementById('clearPointBtn'),
-    pointSearchResults: document.getElementById('pointSearchResults'),
-    resultsSummary: document.getElementById('resultsSummary'),
-    resultsTable: document.getElementById('resultsTable')
-};  
+    init() {
+        this.realTimeBtn = getElement('realTimeBtn');
+        this.historicalBtn = getElement('historicalBtn');
+        this.realTimeSection = getElement('realTime');
+        this.historicalSection = getElement('historical');
+        this.realMapContainer = getElement('realTimeMapContainer');
+        this.historicalMapContainer = getElement('historicalMapContainer');
+        this.loadingMessage = getElement('loadingMessage');
+        this.seguirBtn = getElement('seguirBtn');
+        this.loadHistory = getElement('loadHistory');
+        this.startDate = getElement('startDate');
+        this.endDate = getElement('endDate');
+        this.latitud = getElement('latitud');
+        this.longitud = getElement('longitud');
+        this.fecha = getElement('fecha');
+        this.tiempo = getElement('tiempo');
+        this.realTimeError = getElement('realTimeError');
+        this.historicalError = getElement('historicalError');
+        this.enablePointSelection = getElement('enablePointSelection');
+        this.selectedLat = getElement('selectedLat');
+        this.selectedLng = getElement('selectedLng');
+        this.searchRadius = getElement('searchRadius');
+        this.clearPointBtn = getElement('clearPointBtn');
+        this.pointSearchResults = getElement('pointSearchResults');
+        this.resultsSummary = getElement('resultsSummary');
+        this.resultsTable = getElement('resultsTable');
+        this.timelineControls = getElement('timelineControls');
+        this.timelineSlider = getElement('timelineSlider');
+        this.currentTimeInfo = getElement('currentTimeInfo');
+        this.historicalLoadingMessage = getElement('historicalLoadingMessage');
+        this.realTimeLoadingMessage = getElement('realTimeLoadingMessage');
+    }
+};
 
 function updateInfoPanel(data) {
     domElements.latitud.textContent = data.LATITUDE || "N/A";
@@ -71,23 +84,12 @@ function showError(element, message) {
 }
 
 function showLoading(show) {
-    // En el HTML hay dos elementos de carga diferentes, uno para cada sección
-    if (domElements.historicalSection.classList.contains("active")) {
-        // Estamos en la sección histórica
-        const historicalLoadingMessage = document.getElementById('historicalLoadingMessage');
-        if (historicalLoadingMessage) {
-            historicalLoadingMessage.style.display = show ? 'block' : 'none';
-        } else {
-            console.warn('Elemento #historicalLoadingMessage no encontrado');
-        }
-    } else {
-        // Estamos en la sección de tiempo real
-        const realTimeLoadingMessage = document.getElementById('realTimeLoadingMessage');
-        if (realTimeLoadingMessage) {
-            realTimeLoadingMessage.style.display = show ? 'block' : 'none';
-        } else {
-            console.warn('Elemento #realTimeLoadingMessage no encontrado');
-        }
+    const loadingMessage = domElements.historicalSection?.classList.contains("active") 
+        ? domElements.historicalLoadingMessage
+        : domElements.realTimeLoadingMessage;
+
+    if (loadingMessage) {
+        loadingMessage.style.display = show ? 'block' : 'none';
     }
 }
 
@@ -376,20 +378,29 @@ async function initMap() {
 
         appState.realTime.recorrido = [posicionInicial];
 
-        // Cargar Google Maps API solo una vez para ambos mapas
+        // Cargar Google Maps API
         if (!window.google || !window.google.maps) {
-            const script = document.createElement('script');
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKeyData.apiKey}&callback=mapsApiLoaded`;
-            script.async = true;
-            script.defer = true;
-            document.head.appendChild(script);
+            await new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKeyData.apiKey}&callback=initMapsCallback`;
+                script.async = true;
+                script.defer = true;
+                script.onerror = reject;
+                window.initMapsCallback = () => {
+                    resolve();
+                    delete window.initMapsCallback;
+                };
+                document.head.appendChild(script);
+            });
+            mapsApiLoaded();
         } else {
-            // Si ya está cargada, inicializar los mapas directamente
             mapsApiLoaded();
         }
     } catch (error) {
         console.error('Error inicializando mapa:', error);
-        domElements.realMapContainer.innerHTML = `Error: ${error.message}`;
+        if (domElements.realMapContainer) {
+            domElements.realMapContainer.innerHTML = `Error: ${error.message}`;
+        }
         showError(domElements.realTimeError, error.message);
     }
 }
@@ -599,16 +610,19 @@ function highlightPointOnMap(point) {
 
 async function loadHistoricalData() {
     try {
-        const startDate = domElements.startDate.value;
-        const endDate = domElements.endDate.value;
-
-        if (!startDate || !endDate) {
+        if (!domElements.startDate?.value || !domElements.endDate?.value) {
             throw new Error("Debe seleccionar ambas fechas");
         }
 
         showLoading(true);
-        domElements.historicalError.style.display = "none";
-        document.getElementById('timelineControls').style.display = 'none';
+        
+        if (domElements.historicalError) {
+            domElements.historicalError.style.display = "none";
+        }
+        
+        if (domElements.timelineControls) {
+            domElements.timelineControls.style.display = 'none';
+        }
 
         // Detener actualizaciones en tiempo real si están activas
         stopRealTimeUpdates();
@@ -627,7 +641,7 @@ async function loadHistoricalData() {
         }
 
         // Crear URL con parámetros de fechas
-        const url = `${config.basePath}/historical-data?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
+        const url = `${config.basePath}/historical-data?startDate=${encodeURIComponent(domElements.startDate.value)}&endDate=${encodeURIComponent(domElements.endDate.value)}`;
         console.log("URL de solicitud:", url);
 
         // Obtener datos históricos
@@ -664,24 +678,23 @@ async function loadHistoricalData() {
         appState.historical.timelineAnimation.setPoints(path);
 
         // Mostrar controles de línea de tiempo
-        document.getElementById('timelineControls').style.display = 'block';
+        if (domElements.timelineControls) {
+            domElements.timelineControls.style.display = 'block';
+        }
 
         // Configurar el slider
-        const timelineSlider = document.getElementById('timelineSlider');
-        const currentTimeInfo = document.getElementById('currentTimeInfo');
-
-        timelineSlider.value = 0;
+        domElements.timelineSlider.value = 0;
         appState.historical.timelineAnimation.setProgress(0);
 
         // Actualizar la información de tiempo cuando se mueve el slider
-        timelineSlider.addEventListener('input', function(e) {
+        domElements.timelineSlider.addEventListener('input', function(e) {
             const progress = parseInt(e.target.value);
             appState.historical.timelineAnimation.setProgress(progress);
             
             // Actualizar la información de tiempo
             const currentPoint = path[Math.floor((progress / 100) * (path.length - 1))];
             if (currentPoint) {
-                currentTimeInfo.textContent = `${currentPoint.date} ${currentPoint.time}`;
+                domElements.currentTimeInfo.textContent = `${currentPoint.date} ${currentPoint.time}`;
             }
         });
 
@@ -747,7 +760,9 @@ async function loadHistoricalData() {
 
     } catch (error) {
         console.error('Error cargando datos históricos:', error);
-        showError(domElements.historicalError, error.message);
+        if (domElements.historicalError) {
+            showError(domElements.historicalError, error.message);
+        }
     } finally {
         showLoading(false);
     }
@@ -854,15 +869,23 @@ function initHistoricalTracking() {
         initRadiusChangeHandler();
     } catch (error) {
         console.error('Error inicializando Historical Tracking:', error);
-        showError(domElements.historicalError, error.message);
+        if (domElements.historicalError) {
+            showError(domElements.historicalError, error.message);
+        }
     }
 }
 
 function initApp() {
+    // Inicializar referencias a elementos del DOM
+    domElements.init();
+
     // Configurar eventos para cambiar entre las secciones
-    domElements.realTimeBtn.addEventListener("click", switchToRealTime);
-    domElements.historicalBtn.addEventListener("click", switchToHistorical);
-    //domElements.membersBtn.addEventListener("click", switchToMembers);
+    if (domElements.realTimeBtn) {
+        domElements.realTimeBtn.addEventListener("click", switchToRealTime);
+    }
+    if (domElements.historicalBtn) {
+        domElements.historicalBtn.addEventListener("click", switchToHistorical);
+    }
 
     // Inicializar mapas
     initMap();
