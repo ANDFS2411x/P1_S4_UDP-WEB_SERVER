@@ -667,72 +667,9 @@ async function loadHistoricalData() {
             throw new Error("No hay coordenadas válidas en los datos recibidos");
         }
 
-        // Inicializar o actualizar la animación de la línea de tiempo
-        if (!appState.historical.timelineAnimation) {
-            appState.historical.timelineAnimation = new TimelineAnimation(appState.historical.map);
-        }
-        appState.historical.timelineAnimation.setPoints(path);
-
-        // Configurar y mostrar controles de línea de tiempo
-        if (timelineControls) {
-            const timelineSlider = document.getElementById('timelineSlider');
-            const currentTimeInfo = document.getElementById('currentTimeInfo');
-
-            if (timelineSlider && currentTimeInfo) {
-                // Resetear slider
-                timelineSlider.value = 0;
-                appState.historical.timelineAnimation.setProgress(0);
-
-                // Actualizar la información de tiempo cuando se mueve el slider
-                timelineSlider.addEventListener('input', function(e) {
-                    const progress = parseInt(e.target.value);
-                    appState.historical.timelineAnimation.setProgress(progress);
-                    
-                    // Actualizar la información de tiempo
-                    const currentPoint = path[Math.floor((progress / 100) * (path.length - 1))];
-                    if (currentPoint) {
-                        currentTimeInfo.textContent = `${currentPoint.date} ${currentPoint.time}`;
-                        
-                        // Centrar el mapa en la posición actual
-                        appState.historical.map.panTo({
-                            lat: currentPoint.lat,
-                            lng: currentPoint.lng
-                        });
-                    }
-                });
-
-                // Escuchar eventos de actualización del timeline
-                window.addEventListener('timelineUpdate', function(e) {
-                    const { progress, totalPoints, points } = e.detail;
-                    
-                    // Actualizar el slider
-                    timelineSlider.value = progress;
-                    appState.historical.timelineAnimation.setProgress(progress);
-
-                    // Actualizar información
-                    if (points[0]) {
-                        currentTimeInfo.textContent = `${points[0].date} ${points[0].time} (${totalPoints} registros encontrados)`;
-                    }
-
-                    // Si hay más de un punto, mostrar controles adicionales
-                    if (totalPoints > 1) {
-                        const nextPoints = points.slice(1);
-                        showAdditionalTimePoints(nextPoints);
-                    }
-                });
-
-                // Mostrar controles
-                timelineControls.style.display = 'block';
-            }
-        }
-
-        // Ajustar vista del mapa
-        const bounds = new google.maps.LatLngBounds();
-        path.forEach(point => bounds.extend(point));
-        appState.historical.map.fitBounds(bounds);
-
         // Verificar si hay un punto seleccionado para filtrar
         if (appState.historical.pointSelected && domElements.enablePointSelection.checked) {
+            // Modo de visualización: Cuándo pasó por aquí
             const selectedPoint = {
                 lat: parseFloat(domElements.selectedLat.value),
                 lng: parseFloat(domElements.selectedLng.value)
@@ -743,28 +680,119 @@ async function loadHistoricalData() {
             // Encontrar puntos cercanos
             const nearbyPoints = findPointsNearby(selectedPoint, result.data, radius);
             
+            if (nearbyPoints.length === 0) {
+                throw new Error("No se encontraron registros cercanos al punto seleccionado");
+            }
+
+            // Convertir los puntos cercanos al formato necesario
+            const nearbyPath = nearbyPoints.map(item => ({
+                lat: parseFloat(item.LATITUDE),
+                lng: parseFloat(item.LONGITUDE),
+                time: item.TIME,
+                date: item.DATE
+            })).sort((a, b) => {
+                // Ordenar por fecha y hora
+                const dateA = new Date(`${a.date} ${a.time}`);
+                const dateB = new Date(`${b.date} ${b.time}`);
+                return dateA - dateB;
+            });
+
+            // Inicializar animación solo con los puntos cercanos
+            if (!appState.historical.timelineAnimation) {
+                appState.historical.timelineAnimation = new TimelineAnimation(appState.historical.map);
+            }
+            appState.historical.timelineAnimation.setPoints(nearbyPath);
+
+            // Configurar y mostrar controles de línea de tiempo
+            if (timelineControls) {
+                const timelineSlider = document.getElementById('timelineSlider');
+                const currentTimeInfo = document.getElementById('currentTimeInfo');
+
+                if (timelineSlider && currentTimeInfo) {
+                    // Resetear slider
+                    timelineSlider.value = 0;
+                    appState.historical.timelineAnimation.setProgress(0);
+
+                    // Actualizar la información de tiempo cuando se mueve el slider
+                    timelineSlider.addEventListener('input', function(e) {
+                        const progress = parseInt(e.target.value);
+                        appState.historical.timelineAnimation.setProgress(progress);
+                        
+                        // Actualizar la información de tiempo
+                        const currentPoint = nearbyPath[Math.floor((progress / 100) * (nearbyPath.length - 1))];
+                        if (currentPoint) {
+                            currentTimeInfo.textContent = `${currentPoint.date} ${currentPoint.time}`;
+                            
+                            // Centrar el mapa en la posición actual con una animación suave
+                            appState.historical.map.panTo({
+                                lat: currentPoint.lat,
+                                lng: currentPoint.lng
+                            });
+                        }
+                    });
+
+                    // Mostrar controles
+                    timelineControls.style.display = 'block';
+                }
+            }
+
+            // Ajustar vista del mapa
+            const bounds = new google.maps.LatLngBounds();
+            nearbyPath.forEach(point => bounds.extend(point));
+            appState.historical.map.fitBounds(bounds);
+
             // Mostrar resultados en la tabla
             domElements.pointSearchResults.style.display = 'block';
             buildResultsTable(nearbyPoints);
-            
-            // Resaltar visualmente en el mapa los puntos encontrados
-            if (nearbyPoints.length > 0) {
-                setTimeout(() => {
-                    const firstPoint = {
-                        lat: parseFloat(nearbyPoints[0].LATITUDE),
-                        lng: parseFloat(nearbyPoints[0].LONGITUDE)
-                    };
-                    appState.historical.map.setCenter(firstPoint);
-                    appState.historical.map.setZoom(16);
-                }, 500);
-            }
+
         } else {
-            // Si no hay punto seleccionado, ocultar sección de resultados
+            // Modo de visualización: Dónde estuvo en este tiempo
+            if (!appState.historical.timelineAnimation) {
+                appState.historical.timelineAnimation = new TimelineAnimation(appState.historical.map);
+            }
+            appState.historical.timelineAnimation.setPoints(path);
+
+            // Configurar y mostrar controles de línea de tiempo
+            if (timelineControls) {
+                const timelineSlider = document.getElementById('timelineSlider');
+                const currentTimeInfo = document.getElementById('currentTimeInfo');
+
+                if (timelineSlider && currentTimeInfo) {
+                    // Resetear slider
+                    timelineSlider.value = 0;
+                    appState.historical.timelineAnimation.setProgress(0);
+
+                    // Actualizar la información de tiempo cuando se mueve el slider
+                    timelineSlider.addEventListener('input', function(e) {
+                        const progress = parseInt(e.target.value);
+                        appState.historical.timelineAnimation.setProgress(progress);
+                        
+                        // Actualizar la información de tiempo
+                        const currentPoint = path[Math.floor((progress / 100) * (path.length - 1))];
+                        if (currentPoint) {
+                            currentTimeInfo.textContent = `${currentPoint.date} ${currentPoint.time}`;
+                            
+                            // Centrar el mapa en la posición actual con una animación suave
+                            appState.historical.map.panTo({
+                                lat: currentPoint.lat,
+                                lng: currentPoint.lng
+                            });
+                        }
+                    });
+
+                    // Mostrar controles
+                    timelineControls.style.display = 'block';
+                }
+            }
+
+            // Ajustar vista del mapa
+            const bounds = new google.maps.LatLngBounds();
+            path.forEach(point => bounds.extend(point));
+            appState.historical.map.fitBounds(bounds);
+
+            // Ocultar resultados de punto si estaban visibles
             domElements.pointSearchResults.style.display = 'none';
         }
-
-        // Forzar redibujado
-        google.maps.event.trigger(appState.historical.map, 'resize');
 
     } catch (error) {
         console.error('Error cargando datos históricos:', error);
@@ -774,54 +802,6 @@ async function loadHistoricalData() {
     } finally {
         showLoading(false);
     }
-}
-
-// Función para mostrar puntos de tiempo adicionales
-function showAdditionalTimePoints(points) {
-    const timePointsContainer = document.getElementById('additionalTimePoints') || 
-                              createTimePointsContainer();
-
-    timePointsContainer.innerHTML = `
-        <h4>Otros momentos encontrados:</h4>
-        <div class="time-points-list">
-            ${points.map((point, index) => `
-                <div class="time-point" data-index="${point.index}">
-                    ${point.date} ${point.time}
-                    <button class="goto-btn">Ir</button>
-                </div>
-            `).join('')}
-        </div>
-    `;
-
-    // Agregar eventos a los botones
-    timePointsContainer.querySelectorAll('.goto-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const timePoint = this.parentElement;
-            const index = parseInt(timePoint.dataset.index);
-            const progress = (index / (appState.historical.timelineAnimation.points.length - 1)) * 100;
-            
-            // Actualizar slider y animación
-            const timelineSlider = document.getElementById('timelineSlider');
-            if (timelineSlider) {
-                timelineSlider.value = progress;
-                appState.historical.timelineAnimation.setProgress(progress);
-            }
-        });
-    });
-}
-
-function createTimePointsContainer() {
-    const container = document.createElement('div');
-    container.id = 'additionalTimePoints';
-    container.className = 'additional-time-points';
-    
-    // Insertar después de los controles del timeline
-    const timelineControls = document.getElementById('timelineControls');
-    if (timelineControls) {
-        timelineControls.parentNode.insertBefore(container, timelineControls.nextSibling);
-    }
-    
-    return container;
 }
 
 function initHistoricalTracking() {
