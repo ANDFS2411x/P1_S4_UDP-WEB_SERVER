@@ -369,7 +369,7 @@ h1 {
 /*Formulario Histórico */
 .filter-form {
     background: #2a2a40;
-    padding: 10px 40px 10px 20px;
+    padding: 15px;
     box-shadow: 0 0 10px rgba(0,0,0,0.3);
     margin: 0 auto 15px;
     max-width: 600px;
@@ -604,10 +604,9 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 /* Timeline controls */
 .timeline-controls {
     background: #2a2a40;
-    padding: 20px;
+    padding: 15px;
     border-radius: 8px;
-    width: 80%;
-    max-width: 600px;
+    width: 100%;
     margin: 15px auto;
     box-shadow: 0 0 10px rgba(0,0,0,0.3);
 }
@@ -676,148 +675,158 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     display: none;
 }
 
-/* Estilos para la sección histórica con layout de dos columnas */
-.historical-container {
-    display: flex;
-    flex-direction: row;
-    height: calc(100vh - 80px); /* Altura total menos el header */
-    width: 100%;
-}
-
-.historical-map-column {
-    flex: 1;
+/* Nuevo layout para la sección histórica */
+#historical {
     display: flex;
     flex-direction: column;
-    min-width: 0; /* Evita que el contenido se desborde */
+    height: calc(100vh - 60px);
+    overflow: hidden;
 }
 
-.historical-controls-column {
-    width: 350px;
-    background-color: #2a2a3a;
-    padding: 20px;
-    overflow-y: auto;
-    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
-}
-
-.historical-map-column .mapContainer {
+#historicalMapContainer {
     flex: 1;
-    min-height: 0; /* Permite que el mapa se ajuste correctamente */
-    position: relative;
+    min-height: 300px;
+    margin-bottom: 10px;
 }
 
-.historical-map-column .map {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100%;
+.historical-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+    background: #2a2a40;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    margin-bottom: 10px;
 }
 
-.historical-map-column .timeline-controls {
-    padding: 15px;
-    background-color: #2a2a3a;
-    margin-top: 10px;
-    border-radius: 5px;
-    z-index: 10;
+.historical-controls-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
-/* Ajustes responsive para la sección histórica */
-@media screen and (max-width: 992px) {
-    .historical-container {
+.historical-controls-col {
+    flex: 1;
+    min-width: 250px;
+}
+
+/* Media queries para responsive */
+@media screen and (min-width: 992px) {
+    #historical {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
+    #historicalMapContainer {
+        flex: 2;
+        min-width: 60%;
+        margin-right: 10px;
+        margin-bottom: 0;
+    }
+    
+    .historical-controls {
+        flex: 1;
+        min-width: 35%;
+        max-width: 40%;
+        margin-bottom: 0;
+    }
+    
+    .timeline-controls {
+        width: 100%;
+        margin-top: 10px;
+    }
+}
+
+@media screen and (max-width: 991px) {
+    #historical {
         flex-direction: column;
-        height: auto;
     }
     
-    .historical-map-column {
-        width: 100%;
-        height: 60vh;
+    #historicalMapContainer {
+        flex: 1;
+        min-height: 300px;
+        margin-right: 0;
+        margin-bottom: 10px;
     }
     
-    .historical-controls-column {
+    .historical-controls {
         width: 100%;
-        box-shadow: none;
-        border-top: 1px solid #3a3a4a;
+        margin-bottom: 10px;
+    }
+    
+    .historical-controls-row {
+        flex-direction: column;
+    }
+    
+    .historical-controls-col {
+        width: 100%;
+    }
+    
+    .timeline-controls {
+        width: 100%;
+        margin-top: 10px;
     }
 }
 
 @media screen and (max-width: 768px) {
-    .historical-map-column {
-        height: 50vh;
-    }
-    
-    .historical-controls-column {
-        padding: 15px;
-    }
-    
-    .filter-form {
-        padding: 15px;
-    }
-    
-    .form-group {
-        margin-bottom: 15px;
-    }
-    
     .coordinates-container {
         flex-direction: column;
+        gap: 5px;
     }
     
-    .coord-group {
-        width: 100%;
-        margin-bottom: 10px;
-    }
-}
-
-@media screen and (max-width: 576px) {
-    .historical-map-column {
-        height: 40vh;
+    .info-panel {
+        grid-template-columns: 1fr;
     }
     
-    .historical-controls-column {
+    h1 {
+        font-size: 20px;
+    }
+    
+    .filter-form, .info-panel, .results-container {
         padding: 10px;
     }
     
-    .filter-form {
+    .historical-controls {
         padding: 10px;
     }
     
     .form-group input {
-        padding: 8px;
+        font-size: 14px;
+    }
+}
+
+@media screen and (max-width: 576px) {
+    .action-button {
+        padding: 10px 15px;
         font-size: 14px;
     }
     
-    .action-button, .secondary-button {
-        padding: 10px 15px;
-        font-size: 14px;
+    .mapContainer {
+        min-height: 250px;
+    }
+    
+    .historical-controls {
+        padding: 8px;
     }
     
     .timeline-controls {
         padding: 10px;
     }
     
-    .timeline-slider {
-        height: 15px;
-    }
-    
     .timeline-info {
         flex-direction: column;
-        align-items: flex-start;
         gap: 5px;
     }
 }
 
 @media screen and (max-width: 480px) {
-    .historical-map-column {
-        height: 35vh;
+    .mapContainer {
+        min-height: 200px;
     }
     
-    .historical-controls-column {
-        padding: 8px;
-    }
-    
-    .filter-form {
-        padding: 8px;
+    .historical-controls {
+        padding: 5px;
     }
     
     .form-group label {
@@ -825,146 +834,6 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     }
     
     .form-group input {
-        padding: 6px;
-        font-size: 13px;
-    }
-    
-    .action-button, .secondary-button {
-        padding: 8px 12px;
-        font-size: 13px;
-    }
-    
-    .timeline-controls {
         padding: 8px;
-    }
-    
-    .timeline-slider {
-        height: 12px;
-    }
-    
-    .timeline-info span {
-        font-size: 12px;
-    }
-}
-
-/* Mejoras para dispositivos muy pequeños */
-@media screen and (max-width: 360px) {
-    .historical-map-column {
-        height: 30vh;
-    }
-    
-    .historical-controls-column {
-        padding: 5px;
-    }
-    
-    .filter-form {
-        padding: 5px;
-    }
-    
-    .form-group label {
-        font-size: 13px;
-    }
-    
-    .form-group input {
-        padding: 5px;
-        font-size: 12px;
-    }
-    
-    .action-button, .secondary-button {
-        padding: 6px 10px;
-        font-size: 12px;
-    }
-    
-    .timeline-controls {
-        padding: 5px;
-    }
-    
-    .timeline-slider {
-        height: 10px;
-    }
-    
-    .timeline-info span {
-        font-size: 11px;
-    }
-}
-
-/* Estilos específicos para dispositivos móviles */
-.mobile-device .historical-container {
-    flex-direction: column;
-    height: auto;
-}
-
-.mobile-device .historical-map-column {
-    width: 100%;
-    height: 50vh;
-}
-
-.mobile-device .historical-controls-column {
-    width: 100%;
-    box-shadow: none;
-    border-top: 1px solid #3a3a4a;
-    max-height: 50vh;
-    overflow-y: auto;
-}
-
-.mobile-device .filter-form {
-    padding: 10px;
-}
-
-.mobile-device .form-group {
-    margin-bottom: 12px;
-}
-
-.mobile-device .coordinates-container {
-    flex-direction: column;
-}
-
-.mobile-device .coord-group {
-    width: 100%;
-    margin-bottom: 8px;
-}
-
-.mobile-device .timeline-controls {
-    padding: 10px;
-    margin-top: 5px;
-}
-
-.mobile-device .timeline-info {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 5px;
-}
-
-.mobile-device .timeline-slider {
-    height: 15px;
-}
-
-/* Mejoras para la visualización del mapa en móviles */
-.mobile-device .mapContainer {
-    border-radius: 0;
-    margin-bottom: 0;
-}
-
-.mobile-device .map {
-    border-radius: 0;
-}
-
-/* Mejoras para la interacción táctil */
-@media (hover: none) and (pointer: coarse) {
-    .timeline-slider {
-        height: 20px; /* Más grande para facilitar el toque */
-    }
-    
-    .timeline-slider::-webkit-slider-thumb {
-        width: 24px;
-        height: 24px;
-    }
-    
-    .action-button, .secondary-button {
-        min-height: 44px; /* Tamaño mínimo recomendado para elementos táctiles */
-    }
-    
-    .form-group input {
-        min-height: 44px;
     }
 }
