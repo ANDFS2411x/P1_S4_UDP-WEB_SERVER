@@ -16,12 +16,8 @@ const appState = {
     },
     historical: {
         map: null,
-        recorrido: [],
-        polyline: null, // Polilínea histórica
-        mapsLoaded: false,
-        pointMarker: null,  // Marcador para punto seleccionado
-        pointCircle: null,  // Círculo para radio de búsqueda
-        pointSelected: false // Estado de selección de punto      
+        timelinePlayer: null,
+        mapsLoaded: false
     },
 };
 
@@ -199,6 +195,9 @@ function initHistoricalMapInstance() {
     appState.historical.map.addListener('click', function(event) {
         handleMapClick(event);
     });
+    
+    // Initialize timeline player
+    appState.historical.timelinePlayer = new TimelinePlayer(appState.historical.map);
     
     console.log('Mapa histórico inicializado');
 }

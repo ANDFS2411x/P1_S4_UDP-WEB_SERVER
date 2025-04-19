@@ -10,6 +10,8 @@ const mysql = require("mysql");
 const cors = require("cors");
 
 const path = require('path');
+const dgram = require('dgram');
+const fs = require('fs').promises;
 
 // 🌿 Cargamos las variables de entorno desde el archivo .env
 require('dotenv').config(); // Carga variables del .env
@@ -141,7 +143,6 @@ app.get("/historical-data", (req, res) => {
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-
 app.get('/', (req, res) => {
     res.render('main', { title: process.env.PAGE_TITLE, path: basePath });
 });
@@ -154,4 +155,109 @@ app.get('/aboutUs', (req, res) => {
 // Arrancamos el servidor en el puerto definido y en cualquier IP ('0.0.0.0')
 app.listen(port, '0.0.0.0', () => {
     console.log(`🚀 Servidor web corriendo en http://0.0.0.0:${port}`);
+});
+
+// Variables globales
+let lastData = null;
+const dataFile = 'data.json';
+
+// Función para guardar datos en el archivo
+async function saveData(data) {
+    try {
+        // Leer datos existentes
+        let existingData = [];
+        try {
+            const fileContent = await fs.readFile(dataFile, 'utf8');
+            existingData = JSON.parse(fileContent);
+        } catch (error) {
+            // Si el archivo no existe o está vacío, comenzar con un array vacío
+            console.log('Iniciando nuevo archivo de datos');
+        }
+
+        // Agregar nuevo dato con timestamp
+        data.timestamp = new Date().toISOString();
+        existingData.push(data);
+
+        // Limitar a los últimos 10000 registros para manejar el tamaño del archivo
+        if (existingData.length > 10000) {
+            existingData = existingData.slice(-10000);
+        }
+
+        // Guardar datos actualizados
+        await fs.writeFile(dataFile, JSON.stringify(existingData, null, 2));
+    } catch (error) {
+        console.error('Error al guardar datos:', error);
+    }
+}
+
+// Configuración del servidor UDP
+const udpServer = dgram.createSocket('udp4');
+
+udpServer.on('message', async (msg, rinfo) => {
+    try {
+        const data = JSON.parse(msg.toString());
+        console.log('Datos recibidos:', data);
+        lastData = data;
+        await saveData(data);
+    } catch (error) {
+        console.error('Error al procesar mensaje UDP:', error);
+    }
+});
+
+udpServer.on('error', (err) => {
+    console.error('Error en servidor UDP:', err);
+});
+
+udpServer.bind(12345);
+
+// Rutas de Express
+app.get('/test', (req, res) => {
+    res.render('main', { title: 'Test Mode' });
+});
+
+app.get('/test/aboutUs', (req, res) => {
+    res.render('aboutUs', { title: 'About Us - Test Mode' });
+});
+
+// Endpoint para datos en tiempo real
+app.get('/data', (req, res) => {
+    res.json(lastData || {});
+});
+
+// Endpoint para datos históricos
+app.get('/historical', async (req, res) => {
+    try {
+        const { start, end } = req.query;
+        
+        if (!start || !end) {
+            return res.status(400).json({ error: 'Se requieren fechas de inicio y fin' });
+        }
+
+        // Leer archivo de datos
+        const fileContent = await fs.readFile(dataFile, 'utf8');
+        let allData = JSON.parse(fileContent);
+
+        // Convertir fechas de consulta a timestamps
+        const startDate = new Date(start).getTime();
+        const endDate = new Date(end).getTime();
+
+        // Filtrar datos por rango de fechas
+        const filteredData = allData.filter(record => {
+            const recordDate = new Date(record.timestamp).getTime();
+            return recordDate >= startDate && recordDate <= endDate;
+        });
+
+        // Transformar datos para el cliente
+        const formattedData = filteredData.map(record => ({
+            LATITUDE: record.LATITUDE,
+            LONGITUDE: record.LONGITUDE,
+            DATE: new Date(record.timestamp).toISOString().split('T')[0],
+            TIME: new Date(record.timestamp).toISOString().split('T')[1].substring(0, 8)
+        }));
+
+        res.json(formattedData);
+    } catch (error) {
+        console.error('Error al obtener datos históricos:', error);
+        res.status(500).json({ error: 'Error al obtener datos históricos' });
+    }
 });
