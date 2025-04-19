@@ -692,6 +692,12 @@ async function loadHistoricalData() {
                     const currentPoint = path[Math.floor((progress / 100) * (path.length - 1))];
                     if (currentPoint) {
                         currentTimeInfo.textContent = `${currentPoint.date} ${currentPoint.time}`;
+                        
+                        // Centrar el mapa en la posición actual con una animación suave
+                        appState.historical.map.panTo({
+                            lat: currentPoint.lat,
+                            lng: currentPoint.lng
+                        });
                     }
                 });
 

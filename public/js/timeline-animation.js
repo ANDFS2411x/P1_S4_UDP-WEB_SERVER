@@ -14,12 +14,23 @@ class TimelineAnimation {
             map: this.map,
             icon: {
                 path: google.maps.SymbolPath.CIRCLE,
-                scale: 8,
+                scale: 10,
                 fillColor: "#FF0000",
-                fillOpacity: 1,
-                strokeColor: "#FF0000",
+                fillOpacity: 1.0,
+                strokeColor: "#FFFFFF",
                 strokeWeight: 2
-            }
+            },
+            animation: google.maps.Animation.BOUNCE
+        });
+
+        this.currentCircle = new google.maps.Circle({
+            map: this.map,
+            strokeColor: "#FF0000",
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: "#FF0000",
+            fillOpacity: 0.15,
+            radius: 50
         });
     }
 
@@ -32,20 +43,17 @@ class TimelineAnimation {
     updateVisualization() {
         if (this.currentIndex >= this.points.length) return;
         
-        // Actualizar la polilínea hasta el punto actual
         const pathToShow = this.points.slice(0, this.currentIndex + 1);
         this.animationPath.setPath(pathToShow);
         
-        // Actualizar posición del marcador
         const currentPoint = this.points[this.currentIndex];
         this.currentMarker.setPosition(currentPoint);
+        this.currentCircle.setCenter(currentPoint);
     }
 
-    // Método para actualizar basado en el valor del slider (0-100)
     setProgress(progressPercent) {
         if (this.points.length === 0) return;
         
-        // Convertir el porcentaje a índice
         this.currentIndex = Math.floor((progressPercent / 100) * (this.points.length - 1));
         this.updateVisualization();
     }
@@ -53,6 +61,7 @@ class TimelineAnimation {
     clear() {
         this.animationPath.setPath([]);
         this.currentMarker.setMap(null);
+        this.currentCircle.setMap(null);
         this.points = [];
         this.currentIndex = 0;
     }
