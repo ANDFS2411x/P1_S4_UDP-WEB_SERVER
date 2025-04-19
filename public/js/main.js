@@ -212,74 +212,37 @@ function handleMapClick(event) {
     domElements.selectedLat.value = clickPosition.lat.toFixed(6);
     domElements.selectedLng.value = clickPosition.lng.toFixed(6);
     
-    // Crear o actualizar el marcador
-    if (!appState.historical.pointMarker) {
-        appState.historical.pointMarker = new google.maps.Marker({
-            position: clickPosition,
-            map: appState.historical.map,
-            title: "Punto seleccionado",
-            animation: google.maps.Animation.DROP,
-            icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 8,
-                fillColor: "#4CAF50",
-                fillOpacity: 1,
-                strokeColor: "#45a049",
-                strokeWeight: 2
-            }
-        });
-    } else {
-        appState.historical.pointMarker.setPosition(clickPosition);
-        appState.historical.pointMarker.setMap(appState.historical.map);
-    }
-    
-    // Crear o actualizar el círculo para representar el radio de búsqueda
-    const radius = parseInt(domElements.searchRadius.value);
-    
-    if (!appState.historical.pointCircle) {
-        appState.historical.pointCircle = new google.maps.Circle({
-            strokeColor: "#4CAF50",
-            strokeOpacity: 0.8,
-            strokeWeight: 2,
-            fillColor: "#4CAF50",
-            fillOpacity: 0.2,
-            map: appState.historical.map,
-            center: clickPosition,
-            radius: radius
-        });
-    } else {
-        appState.historical.pointCircle.setCenter(clickPosition);
-        appState.historical.pointCircle.setRadius(radius);
-        appState.historical.pointCircle.setMap(appState.historical.map);
-    }
-    
-    // Añadir breve animación de pulso
-    appState.historical.pointMarker.setAnimation(google.maps.Animation.BOUNCE);
-    setTimeout(() => {
-        appState.historical.pointMarker.setAnimation(null);
-    }, 1500);
-    
     // Actualizar estado y botones
     appState.historical.pointSelected = true;
     domElements.clearPointBtn.disabled = false;
+
+    // Si hay datos cargados, actualizar la visualización
+    if (appState.historical.timelineAnimation && appState.historical.timelineAnimation.hasPoints()) {
+        const radius = parseInt(domElements.searchRadius.value);
+        appState.historical.timelineAnimation.setPointMode(true, clickPosition, radius);
+        
+        // Resetear y mostrar controles si hay puntos filtrados
+        const timelineControls = document.getElementById('timelineControls');
+        if (timelineControls) {
+            const timelineSlider = document.getElementById('timelineSlider');
+            if (timelineSlider) {
+                timelineSlider.value = 0;
+            }
+            timelineControls.style.display = appState.historical.timelineAnimation.hasPoints() ? 'block' : 'none';
+        }
+    }
 }
 
 function clearSelectedPoint() {
-    if (appState.historical.pointMarker) {
-        appState.historical.pointMarker.setMap(null);
-    }
-    
-    if (appState.historical.pointCircle) {
-        appState.historical.pointCircle.setMap(null);
-    }
-    
     domElements.selectedLat.value = '';
     domElements.selectedLng.value = '';
     domElements.clearPointBtn.disabled = true;
     appState.historical.pointSelected = false;
     
-    // Ocultar resultados de búsqueda por punto
-    domElements.pointSearchResults.style.display = 'none';
+    // Actualizar visualización si hay datos cargados
+    if (appState.historical.timelineAnimation && appState.historical.timelineAnimation.hasPoints()) {
+        appState.historical.timelineAnimation.setPointMode(false);
+    }
 }
 
 function initRadiusChangeHandler() {
@@ -671,10 +634,24 @@ async function loadHistoricalData() {
         if (!appState.historical.timelineAnimation) {
             appState.historical.timelineAnimation = new TimelineAnimation(appState.historical.map);
         }
-        appState.historical.timelineAnimation.setPoints(path);
 
-        // Configurar y mostrar controles de línea de tiempo
-        if (timelineControls) {
+        // Establecer los puntos y el modo
+        appState.historical.timelineAnimation.setPoints(path);
+        
+        // Si hay un punto seleccionado, activar modo punto
+        if (appState.historical.pointSelected) {
+            const selectedPoint = {
+                lat: parseFloat(domElements.selectedLat.value),
+                lng: parseFloat(domElements.selectedLng.value)
+            };
+            const radius = parseInt(domElements.searchRadius.value);
+            appState.historical.timelineAnimation.setPointMode(true, selectedPoint, radius);
+        } else {
+            appState.historical.timelineAnimation.setPointMode(false);
+        }
+
+        // Configurar y mostrar controles de línea de tiempo si hay puntos para mostrar
+        if (timelineControls && appState.historical.timelineAnimation.hasPoints()) {
             const timelineSlider = document.getElementById('timelineSlider');
             const currentTimeInfo = document.getElementById('currentTimeInfo');
 
@@ -689,11 +666,11 @@ async function loadHistoricalData() {
                     appState.historical.timelineAnimation.setProgress(progress);
                     
                     // Actualizar la información de tiempo
-                    const currentPoint = path[Math.floor((progress / 100) * (path.length - 1))];
+                    const currentPoint = appState.historical.timelineAnimation.getCurrentPoint();
                     if (currentPoint) {
                         currentTimeInfo.textContent = `${currentPoint.date} ${currentPoint.time}`;
                         
-                        // Centrar el mapa en la posición actual con una animación suave
+                        // Centrar el mapa en la posición actual
                         appState.historical.map.panTo({
                             lat: currentPoint.lat,
                             lng: currentPoint.lng
@@ -704,12 +681,22 @@ async function loadHistoricalData() {
                 // Mostrar controles
                 timelineControls.style.display = 'block';
             }
+        } else if (timelineControls) {
+            timelineControls.style.display = 'none';
+            if (appState.historical.pointSelected) {
+                throw new Error("No se encontraron registros cerca del punto seleccionado");
+            }
         }
 
         // Ajustar vista del mapa
-        const bounds = new google.maps.LatLngBounds();
-        path.forEach(point => bounds.extend(point));
-        appState.historical.map.fitBounds(bounds);
+        if (appState.historical.timelineAnimation.hasPoints()) {
+            const bounds = new google.maps.LatLngBounds();
+            const points = appState.historical.pointSelected ? 
+                appState.historical.timelineAnimation.filteredPoints : 
+                appState.historical.timelineAnimation.points;
+            points.forEach(point => bounds.extend(point));
+            appState.historical.map.fitBounds(bounds);
+        }
 
         // Verificar si hay un punto seleccionado para filtrar
         if (appState.historical.pointSelected && domElements.enablePointSelection.checked) {
