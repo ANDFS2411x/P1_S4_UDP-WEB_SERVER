@@ -63,21 +63,24 @@
             </div>
         </div>
 
-        <!-- Controles históricos en un panel lateral -->
-        <div class="historical-controls">
-            <div class="historical-controls-row">
-                <div class="historical-controls-col">
-                    <div class="form-group">
-                        <label for="startDate">Fecha y hora inicial:</label>
-                        <input type="datetime-local" id="startDate">
-                    </div>
-                </div>
-                <div class="historical-controls-col">
-                    <div class="form-group">
-                        <label for="endDate">Fecha y hora final:</label>
-                        <input type="datetime-local" id="endDate">
-                    </div>
-                </div>
+        <!-- Timeline controls -->
+        <div id="timelineControls" class="timeline-controls" style="display: none;">
+            <input type="range" id="timelineSlider" min="0" max="100" value="0" class="timeline-slider">
+            <div class="timeline-info">
+                <span id="currentTimeInfo">--:--:--</span>
+                <span id="distanceInfo">Distancia al punto: -- m</span>
+            </div>
+        </div>
+
+        <div class="filter-form">
+            <div class="form-group">
+                <label for="startDate">Fecha y hora inicial:</label>
+                <input type="datetime-local" id="startDate">
+            </div>
+
+            <div class="form-group">
+                <label for="endDate">Fecha y hora final:</label>
+                <input type="datetime-local" id="endDate">
             </div>
 
             <div id="pointSelectionContainer" class="point-selection-container">
@@ -107,15 +110,6 @@
             </div>
 
             <button id="loadHistory" class="action-button">Cargar Trayectoria</button>
-        </div>
-
-        <!-- Timeline controls -->
-        <div id="timelineControls" class="timeline-controls" style="display: none;">
-            <input type="range" id="timelineSlider" min="0" max="100" value="0" class="timeline-slider">
-            <div class="timeline-info">
-                <span id="currentTimeInfo">--:--:--</span>
-                <span id="distanceInfo">Distancia al punto: -- m</span>
-            </div>
         </div>
 
         <div id="historicalError" class="error-message"></div>
