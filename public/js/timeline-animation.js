@@ -45,6 +45,9 @@ class TimelineAnimation {
         } else {
             this.animationPath.setMap(this.map);
         }
+        // Asegurarse de que el marcador esté visible en ambos modos
+        this.currentMarker.setMap(this.map);
+        this.currentCircle.setMap(this.map);
     }
 
     setPoints(points, mode = 'route') {
@@ -63,10 +66,14 @@ class TimelineAnimation {
             this.animationPath.setPath(pathToShow);
         }
         
-        // Actualizar posición del marcador y el círculo
+        // Actualizar posición del marcador y el círculo en ambos modos
         const currentPoint = this.points[this.currentIndex];
         this.currentMarker.setPosition(currentPoint);
         this.currentCircle.setCenter(currentPoint);
+        
+        // Asegurarse de que el marcador esté visible
+        this.currentMarker.setMap(this.map);
+        this.currentCircle.setMap(this.map);
     }
 
     setProgress(progressPercent) {
