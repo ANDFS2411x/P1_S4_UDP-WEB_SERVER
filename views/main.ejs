@@ -56,6 +56,29 @@
             <div id="historicalLoadingMessage" class="loadingMessage" style="display: none;">Cargando datos históricos...</div>
         </div>
 
+        <!-- Nuevo contenedor para el slider de tiempo -->
+        <div id="timeSliderContainer" class="time-slider-container" style="display: none;">
+            <div class="time-display">
+                <span id="currentTimeDisplay">00:00:00</span>
+            </div>
+            <input type="range" id="timeSlider" min="0" max="100" value="0" class="time-slider">
+            <div class="time-controls">
+                <button id="playPauseBtn" class="control-button">
+                    <span class="play-icon">▶</span>
+                </button>
+                <button id="resetBtn" class="control-button">⟲</button>
+            </div>
+            <div class="playback-speed">
+                <label for="speedControl">Velocidad:</label>
+                <select id="speedControl">
+                    <option value="0.5">0.5x</option>
+                    <option value="1" selected>1x</option>
+                    <option value="2">2x</option>
+                    <option value="4">4x</option>
+                </select>
+            </div>
+        </div>
+
         <div class="filter-form">
             <div class="form-group">
                 <label for="startDate">Fecha y hora inicial:</label>

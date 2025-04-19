@@ -21,7 +21,14 @@ const appState = {
         mapsLoaded: false,
         pointMarker: null,  // Marcador para punto seleccionado
         pointCircle: null,  // Círculo para radio de búsqueda
-        pointSelected: false // Estado de selección de punto      
+        pointSelected: false, // Estado de selección de punto
+        // Nuevas propiedades para el slider
+        currentIndex: 0,
+        isPlaying: false,
+        playbackInterval: null,
+        playbackSpeed: 1,
+        historicalMarker: null,
+        controlsInitialized: false
     },
 };
 
@@ -53,7 +60,14 @@ const domElements = {
     clearPointBtn: document.getElementById('clearPointBtn'),
     pointSearchResults: document.getElementById('pointSearchResults'),
     resultsSummary: document.getElementById('resultsSummary'),
-    resultsTable: document.getElementById('resultsTable')
+    resultsTable: document.getElementById('resultsTable'),
+    // Nuevos elementos para el slider
+    timeSlider: document.getElementById('timeSlider'),
+    currentTimeDisplay: document.getElementById('currentTimeDisplay'),
+    playPauseBtn: document.getElementById('playPauseBtn'),
+    resetBtn: document.getElementById('resetBtn'),
+    speedControl: document.getElementById('speedControl'),
+    timeSliderContainer: document.getElementById('timeSliderContainer')
 };  
 
 function updateInfoPanel(data) {
@@ -596,125 +610,162 @@ function highlightPointOnMap(point) {
     }, 3000);
 }
 
+function updateHistoricalMarker(position) {
+    if (!appState.historical.historicalMarker) {
+        appState.historical.historicalMarker = new google.maps.Marker({
+            position: position,
+            map: appState.historical.map,
+            title: "Posición histórica",
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 8,
+                fillColor: "#FF0000",
+                fillOpacity: 1,
+                strokeColor: "#FFFFFF",
+                strokeWeight: 2
+            }
+        });
+    } else {
+        appState.historical.historicalMarker.setPosition(position);
+    }
+}
+
+function formatTimeDisplay(date) {
+    return date.toLocaleTimeString('es-ES', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+}
+
+function updateTimeDisplay(index) {
+    if (appState.historical.recorrido.length === 0) return;
+    
+    const point = appState.historical.recorrido[index];
+    if (point && point.timestamp) {
+        const date = new Date(point.timestamp);
+        domElements.currentTimeDisplay.textContent = formatTimeDisplay(date);
+    }
+}
+
+function updateHistoricalView() {
+    if (appState.historical.recorrido.length === 0) return;
+    
+    const currentPoint = appState.historical.recorrido[appState.historical.currentIndex];
+    if (currentPoint) {
+        updateHistoricalMarker(currentPoint);
+        updateTimeDisplay(appState.historical.currentIndex);
+        
+        // Actualizar la polilínea hasta el punto actual
+        const path = appState.historical.recorrido.slice(0, appState.historical.currentIndex + 1);
+        appState.historical.polyline.setPath(path);
+    }
+}
+
+function playHistoricalData() {
+    if (appState.historical.isPlaying) return;
+    
+    appState.historical.isPlaying = true;
+    domElements.playPauseBtn.querySelector('.play-icon').textContent = '⏸';
+    
+    const interval = 1000 / appState.historical.playbackSpeed;
+    appState.historical.playbackInterval = setInterval(() => {
+        if (appState.historical.currentIndex < appState.historical.recorrido.length - 1) {
+            appState.historical.currentIndex++;
+            domElements.timeSlider.value = appState.historical.currentIndex;
+            updateHistoricalView();
+        } else {
+            pauseHistoricalData();
+        }
+    }, interval);
+}
+
+function pauseHistoricalData() {
+    if (!appState.historical.isPlaying) return;
+    
+    appState.historical.isPlaying = false;
+    domElements.playPauseBtn.querySelector('.play-icon').textContent = '▶';
+    clearInterval(appState.historical.playbackInterval);
+}
+
+function resetHistoricalData() {
+    pauseHistoricalData();
+    appState.historical.currentIndex = 0;
+    domElements.timeSlider.value = 0;
+    updateHistoricalView();
+}
+
+function initHistoricalControls() {
+    // Configurar el slider
+    domElements.timeSlider.addEventListener('input', (e) => {
+        appState.historical.currentIndex = parseInt(e.target.value);
+        updateHistoricalView();
+    });
+    
+    // Configurar botón de play/pause
+    domElements.playPauseBtn.addEventListener('click', () => {
+        if (appState.historical.isPlaying) {
+            pauseHistoricalData();
+        } else {
+            playHistoricalData();
+        }
+    });
+    
+    // Configurar botón de reset
+    domElements.resetBtn.addEventListener('click', resetHistoricalData);
+    
+    // Configurar control de velocidad
+    domElements.speedControl.addEventListener('change', (e) => {
+        appState.historical.playbackSpeed = parseFloat(e.target.value);
+        if (appState.historical.isPlaying) {
+            pauseHistoricalData();
+            playHistoricalData();
+        }
+    });
+}
+
 async function loadHistoricalData() {
     try {
+        showLoading(true);
         const startDate = domElements.startDate.value;
         const endDate = domElements.endDate.value;
-
+        
         if (!startDate || !endDate) {
-            throw new Error("Debe seleccionar ambas fechas");
-        }
-
-        showLoading(true);
-        domElements.historicalError.style.display = "none";
-
-        // Detener actualizaciones en tiempo real si están activas
-        stopRealTimeUpdates();
-
-        // Limpiar polilínea histórica anterior
-        if (appState.historical.polyline) {
-            appState.historical.polyline.setPath([]);
-        }
-
-        // Ocultar elementos de tiempo real
-        if (appState.realTime.marker) {
-            appState.realTime.marker.setMap(null);
-        }
-        if (appState.realTime.polyline) {
-            appState.realTime.polyline.setMap(null);
-        }
-
-        // Crear URL con parámetros de fechas
-        const url = `${config.basePath}/historical-data?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
-        console.log("URL de solicitud:", url);
-
-        // Obtener datos históricos
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
-
-        const result = await response.json();
-        console.log("Datos recibidos:", result);
-        
-        if (!result?.success || !Array.isArray(result.data)) {
-            throw new Error("Formato de datos incorrecto");
+            throw new Error("Por favor seleccione un rango de fechas");
         }
         
-        if (result.data.length === 0) {
-            throw new Error("No hay datos para el rango seleccionado");
+        const response = await fetch(`${config.basePath}/historical?start=${startDate}&end=${endDate}`);
+        if (!response.ok) throw new Error("Error al cargar datos históricos");
+        
+        const data = await response.json();
+        if (!data || data.length === 0) {
+            throw new Error("No se encontraron datos para el rango seleccionado");
         }
-
-        // Procesar coordenadas
-        const path = result.data.map(item => ({
-            lat: parseFloat(item.LATITUDE),
-            lng: parseFloat(item.LONGITUDE)
-        })).filter(coord => !isNaN(coord.lat) && !isNaN(coord.lng));
-
-        if (path.length === 0) {
-            throw new Error("No hay coordenadas válidas en los datos recibidos");
+        
+        // Procesar y ordenar los datos por timestamp
+        appState.historical.recorrido = data.map(point => ({
+            lat: parseFloat(point.LATITUDE),
+            lng: parseFloat(point.LONGITUDE),
+            timestamp: new Date(point.DATE + 'T' + point.TIME)
+        })).sort((a, b) => a.timestamp - b.timestamp);
+        
+        // Configurar el slider
+        domElements.timeSlider.max = appState.historical.recorrido.length - 1;
+        domElements.timeSlider.value = 0;
+        appState.historical.currentIndex = 0;
+        
+        // Mostrar el contenedor del slider
+        domElements.timeSliderContainer.style.display = 'block';
+        
+        // Inicializar la vista
+        updateHistoricalView();
+        
+        // Inicializar controles si no se han inicializado antes
+        if (!appState.historical.controlsInitialized) {
+            initHistoricalControls();
+            appState.historical.controlsInitialized = true;
         }
-
-        console.log(`Procesadas ${path.length} coordenadas válidas`);
-
-        // Verificar si el mapa histórico está inicializado
-        if (!appState.historical.map) {
-            initHistoricalMapInstance();
-        }
-
-        // Crear nueva polilínea histórica o actualizar la existente
-        if (!appState.historical.polyline) {
-            appState.historical.polyline = new google.maps.Polyline({
-                path: path,
-                geodesic: true,
-                strokeColor: "#4285F4",
-                strokeOpacity: 1.0,
-                strokeWeight: 4,
-                map: appState.historical.map
-            });
-        } else {
-            appState.historical.polyline.setPath(path);
-            appState.historical.polyline.setMap(appState.historical.map);
-        }
-
-        // Ajustar vista del mapa
-        const bounds = new google.maps.LatLngBounds();
-        path.forEach(point => bounds.extend(point));
-        appState.historical.map.fitBounds(bounds);
-
-        // Verificar si hay un punto seleccionado para filtrar
-        if (appState.historical.pointSelected && domElements.enablePointSelection.checked) {
-            const selectedPoint = {
-                lat: parseFloat(domElements.selectedLat.value),
-                lng: parseFloat(domElements.selectedLng.value)
-            };
-            
-            const radius = parseInt(domElements.searchRadius.value);
-            
-            // Encontrar puntos cercanos
-            const nearbyPoints = findPointsNearby(selectedPoint, result.data, radius);
-            
-            // Mostrar resultados en la tabla
-            domElements.pointSearchResults.style.display = 'block';
-            buildResultsTable(nearbyPoints);
-            
-            // Resaltar visualmente en el mapa los puntos encontrados
-            if (nearbyPoints.length > 0) {
-                setTimeout(() => {
-                    const firstPoint = {
-                        lat: parseFloat(nearbyPoints[0].LATITUDE),
-                        lng: parseFloat(nearbyPoints[0].LONGITUDE)
-                    };
-                    appState.historical.map.setCenter(firstPoint);
-                    appState.historical.map.setZoom(16);
-                }, 500);
-            }
-        } else {
-            // Si no hay punto seleccionado, ocultar sección de resultados
-            domElements.pointSearchResults.style.display = 'none';
-        }
-
-        // Forzar redibujado
-        google.maps.event.trigger(appState.historical.map, 'resize');
-
+        
     } catch (error) {
         console.error('Error cargando datos históricos:', error);
         showError(domElements.historicalError, error.message);
