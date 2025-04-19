@@ -603,16 +603,13 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 
 /* Timeline controls */
 .timeline-controls {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(42, 42, 64, 0.9);
+    background: #2a2a40;
     padding: 15px;
     border-radius: 8px;
     width: 80%;
     max-width: 600px;
-    z-index: 1000;
+    margin: 15px auto;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
 }
 
 .timeline-slider {

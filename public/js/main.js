@@ -611,12 +611,6 @@ function elementExists(elementId) {
 
 async function loadHistoricalData() {
     try {
-        // Verificar que los elementos necesarios existan
-        if (!elementExists('timelineControls') || 
-            !elementExists('historicalLoadingMessage')) {
-            throw new Error("Elementos necesarios no encontrados en el DOM");
-        }
-
         const startDate = domElements.startDate.value;
         const endDate = domElements.endDate.value;
 
@@ -630,6 +624,7 @@ async function loadHistoricalData() {
             domElements.historicalError.style.display = "none";
         }
 
+        // Ocultar timeline mientras se cargan los datos
         const timelineControls = document.getElementById('timelineControls');
         if (timelineControls) {
             timelineControls.style.display = 'none';
@@ -638,29 +633,19 @@ async function loadHistoricalData() {
         // Detener actualizaciones en tiempo real si están activas
         stopRealTimeUpdates();
 
-        // Limpiar polilínea histórica anterior
-        if (appState.historical.polyline) {
-            appState.historical.polyline.setPath([]);
-        }
-
-        // Ocultar elementos de tiempo real
-        if (appState.realTime.marker) {
-            appState.realTime.marker.setMap(null);
-        }
-        if (appState.realTime.polyline) {
-            appState.realTime.polyline.setMap(null);
+        // Limpiar visualizaciones anteriores
+        if (appState.historical.timelineAnimation) {
+            appState.historical.timelineAnimation.clear();
         }
 
         // Crear URL con parámetros de fechas
         const url = `${config.basePath}/historical-data?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
-        console.log("URL de solicitud:", url);
-
+        
         // Obtener datos históricos
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
 
         const result = await response.json();
-        console.log("Datos recibidos:", result);
         
         if (!result?.success || !Array.isArray(result.data)) {
             throw new Error("Formato de datos incorrecto");
@@ -688,48 +673,31 @@ async function loadHistoricalData() {
         }
         appState.historical.timelineAnimation.setPoints(path);
 
-        // Mostrar controles de línea de tiempo
+        // Configurar y mostrar controles de línea de tiempo
         if (timelineControls) {
-            timelineControls.style.display = 'block';
-        }
+            const timelineSlider = document.getElementById('timelineSlider');
+            const currentTimeInfo = document.getElementById('currentTimeInfo');
 
-        // Configurar el slider
-        const timelineSlider = document.getElementById('timelineSlider');
-        const currentTimeInfo = document.getElementById('currentTimeInfo');
+            if (timelineSlider && currentTimeInfo) {
+                // Resetear slider
+                timelineSlider.value = 0;
+                appState.historical.timelineAnimation.setProgress(0);
 
-        timelineSlider.value = 0;
-        appState.historical.timelineAnimation.setProgress(0);
+                // Actualizar la información de tiempo cuando se mueve el slider
+                timelineSlider.addEventListener('input', function(e) {
+                    const progress = parseInt(e.target.value);
+                    appState.historical.timelineAnimation.setProgress(progress);
+                    
+                    // Actualizar la información de tiempo
+                    const currentPoint = path[Math.floor((progress / 100) * (path.length - 1))];
+                    if (currentPoint) {
+                        currentTimeInfo.textContent = `${currentPoint.date} ${currentPoint.time}`;
+                    }
+                });
 
-        // Actualizar la información de tiempo cuando se mueve el slider
-        timelineSlider.addEventListener('input', function(e) {
-            const progress = parseInt(e.target.value);
-            appState.historical.timelineAnimation.setProgress(progress);
-            
-            // Actualizar la información de tiempo
-            const currentPoint = path[Math.floor((progress / 100) * (path.length - 1))];
-            if (currentPoint) {
-                currentTimeInfo.textContent = `${currentPoint.date} ${currentPoint.time}`;
+                // Mostrar controles
+                timelineControls.style.display = 'block';
             }
-        });
-
-        // Verificar si el mapa histórico está inicializado
-        if (!appState.historical.map) {
-            initHistoricalMapInstance();
-        }
-
-        // Crear nueva polilínea histórica o actualizar la existente
-        if (!appState.historical.polyline) {
-            appState.historical.polyline = new google.maps.Polyline({
-                path: path,
-                geodesic: true,
-                strokeColor: "#4285F4",
-                strokeOpacity: 1.0,
-                strokeWeight: 4,
-                map: appState.historical.map
-            });
-        } else {
-            appState.historical.polyline.setPath(path);
-            appState.historical.polyline.setMap(appState.historical.map);
         }
 
         // Ajustar vista del mapa
