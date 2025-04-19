@@ -22,14 +22,7 @@ const appState = {
         pointMarker: null,  // Marcador para punto seleccionado
         pointCircle: null,  // Círculo para radio de búsqueda
         pointSelected: false, // Estado de selección de punto      
-        animation: {
-            currentIndex: 0,
-            isPlaying: false,
-            animationFrame: null,
-            speed: 1,
-            marker: null,
-            infoWindow: null
-        }
+        timelineAnimation: null
     },
 };
 
@@ -61,13 +54,7 @@ const domElements = {
     clearPointBtn: document.getElementById('clearPointBtn'),
     pointSearchResults: document.getElementById('pointSearchResults'),
     resultsSummary: document.getElementById('resultsSummary'),
-    resultsTable: document.getElementById('resultsTable'),
-    timelineControls: document.getElementById('timelineControls'),
-    timelineSlider: document.getElementById('timelineSlider'),
-    timelineLabel: document.getElementById('timelineLabel'),
-    playPauseBtn: document.getElementById('playPauseBtn'),
-    resetTimelineBtn: document.getElementById('resetTimelineBtn'),
-    playbackSpeed: document.getElementById('playbackSpeed')
+    resultsTable: document.getElementById('resultsTable')
 };  
 
 function updateInfoPanel(data) {
@@ -621,6 +608,7 @@ async function loadHistoricalData() {
 
         showLoading(true);
         domElements.historicalError.style.display = "none";
+        document.getElementById('timelineControls').style.display = 'none';
 
         // Detener actualizaciones en tiempo real si están activas
         stopRealTimeUpdates();
@@ -660,14 +648,42 @@ async function loadHistoricalData() {
         // Procesar coordenadas
         const path = result.data.map(item => ({
             lat: parseFloat(item.LATITUDE),
-            lng: parseFloat(item.LONGITUDE)
+            lng: parseFloat(item.LONGITUDE),
+            time: item.TIME,
+            date: item.DATE
         })).filter(coord => !isNaN(coord.lat) && !isNaN(coord.lng));
 
         if (path.length === 0) {
             throw new Error("No hay coordenadas válidas en los datos recibidos");
         }
 
-        console.log(`Procesadas ${path.length} coordenadas válidas`);
+        // Inicializar o actualizar la animación de la línea de tiempo
+        if (!appState.historical.timelineAnimation) {
+            appState.historical.timelineAnimation = new TimelineAnimation(appState.historical.map);
+        }
+        appState.historical.timelineAnimation.setPoints(path);
+
+        // Mostrar controles de línea de tiempo
+        document.getElementById('timelineControls').style.display = 'block';
+
+        // Configurar el slider
+        const timelineSlider = document.getElementById('timelineSlider');
+        const currentTimeInfo = document.getElementById('currentTimeInfo');
+
+        timelineSlider.value = 0;
+        appState.historical.timelineAnimation.setProgress(0);
+
+        // Actualizar la información de tiempo cuando se mueve el slider
+        timelineSlider.addEventListener('input', function(e) {
+            const progress = parseInt(e.target.value);
+            appState.historical.timelineAnimation.setProgress(progress);
+            
+            // Actualizar la información de tiempo
+            const currentPoint = path[Math.floor((progress / 100) * (path.length - 1))];
+            if (currentPoint) {
+                currentTimeInfo.textContent = `${currentPoint.date} ${currentPoint.time}`;
+            }
+        });
 
         // Verificar si el mapa histórico está inicializado
         if (!appState.historical.map) {
@@ -690,9 +706,9 @@ async function loadHistoricalData() {
         }
 
         // Ajustar vista del mapa
-        const initialPathBounds = new google.maps.LatLngBounds();
-        path.forEach(point => initialPathBounds.extend(point));
-        appState.historical.map.fitBounds(initialPathBounds);
+        const bounds = new google.maps.LatLngBounds();
+        path.forEach(point => bounds.extend(point));
+        appState.historical.map.fitBounds(bounds);
 
         // Verificar si hay un punto seleccionado para filtrar
         if (appState.historical.pointSelected && domElements.enablePointSelection.checked) {
@@ -729,142 +745,12 @@ async function loadHistoricalData() {
         // Forzar redibujado
         google.maps.event.trigger(appState.historical.map, 'resize');
 
-        // Process the data
-        appState.historical.recorrido = result.data.map(point => ({
-            lat: parseFloat(point.LATITUDE),
-            lng: parseFloat(point.LONGITUDE),
-            date: point.DATE,
-            time: point.TIME
-        }));
-
-        // Update polyline
-        appState.historical.polyline.setPath(appState.historical.recorrido);
-
-        // Fit bounds to show the entire path
-        const historicalPathBounds = new google.maps.LatLngBounds();
-        appState.historical.recorrido.forEach(point => historicalPathBounds.extend(point));
-        appState.historical.map.fitBounds(historicalPathBounds);
-
-        // Initialize timeline controls
-        initTimelineControls();
-        resetTimeline();
-
     } catch (error) {
         console.error('Error cargando datos históricos:', error);
         showError(domElements.historicalError, error.message);
     } finally {
         showLoading(false);
     }
-}
-
-function initTimelineControls() {
-    // Create the animated marker
-    if (!appState.historical.animation.marker) {
-        appState.historical.animation.marker = new google.maps.Marker({
-            map: appState.historical.map,
-            icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 8,
-                fillColor: "#024abf",
-                fillOpacity: 1,
-                strokeColor: "#ffffff",
-                strokeWeight: 2
-            }
-        });
-    }
-
-    // Create info window if it doesn't exist
-    if (!appState.historical.animation.infoWindow) {
-        appState.historical.animation.infoWindow = new google.maps.InfoWindow();
-    }
-
-    // Initialize event listeners
-    domElements.timelineSlider.addEventListener('input', handleTimelineSliderChange);
-    domElements.playPauseBtn.addEventListener('click', togglePlayPause);
-    domElements.resetTimelineBtn.addEventListener('click', resetTimeline);
-    domElements.playbackSpeed.addEventListener('change', updatePlaybackSpeed);
-
-    // Show timeline controls
-    domElements.timelineControls.style.display = 'block';
-}
-
-function updateTimelineDisplay(index) {
-    const point = appState.historical.recorrido[index];
-    if (!point) return;
-
-    // Update marker position
-    appState.historical.animation.marker.setPosition(point);
-
-    // Update info window content
-    const content = `
-        <div class="point-info">
-            <p class="point-info-timestamp">${point.date} ${point.time}</p>
-            <p>Lat: ${point.lat.toFixed(6)}</p>
-            <p>Lng: ${point.lng.toFixed(6)}</p>
-        </div>
-    `;
-    appState.historical.animation.infoWindow.setContent(content);
-    appState.historical.animation.infoWindow.open(appState.historical.map, appState.historical.animation.marker);
-
-    // Update slider position
-    const percentage = (index / (appState.historical.recorrido.length - 1)) * 100;
-    domElements.timelineSlider.value = percentage;
-
-    // Update timeline label
-    domElements.timelineLabel.textContent = `${point.date} ${point.time}`;
-
-    // Center map if point is near the edges
-    const viewportBounds = appState.historical.map.getBounds();
-    if (!viewportBounds.contains(point)) {
-        appState.historical.map.panTo(point);
-    }
-}
-
-function handleTimelineSliderChange() {
-    const percentage = parseFloat(domElements.timelineSlider.value);
-    const index = Math.floor((percentage / 100) * (appState.historical.recorrido.length - 1));
-    appState.historical.animation.currentIndex = index;
-    updateTimelineDisplay(index);
-}
-
-function togglePlayPause() {
-    appState.historical.animation.isPlaying = !appState.historical.animation.isPlaying;
-    
-    // Update button icon
-    domElements.playPauseBtn.innerHTML = appState.historical.animation.isPlaying ? 
-        '<i class="fas fa-pause"></i>' : 
-        '<i class="fas fa-play"></i>';
-
-    if (appState.historical.animation.isPlaying) {
-        playAnimation();
-    } else {
-        cancelAnimationFrame(appState.historical.animation.animationFrame);
-    }
-}
-
-function resetTimeline() {
-    appState.historical.animation.currentIndex = 0;
-    appState.historical.animation.isPlaying = false;
-    domElements.playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
-    cancelAnimationFrame(appState.historical.animation.animationFrame);
-    updateTimelineDisplay(0);
-}
-
-function updatePlaybackSpeed() {
-    appState.historical.animation.speed = parseFloat(domElements.playbackSpeed.value);
-}
-
-function playAnimation() {
-    if (!appState.historical.animation.isPlaying) return;
-
-    appState.historical.animation.currentIndex += appState.historical.animation.speed;
-
-    if (appState.historical.animation.currentIndex >= appState.historical.recorrido.length) {
-        appState.historical.animation.currentIndex = 0;
-    }
-
-    updateTimelineDisplay(Math.floor(appState.historical.animation.currentIndex));
-    appState.historical.animation.animationFrame = requestAnimationFrame(playAnimation);
 }
 
 function initHistoricalTracking() {

@@ -601,107 +601,45 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     font-family: 'Exo 2', sans-serif;
 }
 
-/* Timeline Controls */
+/* Timeline controls */
 .timeline-controls {
     position: absolute;
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(42, 42, 64, 0.9);
     padding: 15px;
     border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
     width: 80%;
     max-width: 600px;
-}
-
-.timeline-slider-container {
-    margin-bottom: 10px;
+    z-index: 1000;
 }
 
 .timeline-slider {
     width: 100%;
-    height: 4px;
+    height: 20px;
     -webkit-appearance: none;
-    background: #ddd;
+    background: #3a3a5a;
     outline: none;
-    border-radius: 2px;
-    margin-bottom: 8px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
 }
 
 .timeline-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    background: #024abf;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
+    background: #FF0000;
     cursor: pointer;
-    transition: transform 0.2s;
+    border: 4px solid #fff;
+    box-shadow: -407px 0 0 400px #FF0000;
 }
 
-.timeline-slider::-webkit-slider-thumb:hover {
-    transform: scale(1.2);
-}
-
-.timeline-label {
+.timeline-info {
     text-align: center;
-    font-size: 0.9em;
-    color: #333;
-    margin-top: 5px;
-}
-
-.timeline-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    align-items: center;
-}
-
-.timeline-btn {
-    background: #024abf;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 0.2s;
-}
-
-.timeline-btn:hover {
-    background: #0235a3;
-}
-
-.timeline-speed {
-    padding: 4px 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background: white;
-    cursor: pointer;
-}
-
-/* Marker Animation */
-.animated-marker {
-    transition: all 0.5s ease-in-out;
-}
-
-/* Point Info Window */
-.point-info {
-    padding: 10px;
-    max-width: 200px;
-}
-
-.point-info p {
-    margin: 5px 0;
-    font-size: 0.9em;
-}
-
-.point-info-timestamp {
-    font-weight: bold;
-    color: #024abf;
+    margin-top: 10px;
+    color: #fff;
+    font-size: 14px;
 }
