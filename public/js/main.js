@@ -21,18 +21,7 @@ const appState = {
         mapsLoaded: false,
         pointMarker: null,  // Marcador para punto seleccionado
         pointCircle: null,  // Círculo para radio de búsqueda
-        pointSelected: false, // Estado de selección de punto      
-        // Nuevo estado para la línea de tiempo
-        timeline: {
-            isPlaying: false,
-            currentIndex: 0,
-            animationId: null,
-            playbackSpeed: 1,
-            marker: null,
-            path: [],
-            startTime: null,
-            endTime: null
-        }
+        pointSelected: false // Estado de selección de punto      
     },
 };
 
@@ -607,131 +596,6 @@ function highlightPointOnMap(point) {
     }, 3000);
 }
 
-// Función para inicializar la línea de tiempo
-function initTimelineControls() {
-    const timelineSlider = document.getElementById('timelineSlider');
-    const playPauseBtn = document.getElementById('playPauseBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const playbackSpeed = document.getElementById('playbackSpeed');
-    const currentTimeSpan = document.getElementById('currentTime');
-    const totalTimeSpan = document.getElementById('totalTime');
-
-    // Evento para el slider
-    timelineSlider.addEventListener('input', function() {
-        if (appState.historical.timeline.path.length === 0) return;
-        
-        const index = Math.floor((this.value / 100) * (appState.historical.timeline.path.length - 1));
-        updateTimelinePosition(index);
-    });
-
-    // Evento para el botón de play/pause
-    playPauseBtn.addEventListener('click', function() {
-        if (appState.historical.timeline.path.length === 0) return;
-        
-        if (appState.historical.timeline.isPlaying) {
-            pauseTimeline();
-            this.innerHTML = '<i class="fas fa-play"></i>';
-        } else {
-            playTimeline();
-            this.innerHTML = '<i class="fas fa-pause"></i>';
-        }
-    });
-
-    // Evento para el botón de reset
-    resetBtn.addEventListener('click', function() {
-        resetTimeline();
-    });
-
-    // Evento para el selector de velocidad
-    playbackSpeed.addEventListener('change', function() {
-        appState.historical.timeline.playbackSpeed = parseFloat(this.value);
-    });
-}
-
-// Función para actualizar la posición en la línea de tiempo
-function updateTimelinePosition(index) {
-    if (index < 0 || index >= appState.historical.timeline.path.length) return;
-    
-    appState.historical.timeline.currentIndex = index;
-    const point = appState.historical.timeline.path[index];
-    
-    // Actualizar el marcador de posición actual
-    if (!appState.historical.timeline.marker) {
-        appState.historical.timeline.marker = new google.maps.Marker({
-            position: point,
-            map: appState.historical.map,
-            icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 8,
-                fillColor: "#FF4500",
-                fillOpacity: 1,
-                strokeColor: "#FF0000",
-                strokeWeight: 2
-            }
-        });
-    } else {
-        appState.historical.timeline.marker.setPosition(point);
-    }
-    
-    // Actualizar la polilínea hasta el punto actual
-    const path = appState.historical.timeline.path.slice(0, index + 1);
-    appState.historical.polyline.setPath(path);
-    
-    // Actualizar el tiempo actual
-    const currentTime = new Date(point.timestamp);
-    document.getElementById('currentTime').textContent = formatTime(currentTime);
-}
-
-// Función para reproducir la línea de tiempo
-function playTimeline() {
-    if (appState.historical.timeline.isPlaying) return;
-    
-    appState.historical.timeline.isPlaying = true;
-    const animate = () => {
-        if (!appState.historical.timeline.isPlaying) return;
-        
-        const nextIndex = appState.historical.timeline.currentIndex + 1;
-        if (nextIndex >= appState.historical.timeline.path.length) {
-            pauseTimeline();
-            return;
-        }
-        
-        updateTimelinePosition(nextIndex);
-        document.getElementById('timelineSlider').value = 
-            (nextIndex / (appState.historical.timeline.path.length - 1)) * 100;
-        
-        const delay = 1000 / appState.historical.timeline.playbackSpeed;
-        appState.historical.timeline.animationId = setTimeout(animate, delay);
-    };
-    
-    animate();
-}
-
-// Función para pausar la línea de tiempo
-function pauseTimeline() {
-    appState.historical.timeline.isPlaying = false;
-    if (appState.historical.timeline.animationId) {
-        clearTimeout(appState.historical.timeline.animationId);
-    }
-}
-
-// Función para reiniciar la línea de tiempo
-function resetTimeline() {
-    pauseTimeline();
-    updateTimelinePosition(0);
-    document.getElementById('timelineSlider').value = 0;
-    document.getElementById('playPauseBtn').innerHTML = '<i class="fas fa-play"></i>';
-}
-
-// Función para formatear el tiempo
-function formatTime(date) {
-    return date.toLocaleTimeString('es-ES', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-    });
-}
-
 async function loadHistoricalData() {
     try {
         const startDate = domElements.startDate.value;
@@ -779,27 +643,17 @@ async function loadHistoricalData() {
             throw new Error("No hay datos para el rango seleccionado");
         }
 
-        // Procesar coordenadas y timestamps
+        // Procesar coordenadas
         const path = result.data.map(item => ({
             lat: parseFloat(item.LATITUDE),
-            lng: parseFloat(item.LONGITUDE),
-            timestamp: new Date(item.DATE + 'T' + item.TIME)
+            lng: parseFloat(item.LONGITUDE)
         })).filter(coord => !isNaN(coord.lat) && !isNaN(coord.lng));
 
         if (path.length === 0) {
             throw new Error("No hay coordenadas válidas en los datos recibidos");
         }
 
-        // Inicializar la línea de tiempo
-        appState.historical.timeline.path = path;
-        appState.historical.timeline.startTime = path[0].timestamp;
-        appState.historical.timeline.endTime = path[path.length - 1].timestamp;
-        
-        // Actualizar etiquetas de tiempo
-        document.getElementById('totalTime').textContent = formatTime(appState.historical.timeline.endTime);
-        
-        // Inicializar controles de la línea de tiempo
-        initTimelineControls();
+        console.log(`Procesadas ${path.length} coordenadas válidas`);
 
         // Verificar si el mapa histórico está inicializado
         if (!appState.historical.map) {

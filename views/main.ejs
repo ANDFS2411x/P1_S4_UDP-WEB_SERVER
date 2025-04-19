@@ -7,7 +7,6 @@
     <title id="titulo">SnapMap ~ <%= title %></title>
     <link rel="stylesheet" id="themeStyles">
     <link rel="icon" type="image/x-icon" id="icono"/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 
 <body>
@@ -53,33 +52,8 @@
     <div id="historical" class="section">        
         <!-- Map first for visual priority -->
         <div id="historicalMapContainer" class="mapContainer">
-            <div id="historicalMap" class="map">Cargando mapa...</div>
-            <div id="historicalLoadingMessage" class="loadingMessage" style="display: none;">Cargando datos...</div>
-            
-            <!-- Controles de la línea de tiempo animada -->
-            <div id="timelineControls" class="timeline-controls">
-                <div class="timeline-slider-container">
-                    <input type="range" id="timelineSlider" min="0" max="100" value="0" class="timeline-slider">
-                    <div class="timeline-labels">
-                        <span id="currentTime">00:00:00</span>
-                        <span id="totalTime">00:00:00</span>
-                    </div>
-                </div>
-                <div class="timeline-buttons">
-                    <button id="playPauseBtn" class="timeline-btn">
-                        <i class="fas fa-play"></i>
-                    </button>
-                    <button id="resetBtn" class="timeline-btn">
-                        <i class="fas fa-redo"></i>
-                    </button>
-                    <select id="playbackSpeed" class="timeline-select">
-                        <option value="0.5">0.5x</option>
-                        <option value="1" selected>1x</option>
-                        <option value="2">2x</option>
-                        <option value="4">4x</option>
-                    </select>
-                </div>
-            </div>
+            <div id="historicalMap" class="map">Seleccione un rango de fechas y haga clic en "Cargar Trayectoria"</div>
+            <div id="historicalLoadingMessage" class="loadingMessage" style="display: none;">Cargando datos históricos...</div>
         </div>
 
         <div class="filter-form">
