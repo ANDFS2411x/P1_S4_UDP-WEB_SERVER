@@ -14,8 +14,6 @@ body {
     background-color: #1e1e2e;
     position: relative;
     justify-content: space-between;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    z-index: 1000;
 }
 
 #brand {
@@ -181,53 +179,6 @@ body {
     .filter-form, .info-panel, .results-container {
         padding: 10px;
     }
-    
-    .mapContainer {
-        min-height: 300px !important;
-        height: 50vh !important;
-    }
-    
-    .map {
-        height: 100% !important;
-        width: 100% !important;
-    }
-    
-    .filter-form {
-        padding: 15px;
-    }
-    
-    .form-group {
-        margin-bottom: 15px;
-    }
-    
-    .coordinates-container {
-        flex-direction: column;
-    }
-    
-    .coord-group {
-        width: 100%;
-        margin-bottom: 10px;
-    }
-    
-    .timeline-controls {
-        width: 100%;
-        padding: 10px;
-    }
-    
-    .timeline-slider {
-        height: 15px;
-    }
-    
-    .timeline-info {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 5px;
-    }
-    
-    .timeline-info span {
-        width: 100%;
-        text-align: center;
-    }
 }
 
 @media screen and (max-width: 576px) {
@@ -275,27 +226,13 @@ body {
         margin-left: 8px;
     }
     
-    .action-button, .secondary-button {
-        width: 100%;
-        margin: 10px 0;
+    .action-button {
+        padding: 10px 15px;
+        font-size: 14px;
     }
     
     .mapContainer {
-        height: 40vh !important;
-    }
-    
-    .point-selection-container {
-        padding: 10px;
-    }
-    
-    .checkbox-container {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .helper-text {
-        margin-left: 0;
-        margin-top: 5px;
+        min-height: 300px;
     }
 }
 
@@ -323,8 +260,7 @@ body {
 /*Secciones - Clave para funcionalidad */
 .section {
     display: none; /* Oculta por defecto */
-    padding: 0;
-    overflow: hidden;
+    padding: 10px;
     height: calc(100vh - 60px);
     flex-direction: column;
     background-color: #1e1e2e;
@@ -346,10 +282,12 @@ body {
     flex: 1;
     width: 100%;
     min-height: 400px;
-    border: none;
-    border-radius: 0;
+    border: 1px solid #3a3a5a;
+    margin-bottom: 15px;
+    position: relative;
+    border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .map {
@@ -367,10 +305,10 @@ h1 {
 .info-panel {
     background: #2a2a40;
     padding: 15px;
-    margin: 0;
-    border-radius: 0;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    margin: 10px auto;
     max-width: 600px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
@@ -393,18 +331,18 @@ h1 {
     background-color: #5667d8;
     color: white;
     border: none;
-    border-radius: 0;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    border-radius: 5px;
     cursor: pointer;
     font-size: 16px;
-    transition: all 0.3s ease;
+    transition: 0.3s;
     display: block;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
 .action-button:hover {
     background-color: #4a5ac9;
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
 
 .secondary-button {
@@ -412,18 +350,15 @@ h1 {
     background-color: #2a2a40;
     color: #e0e0e0;
     border: 1px solid #4a5ac9;
-    border-radius: 0;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
-    transition: all 0.3s ease;
+    transition: 0.3s;
 }
 
 .secondary-button:hover {
     background-color: #343450;
     border-color: #5667d8;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 .secondary-button:disabled {
@@ -435,10 +370,10 @@ h1 {
 .filter-form {
     background: #2a2a40;
     padding: 10px 40px 10px 20px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
     margin: 0 auto 15px;
     max-width: 600px;
-    border-radius: 0;
+    border-radius: 8px;
 }
 
 .form-group {
@@ -457,17 +392,16 @@ h1 {
     width: 100%;
     padding: 10px;
     border: 1px solid #3a3a5a;
-    border-radius: 0;
+    border-radius: 4px;
     font-size: 16px;
     background-color: #1e1e2e;
     color: #e0e0e0;
-    transition: all 0.3s ease;
 }
 
 .form-group input:focus {
     border-color: #5667d8;
     outline: none;
-    box-shadow: 0 0 0 2px rgba(86, 103, 216, 0.5);
+    box-shadow: 0 0 0 2px rgba(86, 103, 216, 0.3);
 }
 
 /* Estilos para selección de punto */
@@ -619,8 +553,7 @@ h1 {
     color: #ff5b69;
     background-color: rgba(255, 91, 105, 0.1);
     padding: 10px;
-    border-radius: 0;
-    box-shadow: 0 2px 8px rgba(255, 91, 105, 0.2);
+    border-radius: 4px;
     margin: 10px 0;
     display: none;
     border-left: 3px solid #ff5b69;
@@ -633,10 +566,10 @@ h1 {
     transform: translate(-50%, -50%);
     background: rgba(30, 30, 46, 0.9);
     padding: 20px;
-    border-radius: 0;
+    border-radius: 8px;
     z-index: 1000;
     color: #e0e0e0;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
     border: 1px solid #5667d8;
 }
 
@@ -672,11 +605,11 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 .timeline-controls {
     background: #2a2a40;
     padding: 20px;
-    border-radius: 0;
+    border-radius: 8px;
     width: 80%;
     max-width: 600px;
     margin: 15px auto;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
 }
 
 .timeline-header {
@@ -702,9 +635,9 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     
     background: #3a3a5a;
     outline: none;
-    border-radius: 0;
+    border-radius: 10px;
     overflow: hidden;
-    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
     margin-bottom: 15px;
 }
 
@@ -712,11 +645,11 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     -webkit-appearance: none;
     width: 20px;
     height: 20px;
-    border-radius: 0;
-    background: #5667d8;
+    border-radius: 50%;
+    background: #FF0000;
     cursor: pointer;
     border: 4px solid #fff;
-    box-shadow: -407px 0 0 400px #5667d8;
+    box-shadow: -407px 0 0 400px #FF0000;
 }
 
 .timeline-info {
@@ -769,6 +702,17 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 .historical-map-column .mapContainer {
     flex: 1;
     min-height: 0; /* Permite que el mapa se ajuste correctamente */
+    position: relative;
+}
+
+.historical-map-column .map {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
 }
 
 .historical-map-column .timeline-controls {
@@ -776,6 +720,7 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     background-color: #2a2a3a;
     margin-top: 10px;
     border-radius: 5px;
+    z-index: 10;
 }
 
 /* Ajustes responsive para la sección histórica */
@@ -805,6 +750,23 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     .historical-controls-column {
         padding: 15px;
     }
+    
+    .filter-form {
+        padding: 15px;
+    }
+    
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .coordinates-container {
+        flex-direction: column;
+    }
+    
+    .coord-group {
+        width: 100%;
+        margin-bottom: 10px;
+    }
 }
 
 @media screen and (max-width: 576px) {
@@ -815,86 +777,194 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     .historical-controls-column {
         padding: 10px;
     }
+    
+    .filter-form {
+        padding: 10px;
+    }
+    
+    .form-group input {
+        padding: 8px;
+        font-size: 14px;
+    }
+    
+    .action-button, .secondary-button {
+        padding: 10px 15px;
+        font-size: 14px;
+    }
+    
+    .timeline-controls {
+        padding: 10px;
+    }
+    
+    .timeline-slider {
+        height: 15px;
+    }
+    
+    .timeline-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
 }
 
-/* Mejoras para la sección de tiempo real */
-#realTime {
-    display: flex;
+@media screen and (max-width: 480px) {
+    .historical-map-column {
+        height: 35vh;
+    }
+    
+    .historical-controls-column {
+        padding: 8px;
+    }
+    
+    .filter-form {
+        padding: 8px;
+    }
+    
+    .form-group label {
+        font-size: 14px;
+    }
+    
+    .form-group input {
+        padding: 6px;
+        font-size: 13px;
+    }
+    
+    .action-button, .secondary-button {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+    
+    .timeline-controls {
+        padding: 8px;
+    }
+    
+    .timeline-slider {
+        height: 12px;
+    }
+    
+    .timeline-info span {
+        font-size: 12px;
+    }
+}
+
+/* Mejoras para dispositivos muy pequeños */
+@media screen and (max-width: 360px) {
+    .historical-map-column {
+        height: 30vh;
+    }
+    
+    .historical-controls-column {
+        padding: 5px;
+    }
+    
+    .filter-form {
+        padding: 5px;
+    }
+    
+    .form-group label {
+        font-size: 13px;
+    }
+    
+    .form-group input {
+        padding: 5px;
+        font-size: 12px;
+    }
+    
+    .action-button, .secondary-button {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+    
+    .timeline-controls {
+        padding: 5px;
+    }
+    
+    .timeline-slider {
+        height: 10px;
+    }
+    
+    .timeline-info span {
+        font-size: 11px;
+    }
+}
+
+/* Estilos específicos para dispositivos móviles */
+.mobile-device .historical-container {
     flex-direction: column;
-    height: calc(100vh - 80px);
+    height: auto;
 }
 
-#realTimeMapContainer {
-    flex: 1;
-    min-height: 0;
+.mobile-device .historical-map-column {
+    width: 100%;
+    height: 50vh;
 }
 
-.info-panel {
-    margin: 0;
+.mobile-device .historical-controls-column {
+    width: 100%;
+    box-shadow: none;
+    border-top: 1px solid #3a3a4a;
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+.mobile-device .filter-form {
+    padding: 10px;
+}
+
+.mobile-device .form-group {
+    margin-bottom: 12px;
+}
+
+.mobile-device .coordinates-container {
+    flex-direction: column;
+}
+
+.mobile-device .coord-group {
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.mobile-device .timeline-controls {
+    padding: 10px;
+    margin-top: 5px;
+}
+
+.mobile-device .timeline-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+}
+
+.mobile-device .timeline-slider {
+    height: 15px;
+}
+
+/* Mejoras para la visualización del mapa en móviles */
+.mobile-device .mapContainer {
     border-radius: 0;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    margin-bottom: 0;
 }
 
-/* Mejoras para los botones */
-.action-button {
+.mobile-device .map {
     border-radius: 0;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    transition: all 0.3s ease;
 }
 
-.action-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.4);
-}
-
-.secondary-button {
-    border-radius: 0;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    transition: all 0.3s ease;
-}
-
-.secondary-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-}
-
-/* Mejoras para los inputs */
-.form-group input {
-    border-radius: 0;
-    transition: all 0.3s ease;
-}
-
-.form-group input:focus {
-    box-shadow: 0 0 0 2px rgba(86, 103, 216, 0.5);
-}
-
-/* Mejoras para el slider de la línea de tiempo */
-.timeline-slider {
-    border-radius: 0;
-    height: 20px;
-    background: #3a3a5a;
-    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
-}
-
-.timeline-slider::-webkit-slider-thumb {
-    border-radius: 0;
-    box-shadow: -407px 0 0 400px #5667d8;
-}
-
-/* Mejoras para el header */
-.main-header {
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    z-index: 1000;
-}
-
-/* Mejoras para los mensajes de error */
-.error-message {
-    border-radius: 0;
-    box-shadow: 0 2px 8px rgba(255, 91, 105, 0.2);
-}
-
-/* Mejoras para los mensajes de carga */
-.loadingMessage {
-    border-radius: 0;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+/* Mejoras para la interacción táctil */
+@media (hover: none) and (pointer: coarse) {
+    .timeline-slider {
+        height: 20px; /* Más grande para facilitar el toque */
+    }
+    
+    .timeline-slider::-webkit-slider-thumb {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .action-button, .secondary-button {
+        min-height: 44px; /* Tamaño mínimo recomendado para elementos táctiles */
+    }
+    
+    .form-group input {
+        min-height: 44px;
+    }
 }
