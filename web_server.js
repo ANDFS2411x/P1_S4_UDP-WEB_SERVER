@@ -84,12 +84,12 @@ app.get("/data", (req, res) => {
 });
 
 /* ------------------- 🔧 RUTA PARA DATOS HISTÓRICOS ------------------- */
-app.get("/historical", (req, res) => {
-    const { start, end } = req.query;
-    console.log("StartDate recibido:", start);
-    console.log("EndDate recibido:", end);
+app.get("/historical-data", (req, res) => {
+    const { startDate, endDate } = req.query;
+    console.log("StartDate recibido:", startDate);
+    console.log("EndDate recibido:", endDate);
 
-    if (!start || !end) {
+    if (!startDate || !endDate) {
         return res.status(400).json({ 
             success: false,
             error: "Se requieren ambas fechas",
@@ -104,8 +104,8 @@ app.get("/historical", (req, res) => {
     `;
 
     const params = [
-        start.replace('T', ' ') + ':00',  // Formato: 'YYYY-MM-DD HH:MM:00'
-        end.replace('T', ' ') + ':00'
+        startDate.replace('T', ' ') + ':00',  // Formato: 'YYYY-MM-DD HH:MM:00'
+        endDate.replace('T', ' ') + ':00'
     ];
 
     console.log("Query ejecutado:", query.replace(/\?/g, (_, i) => params[i]));
@@ -127,7 +127,11 @@ app.get("/historical", (req, res) => {
             queryExecuted: query.replace(/\?/g, (_, i) => params[i])
         });
 
-        res.json(results);
+        res.json({
+            success: true,
+            count: results.length,
+            data: results
+        });
     });
 });
 

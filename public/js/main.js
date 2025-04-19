@@ -25,10 +25,9 @@ const appState = {
         // Nuevas propiedades para el slider
         currentIndex: 0,
         isPlaying: false,
-        playbackInterval: null,
-        playbackSpeed: 1,
-        historicalMarker: null,
-        controlsInitialized: false
+        playInterval: null,
+        playbackSpeed: 1000, // 1 segundo entre cada punto
+        historicalMarker: null // Marcador para mostrar la posición actual
     },
 };
 
@@ -61,13 +60,11 @@ const domElements = {
     pointSearchResults: document.getElementById('pointSearchResults'),
     resultsSummary: document.getElementById('resultsSummary'),
     resultsTable: document.getElementById('resultsTable'),
-    // Nuevos elementos para el slider
     timeSlider: document.getElementById('timeSlider'),
     currentTimeDisplay: document.getElementById('currentTimeDisplay'),
     playPauseBtn: document.getElementById('playPauseBtn'),
     resetBtn: document.getElementById('resetBtn'),
-    speedControl: document.getElementById('speedControl'),
-    timeSliderContainer: document.getElementById('timeSliderContainer')
+    timeSliderContainer: document.getElementById('timeSliderContainer'),
 };  
 
 function updateInfoPanel(data) {
@@ -610,120 +607,6 @@ function highlightPointOnMap(point) {
     }, 3000);
 }
 
-function updateHistoricalMarker(position) {
-    if (!appState.historical.historicalMarker) {
-        appState.historical.historicalMarker = new google.maps.Marker({
-            position: position,
-            map: appState.historical.map,
-            title: "Posición histórica",
-            icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 8,
-                fillColor: "#FF0000",
-                fillOpacity: 1,
-                strokeColor: "#FFFFFF",
-                strokeWeight: 2
-            }
-        });
-    } else {
-        appState.historical.historicalMarker.setPosition(position);
-    }
-}
-
-function formatTimeDisplay(date) {
-    return date.toLocaleTimeString('es-ES', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-    });
-}
-
-function updateTimeDisplay(index) {
-    if (appState.historical.recorrido.length === 0) return;
-    
-    const point = appState.historical.recorrido[index];
-    if (point && point.timestamp) {
-        const date = new Date(point.timestamp);
-        domElements.currentTimeDisplay.textContent = formatTimeDisplay(date);
-    }
-}
-
-function updateHistoricalView() {
-    if (appState.historical.recorrido.length === 0) return;
-    
-    const currentPoint = appState.historical.recorrido[appState.historical.currentIndex];
-    if (currentPoint) {
-        updateHistoricalMarker(currentPoint);
-        updateTimeDisplay(appState.historical.currentIndex);
-        
-        // Actualizar la polilínea hasta el punto actual
-        const path = appState.historical.recorrido.slice(0, appState.historical.currentIndex + 1);
-        appState.historical.polyline.setPath(path);
-    }
-}
-
-function playHistoricalData() {
-    if (appState.historical.isPlaying) return;
-    
-    appState.historical.isPlaying = true;
-    domElements.playPauseBtn.querySelector('.play-icon').textContent = '⏸';
-    
-    const interval = 1000 / appState.historical.playbackSpeed;
-    appState.historical.playbackInterval = setInterval(() => {
-        if (appState.historical.currentIndex < appState.historical.recorrido.length - 1) {
-            appState.historical.currentIndex++;
-            domElements.timeSlider.value = appState.historical.currentIndex;
-            updateHistoricalView();
-        } else {
-            pauseHistoricalData();
-        }
-    }, interval);
-}
-
-function pauseHistoricalData() {
-    if (!appState.historical.isPlaying) return;
-    
-    appState.historical.isPlaying = false;
-    domElements.playPauseBtn.querySelector('.play-icon').textContent = '▶';
-    clearInterval(appState.historical.playbackInterval);
-}
-
-function resetHistoricalData() {
-    pauseHistoricalData();
-    appState.historical.currentIndex = 0;
-    domElements.timeSlider.value = 0;
-    updateHistoricalView();
-}
-
-function initHistoricalControls() {
-    // Configurar el slider
-    domElements.timeSlider.addEventListener('input', (e) => {
-        appState.historical.currentIndex = parseInt(e.target.value);
-        updateHistoricalView();
-    });
-    
-    // Configurar botón de play/pause
-    domElements.playPauseBtn.addEventListener('click', () => {
-        if (appState.historical.isPlaying) {
-            pauseHistoricalData();
-        } else {
-            playHistoricalData();
-        }
-    });
-    
-    // Configurar botón de reset
-    domElements.resetBtn.addEventListener('click', resetHistoricalData);
-    
-    // Configurar control de velocidad
-    domElements.speedControl.addEventListener('change', (e) => {
-        appState.historical.playbackSpeed = parseFloat(e.target.value);
-        if (appState.historical.isPlaying) {
-            pauseHistoricalData();
-            playHistoricalData();
-        }
-    });
-}
-
 async function loadHistoricalData() {
     try {
         showLoading(true);
@@ -738,32 +621,32 @@ async function loadHistoricalData() {
         if (!response.ok) throw new Error("Error al cargar datos históricos");
         
         const data = await response.json();
-        if (!data || data.length === 0) {
-            throw new Error("No se encontraron datos para el rango seleccionado");
+        if (!data || !data.length) {
+            throw new Error("No se encontraron datos para el rango de fechas seleccionado");
         }
         
-        // Procesar y ordenar los datos por timestamp
+        // Procesar y almacenar los datos
         appState.historical.recorrido = data.map(point => ({
             lat: parseFloat(point.LATITUDE),
-            lng: parseFloat(point.LONGITUDE),
-            timestamp: new Date(point.DATE + 'T' + point.TIME)
-        })).sort((a, b) => a.timestamp - b.timestamp);
+            lng: parseFloat(point.LONGITUDE)
+        }));
         
-        // Configurar el slider
-        domElements.timeSlider.max = appState.historical.recorrido.length - 1;
-        domElements.timeSlider.value = 0;
-        appState.historical.currentIndex = 0;
+        // Almacenar timestamps para el display de tiempo
+        appState.historical.timestamps = data.map(point => new Date(point.DATE + 'T' + point.TIME).getTime());
         
-        // Mostrar el contenedor del slider
+        // Mostrar el slider y actualizar su rango
         domElements.timeSliderContainer.style.display = 'block';
+        domElements.timeSlider.max = 100;
+        domElements.timeSlider.value = 0;
         
-        // Inicializar la vista
-        updateHistoricalView();
+        // Actualizar la visualización inicial
+        updateHistoricalPosition(0);
         
-        // Inicializar controles si no se han inicializado antes
-        if (!appState.historical.controlsInitialized) {
-            initHistoricalControls();
-            appState.historical.controlsInitialized = true;
+        // Centrar el mapa en la trayectoria
+        if (appState.historical.recorrido.length > 0) {
+            const bounds = new google.maps.LatLngBounds();
+            appState.historical.recorrido.forEach(point => bounds.extend(point));
+            appState.historical.map.fitBounds(bounds);
         }
         
     } catch (error) {
@@ -873,10 +756,112 @@ function initHistoricalTracking() {
         
         // Inicializar handler para cambio de radio
         initRadiusChangeHandler();
+
+        // Inicializar controles del slider
+        if (domElements.timeSlider) {
+            domElements.timeSlider.addEventListener('input', handleSliderChange);
+            domElements.playPauseBtn.addEventListener('click', togglePlayback);
+            domElements.resetBtn.addEventListener('click', resetPlayback);
+        }
     } catch (error) {
         console.error('Error inicializando Historical Tracking:', error);
         showError(domElements.historicalError, error.message);
     }
+}
+
+function handleSliderChange(event) {
+    if (!appState.historical.recorrido.length) return;
+    
+    const index = Math.floor((event.target.value / 100) * (appState.historical.recorrido.length - 1));
+    updateHistoricalPosition(index);
+}
+
+function updateHistoricalPosition(index) {
+    if (!appState.historical.recorrido[index]) return;
+    
+    appState.historical.currentIndex = index;
+    const position = appState.historical.recorrido[index];
+    
+    // Actualizar el marcador de posición actual
+    if (!appState.historical.historicalMarker) {
+        appState.historical.historicalMarker = new google.maps.Marker({
+            position: position,
+            map: appState.historical.map,
+            title: "Posición actual",
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 8,
+                fillColor: "#FF0000",
+                fillOpacity: 1,
+                strokeColor: "#FF0000",
+                strokeWeight: 2
+            }
+        });
+    } else {
+        appState.historical.historicalMarker.setPosition(position);
+    }
+    
+    // Actualizar la polilínea hasta el punto actual
+    const path = appState.historical.recorrido.slice(0, index + 1);
+    appState.historical.polyline.setPath(path);
+    
+    // Actualizar el display de tiempo
+    if (appState.historical.timestamps && appState.historical.timestamps[index]) {
+        const timestamp = appState.historical.timestamps[index];
+        const date = new Date(timestamp);
+        domElements.currentTimeDisplay.textContent = `Tiempo: ${date.toLocaleTimeString()}`;
+    }
+}
+
+function togglePlayback() {
+    if (!appState.historical.recorrido.length) return;
+    
+    appState.historical.isPlaying = !appState.historical.isPlaying;
+    const playIcon = domElements.playPauseBtn.querySelector('.play-icon');
+    
+    if (appState.historical.isPlaying) {
+        playIcon.textContent = '⏸';
+        playIcon.classList.add('paused');
+        startPlayback();
+    } else {
+        playIcon.textContent = '▶';
+        playIcon.classList.remove('paused');
+        stopPlayback();
+    }
+}
+
+function startPlayback() {
+    if (appState.historical.playInterval) return;
+    
+    appState.historical.playInterval = setInterval(() => {
+        if (appState.historical.currentIndex >= appState.historical.recorrido.length - 1) {
+            stopPlayback();
+            return;
+        }
+        
+        const nextIndex = appState.historical.currentIndex + 1;
+        const sliderValue = (nextIndex / (appState.historical.recorrido.length - 1)) * 100;
+        domElements.timeSlider.value = sliderValue;
+        updateHistoricalPosition(nextIndex);
+    }, appState.historical.playbackSpeed);
+}
+
+function stopPlayback() {
+    if (appState.historical.playInterval) {
+        clearInterval(appState.historical.playInterval);
+        appState.historical.playInterval = null;
+    }
+}
+
+function resetPlayback() {
+    stopPlayback();
+    appState.historical.isPlaying = false;
+    appState.historical.currentIndex = 0;
+    domElements.timeSlider.value = 0;
+    const playIcon = domElements.playPauseBtn.querySelector('.play-icon');
+    playIcon.textContent = '▶';
+    playIcon.classList.remove('paused');
+    updateHistoricalPosition(0);
 }
 
 function initApp() {
