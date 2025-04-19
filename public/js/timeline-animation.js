@@ -25,16 +25,6 @@ class TimelineAnimation {
             },
             animation: google.maps.Animation.BOUNCE
         });
-
-        this.currentCircle = new google.maps.Circle({
-            map: this.map,
-            strokeColor: "#FF0000",
-            strokeOpacity: 0.8,
-            strokeWeight: 2,
-            fillColor: "#FF0000",
-            fillOpacity: 0.15,
-            radius: 50
-        });
     }
 
     setMode(mode) {
@@ -47,7 +37,6 @@ class TimelineAnimation {
         }
         // Asegurarse de que el marcador esté visible en ambos modos
         this.currentMarker.setMap(this.map);
-        this.currentCircle.setMap(this.map);
     }
 
     setPoints(points, mode = 'route') {
@@ -66,14 +55,12 @@ class TimelineAnimation {
             this.animationPath.setPath(pathToShow);
         }
         
-        // Actualizar posición del marcador y el círculo en ambos modos
+        // Actualizar posición del marcador
         const currentPoint = this.points[this.currentIndex];
         this.currentMarker.setPosition(currentPoint);
-        this.currentCircle.setCenter(currentPoint);
         
         // Asegurarse de que el marcador esté visible
         this.currentMarker.setMap(this.map);
-        this.currentCircle.setMap(this.map);
     }
 
     setProgress(progressPercent) {
@@ -86,7 +73,6 @@ class TimelineAnimation {
     clear() {
         this.animationPath.setPath([]);
         this.currentMarker.setMap(null);
-        this.currentCircle.setMap(null);
         this.points = [];
         this.currentIndex = 0;
     }
