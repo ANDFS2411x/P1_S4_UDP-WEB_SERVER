@@ -54,6 +54,26 @@
         <div id="historicalMapContainer" class="mapContainer">
             <div id="historicalMap" class="map">Seleccione un rango de fechas y haga clic en "Cargar Trayectoria"</div>
             <div id="historicalLoadingMessage" class="loadingMessage" style="display: none;">Cargando datos históricos...</div>
+            
+            <!-- Controles de la línea de tiempo -->
+            <div class="timeline-controls">
+                <div class="timeline-header">
+                    <span id="currentTimeDisplay">--:--:--</span>
+                    <button id="playPauseBtn" class="timeline-button">▶️ Reproducir</button>
+                </div>
+                <div class="timeline-slider-container">
+                    <input type="range" id="timelineSlider" min="0" max="100" value="0" class="timeline-slider">
+                </div>
+                <div class="timeline-speed-control">
+                    <label for="speedControl">Velocidad:</label>
+                    <select id="speedControl">
+                        <option value="2000">0.5x</option>
+                        <option value="1000" selected>1x</option>
+                        <option value="500">2x</option>
+                        <option value="250">4x</option>
+                    </select>
+                </div>
+            </div>
         </div>
 
         <div class="filter-form">

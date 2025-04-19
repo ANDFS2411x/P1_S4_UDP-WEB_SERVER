@@ -21,8 +21,14 @@ const appState = {
         mapsLoaded: false,
         pointMarker: null,  // Marcador para punto seleccionado
         pointCircle: null,  // Círculo para radio de búsqueda
-        pointSelected: false, // Estado de selección de punto      
-        markers: []
+        pointSelected: false, // Estado de selección de punto
+        // Nuevas propiedades para la animación
+        animationMarker: null,
+        animationPath: [],
+        isPlaying: false,
+        currentIndex: 0,
+        animationSpeed: 1000, // Velocidad en milisegundos
+        animationInterval: null
     },
 };
 
@@ -54,7 +60,12 @@ const domElements = {
     clearPointBtn: document.getElementById('clearPointBtn'),
     pointSearchResults: document.getElementById('pointSearchResults'),
     resultsSummary: document.getElementById('resultsSummary'),
-    resultsTable: document.getElementById('resultsTable')
+    resultsTable: document.getElementById('resultsTable'),
+    // Nuevos elementos para la animación
+    timelineSlider: document.getElementById('timelineSlider'),
+    playPauseBtn: document.getElementById('playPauseBtn'),
+    speedControl: document.getElementById('speedControl'),
+    currentTimeDisplay: document.getElementById('currentTimeDisplay'),
 };  
 
 function updateInfoPanel(data) {
@@ -612,14 +623,10 @@ async function loadHistoricalData() {
         // Detener actualizaciones en tiempo real si están activas
         stopRealTimeUpdates();
 
-        // Limpiar polilínea histórica anterior y marcadores
+        // Limpiar polilínea histórica anterior
         if (appState.historical.polyline) {
             appState.historical.polyline.setPath([]);
         }
-        if (appState.historical.markers) {
-            appState.historical.markers.forEach(marker => marker.setMap(null));
-        }
-        appState.historical.markers = [];
 
         // Ocultar elementos de tiempo real
         if (appState.realTime.marker) {
@@ -643,68 +650,27 @@ async function loadHistoricalData() {
         if (!result?.success || !Array.isArray(result.data)) {
             throw new Error("Formato de datos incorrecto");
         }
-
+        
         if (result.data.length === 0) {
             throw new Error("No hay datos para el rango seleccionado");
         }
 
-        // Procesar coordenadas y crear marcadores
-        const path = [];
-        const markers = [];
-        const timeGroups = {};
-        
-        result.data.forEach((item, index) => {
-            const lat = parseFloat(item.LATITUDE);
-            const lng = parseFloat(item.LONGITUDE);
-            
-            if (!isNaN(lat) && !isNaN(lng)) {
-                path.push({ lat, lng });
-                
-                // Agrupar por hora
-                const date = new Date(item.DATE + 'T' + item.TIME);
-                const hourKey = date.getHours();
-                if (!timeGroups[hourKey]) {
-                    timeGroups[hourKey] = [];
-                }
-                timeGroups[hourKey].push(item);
-                
-                // Crear marcador con color según la hora
-                const marker = new google.maps.Marker({
-                    position: { lat, lng },
-                    map: appState.historical.map,
-                    title: `Fecha: ${item.DATE} Hora: ${item.TIME}`,
-                    icon: {
-                        path: google.maps.SymbolPath.CIRCLE,
-                        scale: 6,
-                        fillColor: getColorForHour(hourKey),
-                        fillOpacity: 0.8,
-                        strokeColor: "#FFFFFF",
-                        strokeWeight: 1
-                    }
-                });
-                
-                // Añadir InfoWindow con detalles
-                const infoWindow = new google.maps.InfoWindow({
-                    content: `
-                        <div class="point-info">
-                            <strong>Fecha:</strong> ${item.DATE}<br>
-                            <strong>Hora:</strong> ${item.TIME}<br>
-                            <strong>Latitud:</strong> ${lat.toFixed(6)}<br>
-                            <strong>Longitud:</strong> ${lng.toFixed(6)}
-                        </div>
-                    `
-                });
-                
-                marker.addListener('click', () => {
-                    infoWindow.open(appState.historical.map, marker);
-                });
-                
-                markers.push(marker);
-            }
-        });
+        // Procesar coordenadas
+        const path = result.data.map(item => ({
+            lat: parseFloat(item.LATITUDE),
+            lng: parseFloat(item.LONGITUDE)
+        })).filter(coord => !isNaN(coord.lat) && !isNaN(coord.lng));
 
-        // Guardar marcadores en el estado
-        appState.historical.markers = markers;
+        if (path.length === 0) {
+            throw new Error("No hay coordenadas válidas en los datos recibidos");
+        }
+
+        console.log(`Procesadas ${path.length} coordenadas válidas`);
+
+        // Verificar si el mapa histórico está inicializado
+        if (!appState.historical.map) {
+            initHistoricalMapInstance();
+        }
 
         // Crear nueva polilínea histórica o actualizar la existente
         if (!appState.historical.polyline) {
@@ -712,8 +678,8 @@ async function loadHistoricalData() {
                 path: path,
                 geodesic: true,
                 strokeColor: "#4285F4",
-                strokeOpacity: 0.5,
-                strokeWeight: 3,
+                strokeOpacity: 1.0,
+                strokeWeight: 4,
                 map: appState.historical.map
             });
         } else {
@@ -726,8 +692,47 @@ async function loadHistoricalData() {
         path.forEach(point => bounds.extend(point));
         appState.historical.map.fitBounds(bounds);
 
-        // Mostrar resumen de datos
-        showDataSummary(timeGroups);
+        // Verificar si hay un punto seleccionado para filtrar
+        if (appState.historical.pointSelected && domElements.enablePointSelection.checked) {
+            const selectedPoint = {
+                lat: parseFloat(domElements.selectedLat.value),
+                lng: parseFloat(domElements.selectedLng.value)
+            };
+            
+            const radius = parseInt(domElements.searchRadius.value);
+            
+            // Encontrar puntos cercanos
+            const nearbyPoints = findPointsNearby(selectedPoint, result.data, radius);
+            
+            // Mostrar resultados en la tabla
+            domElements.pointSearchResults.style.display = 'block';
+            buildResultsTable(nearbyPoints);
+            
+            // Resaltar visualmente en el mapa los puntos encontrados
+            if (nearbyPoints.length > 0) {
+                setTimeout(() => {
+                    const firstPoint = {
+                        lat: parseFloat(nearbyPoints[0].LATITUDE),
+                        lng: parseFloat(nearbyPoints[0].LONGITUDE)
+                    };
+                    appState.historical.map.setCenter(firstPoint);
+                    appState.historical.map.setZoom(16);
+                }, 500);
+            }
+        } else {
+            // Si no hay punto seleccionado, ocultar sección de resultados
+            domElements.pointSearchResults.style.display = 'none';
+        }
+
+        // Forzar redibujado
+        google.maps.event.trigger(appState.historical.map, 'resize');
+
+        // Después de cargar los datos, inicializar los controles de la línea de tiempo
+        if (appState.historical.recorrido.length > 0) {
+            domElements.timelineSlider.max = appState.historical.recorrido.length - 1;
+            domElements.timelineSlider.value = 0;
+            updateAnimationPosition(0);
+        }
 
     } catch (error) {
         console.error('Error cargando datos históricos:', error);
@@ -735,57 +740,6 @@ async function loadHistoricalData() {
     } finally {
         showLoading(false);
     }
-}
-
-// Función auxiliar para obtener color según la hora
-function getColorForHour(hour) {
-    const colors = {
-        0: '#FF0000', // Rojo para medianoche
-        6: '#FFA500', // Naranja para amanecer
-        12: '#FFFF00', // Amarillo para mediodía
-        18: '#00FF00', // Verde para atardecer
-        23: '#0000FF'  // Azul para noche
-    };
-    
-    // Encontrar el color más cercano
-    const hourKeys = Object.keys(colors).map(Number);
-    const closestHour = hourKeys.reduce((prev, curr) => {
-        return Math.abs(curr - hour) < Math.abs(prev - hour) ? curr : prev;
-    });
-    
-    return colors[closestHour];
-}
-
-// Función para mostrar resumen de datos
-function showDataSummary(timeGroups) {
-    const summaryContainer = document.createElement('div');
-    summaryContainer.className = 'data-summary';
-    
-    let summaryHTML = '<h3>Resumen de Registros por Hora</h3>';
-    summaryHTML += '<div class="time-groups">';
-    
-    Object.entries(timeGroups).sort(([hourA], [hourB]) => Number(hourA) - Number(hourB)).forEach(([hour, points]) => {
-        const color = getColorForHour(Number(hour));
-        summaryHTML += `
-            <div class="time-group" style="border-left-color: ${color}">
-                <div class="time-header">
-                    <span class="time-hour">${hour}:00</span>
-                    <span class="point-count">${points.length} puntos</span>
-                </div>
-                <div class="time-details">
-                    <div>Primer punto: ${points[0].TIME}</div>
-                    <div>Último punto: ${points[points.length - 1].TIME}</div>
-                </div>
-            </div>
-        `;
-    });
-    
-    summaryHTML += '</div>';
-    summaryContainer.innerHTML = summaryHTML;
-    
-    // Insertar el resumen después del mapa
-    const mapContainer = document.getElementById('historicalMapContainer');
-    mapContainer.parentNode.insertBefore(summaryContainer, mapContainer.nextSibling);
 }
 
 function initHistoricalTracking() {
@@ -893,20 +847,141 @@ function initHistoricalTracking() {
     }
 }
 
-function initApp() {
-    // Configurar eventos para cambiar entre las secciones
-    domElements.realTimeBtn.addEventListener("click", switchToRealTime);
-    domElements.historicalBtn.addEventListener("click", switchToHistorical);
-    //domElements.membersBtn.addEventListener("click", switchToMembers);
+// Funciones para la animación de la línea de tiempo
+function initTimelineControls() {
+    if (!domElements.timelineSlider || !domElements.playPauseBtn || !domElements.speedControl) {
+        console.warn('Elementos de control de línea de tiempo no encontrados');
+        return;
+    }
 
-    // Inicializar mapas
-    initMap();
+    // Inicializar el slider
+    domElements.timelineSlider.addEventListener('input', function() {
+        const index = parseInt(this.value);
+        updateAnimationPosition(index);
+    });
 
-    // Inicializar seguimiento histórico
-    initHistoricalTracking();
+    // Control de reproducción
+    domElements.playPauseBtn.addEventListener('click', function() {
+        if (appState.historical.isPlaying) {
+            pauseAnimation();
+        } else {
+            playAnimation();
+        }
+    });
+
+    // Control de velocidad
+    domElements.speedControl.addEventListener('change', function() {
+        const speed = parseInt(this.value);
+        updateAnimationSpeed(speed);
+    });
+}
+
+function updateAnimationPosition(index) {
+    if (!appState.historical.recorrido[index]) return;
     
-    // Hacer que la función mapsApiLoaded sea global para que Google Maps pueda llamarla
-    window.mapsApiLoaded = mapsApiLoaded;
+    appState.historical.currentIndex = index;
+    const point = appState.historical.recorrido[index];
+    
+    // Actualizar marcador de posición actual
+    if (!appState.historical.animationMarker) {
+        appState.historical.animationMarker = new google.maps.Marker({
+            map: appState.historical.map,
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 8,
+                fillColor: "#FF0000",
+                fillOpacity: 1,
+                strokeColor: "#FFFFFF",
+                strokeWeight: 2
+            }
+        });
+    }
+    
+    appState.historical.animationMarker.setPosition(point);
+    
+    // Actualizar la polilínea hasta el punto actual
+    appState.historical.polyline.setPath(appState.historical.recorrido.slice(0, index + 1));
+    
+    // Actualizar el display de tiempo
+    if (domElements.currentTimeDisplay) {
+        const date = new Date(point.timestamp);
+        domElements.currentTimeDisplay.textContent = date.toLocaleString();
+    }
+}
+
+function playAnimation() {
+    if (appState.historical.isPlaying) return;
+    
+    appState.historical.isPlaying = true;
+    domElements.playPauseBtn.textContent = '⏸️ Pausar';
+    
+    appState.historical.animationInterval = setInterval(() => {
+        if (appState.historical.currentIndex < appState.historical.recorrido.length - 1) {
+            appState.historical.currentIndex++;
+            updateAnimationPosition(appState.historical.currentIndex);
+            domElements.timelineSlider.value = appState.historical.currentIndex;
+        } else {
+            pauseAnimation();
+        }
+    }, appState.historical.animationSpeed);
+}
+
+function pauseAnimation() {
+    if (!appState.historical.isPlaying) return;
+    
+    appState.historical.isPlaying = false;
+    domElements.playPauseBtn.textContent = '▶️ Reproducir';
+    clearInterval(appState.historical.animationInterval);
+}
+
+function updateAnimationSpeed(speed) {
+    appState.historical.animationSpeed = speed;
+    if (appState.historical.isPlaying) {
+        pauseAnimation();
+        playAnimation();
+    }
+}
+
+function initApp() {
+    // Inicializar los mapas cuando la API de Google Maps esté lista
+    if (window.google && window.google.maps) {
+        initMap();
+    } else {
+        // Si la API aún no está lista, esperar a que se cargue
+        window.mapsApiLoaded = initMap;
+    }
+
+    // Inicializar los controles de la línea de tiempo
+    initTimelineControls();
+
+    // Configurar los manejadores de eventos para los botones de navegación
+    domElements.realTimeBtn.addEventListener('click', switchToRealTime);
+    domElements.historicalBtn.addEventListener('click', switchToHistorical);
+    domElements.membersBtn.addEventListener('click', switchToMembers);
+
+    // Configurar el botón de seguir taxi
+    domElements.seguirBtn.addEventListener('click', function() {
+        appState.realTime.seguirCentrando = !appState.realTime.seguirCentrando;
+        this.textContent = appState.realTime.seguirCentrando ? 'Dejar de seguir' : 'Seguir Taxi';
+    });
+
+    // Configurar el botón de cargar datos históricos
+    domElements.loadHistory.addEventListener('click', loadHistoricalData);
+
+    // Configurar el botón de borrar punto seleccionado
+    domElements.clearPointBtn.addEventListener('click', clearSelectedPoint);
+
+    // Configurar el cambio de radio de búsqueda
+    initRadiusChangeHandler();
+
+    // Configurar el cambio de selección de punto
+    domElements.enablePointSelection.addEventListener('change', function() {
+        const isEnabled = this.checked;
+        domElements.selectedLat.disabled = !isEnabled;
+        domElements.selectedLng.disabled = !isEnabled;
+        domElements.clearPointBtn.disabled = !isEnabled;
+        domElements.searchRadius.disabled = !isEnabled;
+    });
 }
 
 // Iniciar la aplicación cuando el DOM esté listo
