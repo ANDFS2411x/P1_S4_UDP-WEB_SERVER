@@ -103,40 +103,34 @@
         
         <!-- Contenedor para resultados de búsqueda por punto -->
         <div id="pointSearchResults" class="results-container">
-            <h3>Historial de Ubicaciones</h3>
+            <h3>Resultados de búsqueda por punto</h3>
             <div class="results-summary">
                 <p id="resultsSummary">Selecciona un punto en el mapa y carga la trayectoria para ver cuándo el taxi pasó por esa ubicación.</p>
             </div>
-            <div class="results-controls">
-                <button id="exportData" class="secondary-button">Exportar Datos</button>
-                <button id="toggleMapView" class="secondary-button">Vista Satélite</button>
-            </div>
-            <div class="results-stats">
-                <div class="stat-item">
-                    <span class="stat-label">Total Registros:</span>
-                    <span id="totalRecords" class="stat-value">0</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">Tiempo Total:</span>
-                    <span id="totalTime" class="stat-value">0 min</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">Distancia Total:</span>
-                    <span id="totalDistance" class="stat-value">0 km</span>
+            
+            <!-- Nuevo slider para navegar por los puntos -->
+            <div class="slider-container">
+                <input type="range" id="pointSlider" min="0" max="0" value="0" class="slider">
+                <div class="slider-labels">
+                    <span id="currentPoint">Punto 0 de 0</span>
+                    <span id="pointTime">Hora: --:--:--</span>
                 </div>
             </div>
-            <div id="resultsTable" class="results-table">
-                <table>
+
+            <!-- Contenedor para la tabla de resultados con scroll -->
+            <div class="results-table-container">
+                <table id="resultsTable" class="results-table">
                     <thead>
                         <tr>
                             <th>Fecha</th>
                             <th>Hora</th>
-                            <th>Ubicación</th>
-                            <th>Acciones</th>
+                            <th>Latitud</th>
+                            <th>Longitud</th>
+                            <th>Acción</th>
                         </tr>
                     </thead>
-                    <tbody id="resultsTableBody">
-                        <!-- Los resultados se cargarán aquí dinámicamente -->
+                    <tbody>
+                        <!-- Los resultados se cargarán dinámicamente aquí -->
                     </tbody>
                 </table>
             </div>
