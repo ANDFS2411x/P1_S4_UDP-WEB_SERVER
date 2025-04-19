@@ -494,106 +494,118 @@ function findPointsNearby(point, data, radius) {
 
 // Función para construir la tabla de resultados
 function buildResultsTable(nearbyPoints) {
-    // Si no hay puntos cercanos, mostrar mensaje
-    if (nearbyPoints.length === 0) {
-        domElements.resultsSummary.textContent = "No se encontraron registros cercanos al punto seleccionado.";
-        domElements.resultsTable.innerHTML = '<div class="no-results">Sin resultados</div>';
+    const tbody = document.getElementById('resultsTableBody');
+    tbody.innerHTML = '';
+    
+    if (!nearbyPoints || nearbyPoints.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="no-results">No se encontraron registros cercanos al punto seleccionado</td></tr>';
         return;
     }
-    
-    // Actualizar resumen
-    domElements.resultsSummary.textContent = `Se encontraron ${nearbyPoints.length} registros cercanos al punto seleccionado.`;
-    
-    // Construir tabla
-    let tableHTML = `
-        <table>
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Hora</th>
-                    <th>Latitud</th>
-                    <th>Longitud</th>
-                    <th>Acción</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
-    
-    // Agregar filas
+
+    // Actualizar estadísticas
+    updateStats(nearbyPoints);
+
     nearbyPoints.forEach((point, index) => {
-        tableHTML += `
-            <tr>
-                <td class="white">${point.DATE || 'N/A'}</td>
-                <td class="white">${point.TIME || 'N/A'}</td>
-                <td class="white">${point.LATITUDE || 'N/A'}</td>
-                <td class="white">${point.LONGITUDE || 'N/A'}</td>
-                <td>
-                    <button class="secondary-button highlight-btn" data-index="${index}">Resaltar</button>
-                </td>
-            </tr>
+        const row = document.createElement('tr');
+        
+        // Formatear fecha y hora
+        const date = new Date(point.timestamp);
+        const formattedDate = date.toLocaleDateString();
+        const formattedTime = date.toLocaleTimeString();
+        
+        // Formatear ubicación
+        const location = `${point.lat.toFixed(6)}, ${point.lng.toFixed(6)}`;
+        
+        row.innerHTML = `
+            <td>${formattedDate}</td>
+            <td>${formattedTime}</td>
+            <td>${location}</td>
+            <td>
+                <button class="action-button" onclick="highlightPointOnMap(${index})">
+                    Resaltar
+                </button>
+            </td>
         `;
-    });
-    
-    tableHTML += `
-            </tbody>
-        </table>
-    `;
-    
-    // Insertar tabla en el DOM
-    domElements.resultsTable.innerHTML = tableHTML;
-    
-    // Agregar manejadores de eventos para los botones de resaltar
-    const highlightButtons = domElements.resultsTable.querySelectorAll('.highlight-btn');
-    highlightButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const pointIndex = parseInt(this.getAttribute('data-index'));
-            highlightPointOnMap(nearbyPoints[pointIndex]);
-            //llevar al usuario al inicio de la pagina
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
+        
+        tbody.appendChild(row);
     });
 }
 
-// Función para resaltar un punto en el mapa
-function highlightPointOnMap(point) {
-    const position = {
-        lat: parseFloat(point.LATITUDE),
-        lng: parseFloat(point.LONGITUDE)
-    };
+function updateStats(points) {
+    // Actualizar total de registros
+    document.getElementById('totalRecords').textContent = points.length;
     
-    // Crear marcador temporal
-    const highlightMarker = new google.maps.Marker({
-        position: position,
-        map: appState.historical.map,
-        icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 10,
-            fillColor: "#FF4500",
-            fillOpacity: 1,
-            strokeColor: "#FF0000",
-            strokeWeight: 2
-        },
-        zIndex: 1000,
-        animation: google.maps.Animation.BOUNCE
-    });
+    // Calcular tiempo total
+    if (points.length >= 2) {
+        const firstPoint = new Date(points[0].timestamp);
+        const lastPoint = new Date(points[points.length - 1].timestamp);
+        const timeDiff = (lastPoint - firstPoint) / (1000 * 60); // en minutos
+        document.getElementById('totalTime').textContent = `${Math.round(timeDiff)} min`;
+    } else {
+        document.getElementById('totalTime').textContent = '0 min';
+    }
     
-    // Centrar mapa en este punto
-    appState.historical.map.setCenter(position);
+    // Calcular distancia total
+    let totalDistance = 0;
+    for (let i = 1; i < points.length; i++) {
+        totalDistance += calculateDistance(
+            points[i-1].lat,
+            points[i-1].lng,
+            points[i].lat,
+            points[i].lng
+        );
+    }
+    document.getElementById('totalDistance').textContent = `${totalDistance.toFixed(2)} km`;
+}
+
+// Función para exportar datos
+function exportToCSV(points) {
+    const headers = ['Fecha', 'Hora', 'Latitud', 'Longitud'];
+    const csvContent = [
+        headers.join(','),
+        ...points.map(point => {
+            const date = new Date(point.timestamp);
+            return [
+                date.toLocaleDateString(),
+                date.toLocaleTimeString(),
+                point.lat,
+                point.lng
+            ].join(',');
+        })
+    ].join('\n');
     
-    // Añadir etiqueta con fecha y hora
-    const infoWindow = new google.maps.InfoWindow({
-        content: `<div class="point-marker-label">Fecha: ${point.DATE}<br>Hora: ${point.TIME}</div>`
-    });
-    infoWindow.open(appState.historical.map, highlightMarker);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'historico_taxi.csv';
+    link.click();
+}
+
+// Función para cambiar la vista del mapa
+function toggleMapView() {
+    if (appState.historical.map) {
+        const currentMapType = appState.historical.map.getMapTypeId();
+        const newMapType = currentMapType === 'roadmap' ? 'satellite' : 'roadmap';
+        appState.historical.map.setMapTypeId(newMapType);
+    }
+}
+
+// Inicializar eventos para los nuevos botones
+function initHistoricalControls() {
+    const exportButton = document.getElementById('exportData');
+    const toggleViewButton = document.getElementById('toggleMapView');
     
-    // Eliminar marcador después de unos segundos
-    setTimeout(() => {
-        highlightMarker.setAnimation(null);
-        setTimeout(() => {
-            highlightMarker.setMap(null);
-            infoWindow.close();
-        }, 2000);
-    }, 3000);
+    if (exportButton) {
+        exportButton.addEventListener('click', () => {
+            if (appState.historical.recorrido.length > 0) {
+                exportToCSV(appState.historical.recorrido);
+            }
+        });
+    }
+    
+    if (toggleViewButton) {
+        toggleViewButton.addEventListener('click', toggleMapView);
+    }
 }
 
 async function loadHistoricalData() {
@@ -842,6 +854,8 @@ function initApp() {
     
     // Hacer que la función mapsApiLoaded sea global para que Google Maps pueda llamarla
     window.mapsApiLoaded = mapsApiLoaded;
+
+    initHistoricalControls();
 }
 
 // Iniciar la aplicación cuando el DOM esté listo

@@ -103,23 +103,42 @@
         
         <!-- Contenedor para resultados de búsqueda por punto -->
         <div id="pointSearchResults" class="results-container">
-            <h3>Resultados de búsqueda por punto</h3>
+            <h3>Historial de Ubicaciones</h3>
             <div class="results-summary">
                 <p id="resultsSummary">Selecciona un punto en el mapa y carga la trayectoria para ver cuándo el taxi pasó por esa ubicación.</p>
             </div>
-            <div id="resultsTable" class="results-table">
-                <!-- Aquí se cargarán dinámicamente los resultados -->
+            <div class="results-controls">
+                <button id="exportData" class="secondary-button">Exportar Datos</button>
+                <button id="toggleMapView" class="secondary-button">Vista Satélite</button>
             </div>
-        </div>
-        
-        <!-- Nuevo contenedor para resultados de búsqueda por punto -->
-        <div id="pointSearchResults" class="results-container">
-            <h3>Resultados de búsqueda por punto</h3>
-            <div class="results-summary">
-                <p id="resultsSummary">Selecciona un punto en el mapa y carga la trayectoria para ver cuándo el taxi pasó por esa ubicación.</p>
+            <div class="results-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Total Registros:</span>
+                    <span id="totalRecords" class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Tiempo Total:</span>
+                    <span id="totalTime" class="stat-value">0 min</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Distancia Total:</span>
+                    <span id="totalDistance" class="stat-value">0 km</span>
+                </div>
             </div>
             <div id="resultsTable" class="results-table">
-                <!-- Aquí se cargarán dinámicamente los resultados -->
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Hora</th>
+                            <th>Ubicación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsTableBody">
+                        <!-- Los resultados se cargarán aquí dinámicamente -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
