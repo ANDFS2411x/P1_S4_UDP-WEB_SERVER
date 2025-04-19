@@ -3,6 +3,8 @@ class TimelineAnimation {
         this.map = map;
         this.points = [];
         this.currentIndex = 0;
+        this.mode = 'route'; // 'route' o 'point'
+        
         this.animationPath = new google.maps.Polyline({
             geodesic: true,
             strokeColor: "#FF0000",
@@ -10,6 +12,7 @@ class TimelineAnimation {
             strokeWeight: 4,
             map: this.map
         });
+        
         this.currentMarker = new google.maps.Marker({
             map: this.map,
             icon: {
@@ -34,18 +37,33 @@ class TimelineAnimation {
         });
     }
 
-    setPoints(points) {
+    setMode(mode) {
+        this.mode = mode;
+        // En modo punto, ocultar la polilínea
+        if (mode === 'point') {
+            this.animationPath.setMap(null);
+        } else {
+            this.animationPath.setMap(this.map);
+        }
+    }
+
+    setPoints(points, mode = 'route') {
         this.points = points;
         this.currentIndex = 0;
+        this.setMode(mode);
         this.updateVisualization();
     }
 
     updateVisualization() {
         if (this.currentIndex >= this.points.length) return;
         
-        const pathToShow = this.points.slice(0, this.currentIndex + 1);
-        this.animationPath.setPath(pathToShow);
+        // Actualizar la polilínea solo en modo ruta
+        if (this.mode === 'route') {
+            const pathToShow = this.points.slice(0, this.currentIndex + 1);
+            this.animationPath.setPath(pathToShow);
+        }
         
+        // Actualizar posición del marcador y el círculo
         const currentPoint = this.points[this.currentIndex];
         this.currentMarker.setPosition(currentPoint);
         this.currentCircle.setCenter(currentPoint);

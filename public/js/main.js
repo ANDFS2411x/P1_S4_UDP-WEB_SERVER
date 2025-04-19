@@ -705,9 +705,9 @@ async function loadHistoricalData() {
 
         // En modo de selección de punto, mostrar solo los puntos relevantes
         if (domElements.enablePointSelection.checked) {
-            appState.historical.timelineAnimation.setPoints(relevantPoints);
+            appState.historical.timelineAnimation.setPoints(relevantPoints, 'point');
         } else {
-            appState.historical.timelineAnimation.setPoints(allPoints);
+            appState.historical.timelineAnimation.setPoints(allPoints, 'route');
         }
 
         // Configurar y mostrar controles de línea de tiempo
@@ -730,6 +730,7 @@ async function loadHistoricalData() {
                     const currentPoint = points[Math.floor((progress / 100) * (points.length - 1))];
                     
                     if (currentPoint) {
+                        // Actualizar información de tiempo
                         currentTimeInfo.textContent = `${currentPoint.date} ${currentPoint.time}`;
                         
                         // Si hay un punto seleccionado, mostrar la distancia
@@ -745,6 +746,9 @@ async function loadHistoricalData() {
                                 currentPoint.lng
                             );
                             distanceInfo.textContent = `Distancia al punto: ${Math.round(distance)} m`;
+                            distanceInfo.style.display = 'block';
+                        } else {
+                            distanceInfo.style.display = 'none';
                         }
 
                         // Centrar el mapa en la posición actual
