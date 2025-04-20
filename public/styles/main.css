@@ -431,35 +431,19 @@ h2.panel-title {
 /* TIMELINE */
 /*------------*/
 .timeline-controls {
-    background: linear-gradient(180deg, var(--background-secondary) 0%, var(--background-primary) 100%);
+    background: linear-gradient(145deg, var(--background-secondary), var(--background-tertiary));
     padding: 20px;
-    border-radius: var(--border-radius);
-    box-shadow: 0 8px 32px var(--shadow-color-strong);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     height: var(--timeline-height);
     display: flex;
     flex-direction: column;
-    border: 1px solid var(--border-color);
-    position: relative;
-    overflow: hidden;
-}
-
-.timeline-controls::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, 
-        transparent 0%, 
-        var(--accent-color) 50%, 
-        transparent 100%
-    );
-    opacity: 0.5;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(8px);
 }
 
 .timeline-header {
-    margin-bottom: 10px;
+    margin-bottom: 15px;
 }
 
 .timeline-header h3 {
@@ -467,6 +451,8 @@ h2.panel-title {
     margin: 0;
     font-size: 1.1em;
     text-align: center;
+    letter-spacing: 0.5px;
+    font-weight: 500;
 }
 
 .timeline-slider {
@@ -474,12 +460,12 @@ h2.panel-title {
     height: 6px;
     background: var(--background-tertiary);
     border-radius: 3px;
-    overflow: visible;
-    margin: 20px 0;
-    position: relative;
-    cursor: pointer;
+    overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+    margin: 10px 0 20px;
     appearance: none;
     -webkit-appearance: none;
+    cursor: pointer;
 }
 
 .timeline-slider::-webkit-slider-thumb {
@@ -487,27 +473,61 @@ h2.panel-title {
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
+    background: linear-gradient(145deg, #ff4d4d, #ff0000);
     cursor: pointer;
-    border: 2px solid var(--text-primary);
-    box-shadow: 0 0 10px var(--shadow-color-strong);
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.3), -407px 0 0 400px rgba(255, 0, 0, 0.5);
     transition: all 0.2s ease;
-    position: relative;
-    z-index: 2;
 }
 
 .timeline-slider::-webkit-slider-thumb:hover {
-    transform: scale(1.2);
-    box-shadow: 0 0 15px var(--accent-color);
-    border-color: var(--text-highlight);
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.4), -407px 0 0 400px rgba(255, 0, 0, 0.6);
+}
+
+.timeline-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #ff4d4d, #ff0000);
+    cursor: pointer;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    transition: all 0.2s ease;
+}
+
+.timeline-slider::-moz-range-thumb:hover {
+    transform: scale(1.1);
+}
+
+.timeline-slider::-ms-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #ff4d4d, #ff0000);
+    cursor: pointer;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    transition: all 0.2s ease;
+}
+
+.timeline-slider::-ms-thumb:hover {
+    transform: scale(1.1);
 }
 
 .timeline-slider::-webkit-slider-runnable-track {
     height: 6px;
-    background: linear-gradient(90deg, 
-        var(--accent-color) var(--value, 0%), 
-        var(--background-tertiary) var(--value, 0%)
-    );
+    background: var(--background-tertiary);
+    border-radius: 3px;
+}
+
+.timeline-slider::-moz-range-track {
+    height: 6px;
+    background: var(--background-tertiary);
+    border-radius: 3px;
+}
+
+.timeline-slider::-ms-track {
+    height: 6px;
+    background: var(--background-tertiary);
     border-radius: 3px;
 }
 
@@ -516,57 +536,27 @@ h2.panel-title {
     justify-content: space-between;
     align-items: center;
     padding: 12px 15px;
-    background: var(--background-tertiary);
-    border-radius: var(--border-radius);
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
     margin-top: auto;
-    font-family: 'Exo 2', monospace;
-    border: 1px solid var(--border-color);
-    position: relative;
-    overflow: hidden;
-}
-
-.timeline-info::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-        135deg,
-        transparent 0%,
-        rgba(86, 103, 216, 0.05) 50%,
-        transparent 100%
-    );
-    pointer-events: none;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .timeline-info span {
-    padding: 8px 12px;
-    background: var(--background-primary);
-    border-radius: var(--border-radius);
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    font-weight: 500;
     font-size: 0.9em;
     letter-spacing: 0.5px;
-    color: var(--text-highlight);
-    border: 1px solid var(--border-color);
-    position: relative;
-    overflow: hidden;
-    font-weight: 500;
+    color: var(--text-primary);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
 }
 
-.timeline-info span::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 1px;
-    background: linear-gradient(90deg, 
-        transparent 0%, 
-        var(--accent-color) 50%, 
-        transparent 100%
-    );
-    opacity: 0.5;
+.timeline-info span:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
 }
 
 /*-----------------*/

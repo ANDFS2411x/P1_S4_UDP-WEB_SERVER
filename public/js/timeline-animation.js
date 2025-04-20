@@ -25,12 +25,6 @@ class TimelineAnimation {
             },
             animation: google.maps.Animation.BOUNCE
         });
-
-        // Inicializar el slider
-        this.timelineSlider = document.getElementById('timelineSlider');
-        if (this.timelineSlider) {
-            this.timelineSlider.style.setProperty('--value', '0%');
-        }
     }
 
     setMode(mode) {
@@ -67,12 +61,6 @@ class TimelineAnimation {
         
         // Asegurarse de que el marcador esté visible
         this.currentMarker.setMap(this.map);
-
-        // Actualizar el progreso visual del slider
-        if (this.timelineSlider) {
-            const progress = (this.currentIndex / (this.points.length - 1)) * 100;
-            this.timelineSlider.style.setProperty('--value', `${progress}%`);
-        }
     }
 
     setProgress(progressPercent) {
@@ -87,10 +75,5 @@ class TimelineAnimation {
         this.currentMarker.setMap(null);
         this.points = [];
         this.currentIndex = 0;
-        
-        // Resetear el progreso visual del slider
-        if (this.timelineSlider) {
-            this.timelineSlider.style.setProperty('--value', '0%');
-        }
     }
 } 
