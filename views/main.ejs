@@ -7,7 +7,6 @@
     <title id="titulo">SnapMap ~ <%= title %></title>
     <link rel="stylesheet" id="themeStyles">
     <link rel="icon" type="image/x-icon" id="icono"/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Precargar el script de Google Maps -->
     <link rel="preconnect" href="https://maps.googleapis.com">
     <link rel="preconnect" href="https://maps.gstatic.com">
@@ -76,19 +75,8 @@
                     <div id="timelineControls" class="timeline-controls" style="display: none;">
                         <div class="timeline-header">
                             <h3>Línea de tiempo</h3>
-                            <div class="timeline-controls-buttons">
-                                <button class="timeline-button" id="playPauseBtn" title="Reproducir/Pausar">
-                                    <i class="fas fa-play"></i>
-                                </button>
-                                <button class="timeline-button" id="resetBtn" title="Reiniciar">
-                                    <i class="fas fa-undo"></i>
-                                </button>
-                            </div>
                         </div>
-                        <div class="timeline-slider-container">
-                            <input type="range" id="timelineSlider" min="0" max="100" value="0" class="timeline-slider">
-                            <div class="timeline-progress" id="timelineProgress"></div>
-                        </div>
+                        <input type="range" id="timelineSlider" min="0" max="100" value="0" class="timeline-slider">
                         <div class="timeline-info">
                             <span id="currentTimeInfo">--:--:--</span>
                             <span id="distanceInfo">Distancia al punto: -- m</span>
