@@ -4,144 +4,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="SnapMap - Sistema de seguimiento de taxis en tiempo real">
-    <meta name="theme-color" content="#1e1e2e">
     <title id="titulo">SnapMap ~ <%= title %></title>
     <link rel="stylesheet" id="themeStyles">
     <link rel="icon" type="image/x-icon" id="icono"/>
-    <!-- Precargar recursos -->
+    <!-- Precargar el script de Google Maps -->
     <link rel="preconnect" href="https://maps.googleapis.com">
     <link rel="preconnect" href="https://maps.gstatic.com">
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&display=swap">
 </head>
 
 <body>
     <!-- Encabezado con logo y título del proyecto -->
     <header class="main-header">
         <div id="brand">
-            <a id="btn-logo" aria-label="Inicio">
-                <img alt="Logo de SnapMap" class="logo" id="logo" loading="eager">
+            <a id="btn-logo">
+                <img alt="Project logo" class="logo" id="logo">
             </a>
             <h1 class="project-title">SnapMap</h1>
         </div>
-        
-        <nav id="navbar" aria-label="Navegación principal">
-            <a href="#" id="realTimeBtn" class="active" aria-current="page">Real Time</a>
+        <div id="navbar">
+            <a href="#" id="realTimeBtn" class="active">Real Time</a>
             <a href="#" id="historicalBtn">Historical</a>
-        </nav>
+        </div>
 
         <div id="about-div">
-            <a id="about" href="#" aria-label="Acerca de nosotros">About us</a>
+            <a id="about">About us</a>
         </div>
     </header>
 
-    <main>
-        <!-- 🔹 Sección "Real Time" -->
-        <section id="realTime" class="section active" aria-labelledby="realTimeTitle">        
-            <h2 id="realTimeTitle" class="visually-hidden">Modo tiempo real</h2>
-            
-            <div id="realTimeMapContainer" class="mapContainer">
-                <div id="realTimeMap" class="map" role="application" aria-label="Mapa en tiempo real">
-                    <div class="map-loading">Cargando mapa...</div>
-                </div>
-                <div id="realTimeLoadingMessage" class="loadingMessage" style="display: none;" role="status">
-                    <span>Cargando datos...</span>
-                </div>
+    <!-- 🔹 Sección "Real Time" -->
+    <div id="realTime" class="section active">        
+        <!-- Map is now first for visual priority -->
+        <div id="realTimeMapContainer" class="mapContainer">
+            <div id="realTimeMap" class="map">Cargando mapa...</div>
+            <div id="realTimeLoadingMessage" class="loadingMessage" style="display: none;">
+                <span>Cargando datos...</span>
             </div>
-            
-            <div class="info-panel" role="region" aria-label="Información del taxi">
-                <p><strong>Latitud:</strong> <span id="latitud">N/A</span></p>
-                <p><strong>Longitud:</strong> <span id="longitud">N/A</span></p>
-                <p><strong>Fecha:</strong> <span id="fecha">N/A</span></p>
-                <p><strong>Hora:</strong> <span id="tiempo">N/A</span></p>
+        </div>
+        
+        <!-- Panel de información -->
+        <div class="info-panel">
+            <p><strong>Latitud:</strong> <span id="latitud">N/A</span></p>
+            <p><strong>Longitud:</strong> <span id="longitud">N/A</span></p>
+            <p><strong>Fecha:</strong> <span id="fecha">N/A</span></p>
+            <p><strong>Hora:</strong> <span id="tiempo">N/A</span></p>
+        </div>
+
+        <button id="seguirBtn" class="action-button">Seguir Taxi</button>
+        <div id="realTimeError" class="error-message"></div>
+    </div>
+
+    <!-- 🔹 Sección "Historical" -->
+    <div id="historical" class="section">        
+        <!-- Map first for visual priority -->
+        <div id="historicalMapContainer" class="mapContainer">
+            <div id="historicalMap" class="map">Seleccione un rango de fechas y haga clic en "Cargar Trayectoria"</div>
+            <div id="historicalLoadingMessage" class="loadingMessage" style="display: none;">
+                <span>Cargando datos históricos...</span>
+            </div>
+        </div>
+
+        <!-- Timeline controls -->
+        <div id="timelineControls" class="timeline-controls" style="display: none;">
+            <input type="range" id="timelineSlider" min="0" max="100" value="0" class="timeline-slider">
+            <div class="timeline-info">
+                <span id="currentTimeInfo">--:--:--</span>
+                <span id="distanceInfo">Distancia al punto: -- m</span>
+            </div>
+        </div>
+
+        <div class="filter-form">
+            <div class="form-group">
+                <label for="startDate">Fecha y hora inicial:</label>
+                <input type="datetime-local" id="startDate">
             </div>
 
-            <button id="seguirBtn" class="action-button" aria-label="Seguir taxi en tiempo real">
-                <span class="button-text">Seguir Taxi</span>
-                <span class="button-icon" aria-hidden="true">→</span>
-            </button>
-            
-            <div id="realTimeError" class="error-message" role="alert" aria-live="polite"></div>
-        </section>
-
-        <!-- 🔹 Sección "Historical" -->
-        <section id="historical" class="section" aria-labelledby="historicalTitle">        
-            <h2 id="historicalTitle" class="visually-hidden">Modo histórico</h2>
-            
-            <div id="historicalMapContainer" class="mapContainer">
-                <div id="historicalMap" class="map" role="application" aria-label="Mapa histórico">
-                    <div class="map-loading">Seleccione un rango de fechas y haga clic en "Cargar Trayectoria"</div>
-                </div>
-                <div id="historicalLoadingMessage" class="loadingMessage" style="display: none;" role="status">
-                    <span>Cargando datos históricos...</span>
-                </div>
+            <div class="form-group">
+                <label for="endDate">Fecha y hora final:</label>
+                <input type="datetime-local" id="endDate">
             </div>
 
-            <div id="timelineControls" class="timeline-controls" style="display: none;" role="region" aria-label="Controles de línea de tiempo">
-                <div class="timeline-header">
-                    <h3>Línea de tiempo</h3>
-                    <p class="timeline-description">Desliza para navegar por la trayectoria</p>
+            <div id="pointSelectionContainer" class="point-selection-container">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="enablePointSelection">
+                    <label class="white" for="enablePointSelection">Seleccionar punto en el mapa</label>
+                    <span class="helper-text">(Haz clic en el mapa para seleccionar un punto)</span>
                 </div>
                 
-                <input type="range" id="timelineSlider" min="0" max="100" value="0" class="timeline-slider" 
-                       aria-label="Control de tiempo" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-                
-                <div class="timeline-info">
-                    <span id="currentTimeInfo" aria-live="polite">--:--:--</span>
-                    <span id="distanceInfo" aria-live="polite">Distancia al punto: -- m</span>
+                <div class="coordinates-container">
+                    <div class="coord-group">
+                        <label for="selectedLat">Latitud:</label>
+                        <input type="text" id="selectedLat" disabled>
+                    </div>
+                    <div class="coord-group">
+                        <label for="selectedLng">Longitud:</label>
+                        <input type="text" id="selectedLng" disabled>
+                    </div>
                 </div>
+                
+                <div class="radius-container">
+                    <label for="searchRadius">Radio de búsqueda (metros):</label>
+                    <input type="number" id="searchRadius" min="10" max="1000" value="50">
+                </div>
+                
+                <button id="clearPointBtn" class="secondary-button" disabled>Borrar punto</button>
             </div>
 
-            <form class="filter-form" id="historicalForm" role="form" aria-label="Filtros de búsqueda histórica">
-                <div class="form-group">
-                    <label for="startDate">Fecha y hora inicial:</label>
-                    <input type="datetime-local" id="startDate" required aria-required="true">
-                </div>
+            <button id="loadHistory" class="action-button">Cargar Trayectoria</button>
+        </div>
 
-                <div class="form-group">
-                    <label for="endDate">Fecha y hora final:</label>
-                    <input type="datetime-local" id="endDate" required aria-required="true">
-                </div>
-
-                <fieldset id="pointSelectionContainer" class="point-selection-container">
-                    <legend>Selección de punto</legend>
-                    
-                    <div class="checkbox-container">
-                        <input type="checkbox" id="enablePointSelection">
-                        <label for="enablePointSelection">Seleccionar punto en el mapa</label>
-                        <span class="helper-text">(Haz clic en el mapa para seleccionar un punto)</span>
-                    </div>
-                    
-                    <div class="coordinates-container">
-                        <div class="coord-group">
-                            <label for="selectedLat">Latitud:</label>
-                            <input type="text" id="selectedLat" disabled aria-disabled="true">
-                        </div>
-                        <div class="coord-group">
-                            <label for="selectedLng">Longitud:</label>
-                            <input type="text" id="selectedLng" disabled aria-disabled="true">
-                        </div>
-                    </div>
-                    
-                    <div class="radius-container">
-                        <label for="searchRadius">Radio de búsqueda (metros):</label>
-                        <input type="number" id="searchRadius" min="10" max="1000" value="50" aria-label="Radio de búsqueda en metros">
-                    </div>
-                    
-                    <button id="clearPointBtn" class="secondary-button" disabled aria-disabled="true">Borrar punto</button>
-                </fieldset>
-
-                <button type="submit" id="loadHistory" class="action-button">
-                    <span class="button-text">Cargar Trayectoria</span>
-                    <span class="button-icon" aria-hidden="true">↻</span>
-                </button>
-            </form>
-
-            <div id="historicalError" class="error-message" role="alert" aria-live="polite"></div>
-        </section>
-    </main>
+        <div id="historicalError" class="error-message"></div>
+    </div>
     
-    <!-- Scripts -->
+    <!-- Scripts loading -->
     <script>
         const isTesting = window.location.pathname.startsWith('/test');
         document.getElementById('themeStyles').href = isTesting
@@ -151,7 +125,6 @@
         document.getElementById('btn-logo').href = isTesting
             ? '/test/'
             : '/';
-            
         const logo = document.getElementById('logo');
         logo.src = isTesting
             ? '/test/images/logo.png'
