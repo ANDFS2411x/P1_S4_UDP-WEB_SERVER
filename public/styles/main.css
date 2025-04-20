@@ -431,15 +431,31 @@ h2.panel-title {
 /* TIMELINE */
 /*------------*/
 .timeline-controls {
-    background: linear-gradient(180deg, rgba(30, 30, 46, 0.95) 0%, rgba(20, 20, 35, 0.98) 100%);
+    background: linear-gradient(180deg, var(--background-secondary) 0%, var(--background-primary) 100%);
     padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border-radius: var(--border-radius);
+    box-shadow: 0 8px 32px var(--shadow-color-strong);
     height: var(--timeline-height);
     display: flex;
     flex-direction: column;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    position: relative;
+    overflow: hidden;
+}
+
+.timeline-controls::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        var(--accent-color) 50%, 
+        transparent 100%
+    );
+    opacity: 0.5;
 }
 
 .timeline-header {
@@ -456,7 +472,7 @@ h2.panel-title {
 .timeline-slider {
     width: 100%;
     height: 6px;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--background-tertiary);
     border-radius: 3px;
     overflow: visible;
     margin: 20px 0;
@@ -471,10 +487,10 @@ h2.panel-title {
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #FF4D4D 0%, #FF0000 100%);
+    background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
     cursor: pointer;
-    border: 2px solid rgba(255, 255, 255, 0.9);
-    box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+    border: 2px solid var(--text-primary);
+    box-shadow: 0 0 10px var(--shadow-color-strong);
     transition: all 0.2s ease;
     position: relative;
     z-index: 2;
@@ -482,12 +498,16 @@ h2.panel-title {
 
 .timeline-slider::-webkit-slider-thumb:hover {
     transform: scale(1.2);
-    box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+    box-shadow: 0 0 15px var(--accent-color);
+    border-color: var(--text-highlight);
 }
 
 .timeline-slider::-webkit-slider-runnable-track {
     height: 6px;
-    background: linear-gradient(90deg, #FF0000 var(--value, 0%), rgba(255, 255, 255, 0.1) var(--value, 0%));
+    background: linear-gradient(90deg, 
+        var(--accent-color) var(--value, 0%), 
+        var(--background-tertiary) var(--value, 0%)
+    );
     border-radius: 3px;
 }
 
@@ -496,21 +516,57 @@ h2.panel-title {
     justify-content: space-between;
     align-items: center;
     padding: 12px 15px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
+    background: var(--background-tertiary);
+    border-radius: var(--border-radius);
     margin-top: auto;
-    font-family: 'Roboto Mono', monospace;
+    font-family: 'Exo 2', monospace;
+    border: 1px solid var(--border-color);
+    position: relative;
+    overflow: hidden;
+}
+
+.timeline-info::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        135deg,
+        transparent 0%,
+        rgba(86, 103, 216, 0.05) 50%,
+        transparent 100%
+    );
+    pointer-events: none;
 }
 
 .timeline-info span {
     padding: 8px 12px;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 6px;
+    background: var(--background-primary);
+    border-radius: var(--border-radius);
     font-size: 0.9em;
     letter-spacing: 0.5px;
-    color: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(5px);
+    color: var(--text-highlight);
+    border: 1px solid var(--border-color);
+    position: relative;
+    overflow: hidden;
+    font-weight: 500;
+}
+
+.timeline-info span::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        var(--accent-color) 50%, 
+        transparent 100%
+    );
+    opacity: 0.5;
 }
 
 /*-----------------*/
