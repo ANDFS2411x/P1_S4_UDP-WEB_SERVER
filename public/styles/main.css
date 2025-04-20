@@ -431,19 +431,17 @@ h2.panel-title {
 /* TIMELINE */
 /*------------*/
 .timeline-controls {
-    background: linear-gradient(145deg, var(--background-secondary), var(--background-tertiary));
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    background: var(--background-secondary);
+    padding: 15px;
+    border-radius: var(--border-radius);
+    box-shadow: 0 0 10px var(--shadow-color-strong);
     height: var(--timeline-height);
     display: flex;
     flex-direction: column;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(8px);
 }
 
 .timeline-header {
-    margin-bottom: 15px;
+    margin-bottom: 10px;
 }
 
 .timeline-header h3 {
@@ -451,112 +449,64 @@ h2.panel-title {
     margin: 0;
     font-size: 1.1em;
     text-align: center;
-    letter-spacing: 0.5px;
-    font-weight: 500;
 }
 
 .timeline-slider {
     width: 100%;
-    height: 6px;
+    height: 20px;
     background: var(--background-tertiary);
-    border-radius: 3px;
+    border-radius: 10px;
     overflow: hidden;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
-    margin: 10px 0 20px;
+    box-shadow: inset 0 0 5px var(--shadow-color);
+    margin: 5px 0 15px;
     appearance: none;
     -webkit-appearance: none;
-    cursor: pointer;
 }
 
 .timeline-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
-    background: linear-gradient(145deg, #ff4d4d, #ff0000);
+    background: #FF0000;
     cursor: pointer;
-    border: 2px solid rgba(255, 255, 255, 0.9);
-    box-shadow: 0 0 10px rgba(255, 0, 0, 0.3), -407px 0 0 400px rgba(255, 0, 0, 0.5);
-    transition: all 0.2s ease;
-}
-
-.timeline-slider::-webkit-slider-thumb:hover {
-    transform: scale(1.1);
-    box-shadow: 0 0 15px rgba(255, 0, 0, 0.4), -407px 0 0 400px rgba(255, 0, 0, 0.6);
+    border: 4px solid #fff;
+    box-shadow: -407px 0 0 400px #FF0000;
 }
 
 .timeline-slider::-moz-range-thumb {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
-    background: linear-gradient(145deg, #ff4d4d, #ff0000);
+    background: #FF0000;
     cursor: pointer;
-    border: 2px solid rgba(255, 255, 255, 0.9);
-    transition: all 0.2s ease;
-}
-
-.timeline-slider::-moz-range-thumb:hover {
-    transform: scale(1.1);
+    border: 4px solid #fff;
 }
 
 .timeline-slider::-ms-thumb {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
-    background: linear-gradient(145deg, #ff4d4d, #ff0000);
+    background: #FF0000;
     cursor: pointer;
-    border: 2px solid rgba(255, 255, 255, 0.9);
-    transition: all 0.2s ease;
-}
-
-.timeline-slider::-ms-thumb:hover {
-    transform: scale(1.1);
-}
-
-.timeline-slider::-webkit-slider-runnable-track {
-    height: 6px;
-    background: var(--background-tertiary);
-    border-radius: 3px;
-}
-
-.timeline-slider::-moz-range-track {
-    height: 6px;
-    background: var(--background-tertiary);
-    border-radius: 3px;
-}
-
-.timeline-slider::-ms-track {
-    height: 6px;
-    background: var(--background-tertiary);
-    border-radius: 3px;
+    border: 4px solid #fff;
 }
 
 .timeline-info {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 15px;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 8px;
+    padding: 10px;
+    background: var(--background-tertiary);
+    border-radius: 4px;
     margin-top: auto;
-    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .timeline-info span {
-    padding: 6px 12px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 6px;
+    padding: 5px 10px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
     font-weight: 500;
-    font-size: 0.9em;
-    letter-spacing: 0.5px;
-    color: var(--text-primary);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    transition: all 0.2s ease;
-}
-
-.timeline-info span:hover {
-    background: rgba(255, 255, 255, 0.1);
-    transform: translateY(-1px);
 }
 
 /*-----------------*/
