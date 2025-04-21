@@ -21,7 +21,8 @@ const appState = {
         mapsLoaded: false,
         pointMarker: null,  // Marcador para punto seleccionado
         pointCircle: null,  // Círculo para radio de búsqueda
-        pointSelected: false // Estado de selección de punto      
+        pointSelected: false, // Estado de selección de punto      
+        timelineAnimation: null
     },
 };
 
@@ -70,23 +71,16 @@ function showError(element, message) {
 }
 
 function showLoading(show) {
-    // En el HTML hay dos elementos de carga diferentes, uno para cada sección
-    if (domElements.historicalSection.classList.contains("active")) {
-        // Estamos en la sección histórica
-        const historicalLoadingMessage = document.getElementById('historicalLoadingMessage');
-        if (historicalLoadingMessage) {
-            historicalLoadingMessage.style.display = show ? 'block' : 'none';
-        } else {
-            console.warn('Elemento #historicalLoadingMessage no encontrado');
+    try {
+        const isHistorical = domElements.historicalSection?.classList.contains("active");
+        const loadingId = isHistorical ? 'historicalLoadingMessage' : 'realTimeLoadingMessage';
+        const loadingMessage = document.getElementById(loadingId);
+        
+        if (loadingMessage) {
+            loadingMessage.style.display = show ? 'block' : 'none';
         }
-    } else {
-        // Estamos en la sección de tiempo real
-        const realTimeLoadingMessage = document.getElementById('realTimeLoadingMessage');
-        if (realTimeLoadingMessage) {
-            realTimeLoadingMessage.style.display = show ? 'block' : 'none';
-        } else {
-            console.warn('Elemento #realTimeLoadingMessage no encontrado');
-        }
+    } catch (error) {
+        console.warn('Error al mostrar/ocultar el mensaje de carga:', error);
     }
 }
 
@@ -375,20 +369,29 @@ async function initMap() {
 
         appState.realTime.recorrido = [posicionInicial];
 
-        // Cargar Google Maps API solo una vez para ambos mapas
+        // Cargar Google Maps API
         if (!window.google || !window.google.maps) {
-            const script = document.createElement('script');
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKeyData.apiKey}&callback=mapsApiLoaded`;
-            script.async = true;
-            script.defer = true;
-            document.head.appendChild(script);
+            await new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKeyData.apiKey}&callback=initMapsCallback`;
+                script.async = true;
+                script.defer = true;
+                script.onerror = reject;
+                window.initMapsCallback = () => {
+                    resolve();
+                    delete window.initMapsCallback;
+                };
+                document.head.appendChild(script);
+            });
+            mapsApiLoaded();
         } else {
-            // Si ya está cargada, inicializar los mapas directamente
             mapsApiLoaded();
         }
     } catch (error) {
         console.error('Error inicializando mapa:', error);
-        domElements.realMapContainer.innerHTML = `Error: ${error.message}`;
+        if (domElements.realMapContainer) {
+            domElements.realMapContainer.innerHTML = `Error: ${error.message}`;
+        }
         showError(domElements.realTimeError, error.message);
     }
 }
@@ -596,6 +599,16 @@ function highlightPointOnMap(point) {
     }, 3000);
 }
 
+// Función auxiliar para verificar si un elemento existe
+function elementExists(elementId) {
+    const element = document.getElementById(elementId);
+    if (!element) {
+        console.warn(`Elemento #${elementId} no encontrado`);
+        return false;
+    }
+    return true;
+}
+
 async function loadHistoricalData() {
     try {
         const startDate = domElements.startDate.value;
@@ -605,35 +618,41 @@ async function loadHistoricalData() {
             throw new Error("Debe seleccionar ambas fechas");
         }
 
+        // Verificar si hay un punto seleccionado cuando se está en modo de selección
+        if (domElements.enablePointSelection.checked) {
+            const selectedLat = parseFloat(domElements.selectedLat.value);
+            const selectedLng = parseFloat(domElements.selectedLng.value);
+            
+            if (isNaN(selectedLat) || isNaN(selectedLng)) {
+                throw new Error("Debe seleccionar un punto en el mapa primero");
+            }
+        }
+
         showLoading(true);
-        domElements.historicalError.style.display = "none";
+        
+        if (domElements.historicalError) {
+            domElements.historicalError.style.display = "none";
+        }
+
+        const timelineControls = document.getElementById('timelineControls');
+        if (timelineControls) {
+            timelineControls.style.display = 'none';
+        }
 
         // Detener actualizaciones en tiempo real si están activas
         stopRealTimeUpdates();
 
-        // Limpiar polilínea histórica anterior
-        if (appState.historical.polyline) {
-            appState.historical.polyline.setPath([]);
+        // Limpiar visualizaciones anteriores
+        if (appState.historical.timelineAnimation) {
+            appState.historical.timelineAnimation.clear();
         }
-
-        // Ocultar elementos de tiempo real
-        if (appState.realTime.marker) {
-            appState.realTime.marker.setMap(null);
-        }
-        if (appState.realTime.polyline) {
-            appState.realTime.polyline.setMap(null);
-        }
-
-        // Crear URL con parámetros de fechas
-        const url = `${config.basePath}/historical-data?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
-        console.log("URL de solicitud:", url);
 
         // Obtener datos históricos
+        const url = `${config.basePath}/historical-data?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
 
         const result = await response.json();
-        console.log("Datos recibidos:", result);
         
         if (!result?.success || !Array.isArray(result.data)) {
             throw new Error("Formato de datos incorrecto");
@@ -644,80 +663,117 @@ async function loadHistoricalData() {
         }
 
         // Procesar coordenadas
-        const path = result.data.map(item => ({
+        const allPoints = result.data.map(item => ({
             lat: parseFloat(item.LATITUDE),
-            lng: parseFloat(item.LONGITUDE)
+            lng: parseFloat(item.LONGITUDE),
+            time: item.TIME,
+            date: item.DATE
         })).filter(coord => !isNaN(coord.lat) && !isNaN(coord.lng));
 
-        if (path.length === 0) {
+        if (allPoints.length === 0) {
             throw new Error("No hay coordenadas válidas en los datos recibidos");
         }
 
-        console.log(`Procesadas ${path.length} coordenadas válidas`);
-
-        // Verificar si el mapa histórico está inicializado
-        if (!appState.historical.map) {
-            initHistoricalMapInstance();
-        }
-
-        // Crear nueva polilínea histórica o actualizar la existente
-        if (!appState.historical.polyline) {
-            appState.historical.polyline = new google.maps.Polyline({
-                path: path,
-                geodesic: true,
-                strokeColor: "#4285F4",
-                strokeOpacity: 1.0,
-                strokeWeight: 4,
-                map: appState.historical.map
-            });
-        } else {
-            appState.historical.polyline.setPath(path);
-            appState.historical.polyline.setMap(appState.historical.map);
-        }
-
-        // Ajustar vista del mapa
-        const bounds = new google.maps.LatLngBounds();
-        path.forEach(point => bounds.extend(point));
-        appState.historical.map.fitBounds(bounds);
-
-        // Verificar si hay un punto seleccionado para filtrar
-        if (appState.historical.pointSelected && domElements.enablePointSelection.checked) {
+        // Si está en modo de selección de punto, filtrar solo los puntos cercanos
+        let relevantPoints = allPoints;
+        if (domElements.enablePointSelection.checked) {
             const selectedPoint = {
                 lat: parseFloat(domElements.selectedLat.value),
                 lng: parseFloat(domElements.selectedLng.value)
             };
-            
             const radius = parseInt(domElements.searchRadius.value);
-            
-            // Encontrar puntos cercanos
-            const nearbyPoints = findPointsNearby(selectedPoint, result.data, radius);
-            
-            // Mostrar resultados en la tabla
-            domElements.pointSearchResults.style.display = 'block';
-            buildResultsTable(nearbyPoints);
-            
-            // Resaltar visualmente en el mapa los puntos encontrados
-            if (nearbyPoints.length > 0) {
-                setTimeout(() => {
-                    const firstPoint = {
-                        lat: parseFloat(nearbyPoints[0].LATITUDE),
-                        lng: parseFloat(nearbyPoints[0].LONGITUDE)
-                    };
-                    appState.historical.map.setCenter(firstPoint);
-                    appState.historical.map.setZoom(16);
-                }, 500);
+
+            relevantPoints = allPoints.filter(point => {
+                const distance = calculateDistance(
+                    selectedPoint.lat,
+                    selectedPoint.lng,
+                    point.lat,
+                    point.lng
+                );
+                return distance <= radius;
+            });
+
+            if (relevantPoints.length === 0) {
+                throw new Error("No se encontraron momentos en que el vehículo pasara por el punto seleccionado");
             }
-        } else {
-            // Si no hay punto seleccionado, ocultar sección de resultados
-            domElements.pointSearchResults.style.display = 'none';
         }
 
-        // Forzar redibujado
-        google.maps.event.trigger(appState.historical.map, 'resize');
+        // Inicializar o actualizar la animación
+        if (!appState.historical.timelineAnimation) {
+            appState.historical.timelineAnimation = new TimelineAnimation(appState.historical.map);
+        }
+
+        // En modo de selección de punto, mostrar solo los puntos relevantes
+        if (domElements.enablePointSelection.checked) {
+            appState.historical.timelineAnimation.setPoints(relevantPoints, 'point');
+        } else {
+            appState.historical.timelineAnimation.setPoints(allPoints, 'route');
+        }
+
+        // Configurar y mostrar controles de línea de tiempo
+        if (timelineControls) {
+            const timelineSlider = document.getElementById('timelineSlider');
+            const currentTimeInfo = document.getElementById('currentTimeInfo');
+            const distanceInfo = document.getElementById('distanceInfo');
+
+            if (timelineSlider && currentTimeInfo) {
+                // Resetear slider
+                timelineSlider.value = 0;
+                appState.historical.timelineAnimation.setProgress(0);
+
+                // Actualizar la información cuando se mueve el slider
+                timelineSlider.addEventListener('input', function(e) {
+                    const progress = parseInt(e.target.value);
+                    appState.historical.timelineAnimation.setProgress(progress);
+                    
+                    const points = domElements.enablePointSelection.checked ? relevantPoints : allPoints;
+                    const currentPoint = points[Math.floor((progress / 100) * (points.length - 1))];
+                    
+                    if (currentPoint) {
+                        // Actualizar información de tiempo
+                        currentTimeInfo.textContent = `${currentPoint.date} ${currentPoint.time}`;
+                        
+                        // Si hay un punto seleccionado, mostrar la distancia
+                        if (domElements.enablePointSelection.checked) {
+                            const selectedPoint = {
+                                lat: parseFloat(domElements.selectedLat.value),
+                                lng: parseFloat(domElements.selectedLng.value)
+                            };
+                            const distance = calculateDistance(
+                                selectedPoint.lat,
+                                selectedPoint.lng,
+                                currentPoint.lat,
+                                currentPoint.lng
+                            );
+                            distanceInfo.textContent = `Distancia al punto: ${Math.round(distance)} m`;
+                            distanceInfo.style.display = 'block';
+                        } else {
+                            distanceInfo.style.display = 'none';
+                        }
+
+                        // Centrar el mapa en la posición actual
+                        appState.historical.map.panTo({
+                            lat: currentPoint.lat,
+                            lng: currentPoint.lng
+                        });
+                    }
+                });
+
+                // Mostrar controles
+                timelineControls.style.display = 'block';
+            }
+        }
+
+        // Ajustar vista del mapa
+        const bounds = new google.maps.LatLngBounds();
+        relevantPoints.forEach(point => bounds.extend(point));
+        appState.historical.map.fitBounds(bounds);
 
     } catch (error) {
         console.error('Error cargando datos históricos:', error);
-        showError(domElements.historicalError, error.message);
+        if (domElements.historicalError) {
+            showError(domElements.historicalError, error.message);
+        }
     } finally {
         showLoading(false);
     }
