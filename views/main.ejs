@@ -117,10 +117,16 @@
                                 </div>
                             </div>
                             
-                            <div class="radius-container">
+                            <!-- <div class="radius-container">
                                 <label for="searchRadius">Radio de búsqueda (metros):</label>
                                 <input type="number" id="searchRadius" min="10" max="1000" value="50">
+                            </div> -->
+
+                            <div class="radius-container">
+                                <label for="searchRadius">Radio de búsqueda (metros): <span id="radius-value">50</span></label>
+                                <input type="range" id="searchRadius" min="10" max="1000" value="50" step="10">
                             </div>
+                            
                             
                             <div class="button-group">
                                 <button id="clearPointBtn" class="secondary-button" disabled>Borrar punto</button>
