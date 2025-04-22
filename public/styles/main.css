@@ -762,4 +762,10 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
         width: 100%;
         text-align: center;
     }
+
+    input[type=range] {
+        width: 100%;
+        accent-color: #7c3aed; /* Color morado acorde a tu tema */
+        cursor: pointer;
+    }    
 }

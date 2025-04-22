@@ -107,6 +107,13 @@ app.get("/historical-data", (req, res) => {
         startDate.replace('T', ' ') + ':00',  // Formato: 'YYYY-MM-DD HH:MM:00'
         endDate.replace('T', ' ') + ':00'
     ];
+//sliderrrr
+    const slider = document.getElementById('searchRadius');
+    const radiusDisplay = document.getElementById('radius-value');
+
+    slider.addEventListener('input', () => {
+        radiusDisplay.textContent = slider.value;
+    });
 
     console.log("Query ejecutado:", query.replace(/\?/g, (_, i) => params[i]));
 
