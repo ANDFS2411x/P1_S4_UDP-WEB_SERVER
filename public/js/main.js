@@ -671,7 +671,9 @@ async function loadHistoricalData() {
             lat: parseFloat(item.LATITUDE),
             lng: parseFloat(item.LONGITUDE),
             time: item.TIME,
-            date: item.DATE
+            date: item.DATE,
+            RPM: item.RPM || 'N/A',
+            ID_TAXI: item.ID_TAXI || 'N/A'
         })).filter(coord => !isNaN(coord.lat) && !isNaN(coord.lng));
 
         if (allPoints.length === 0) {
