@@ -45,6 +45,7 @@ const domElements = {
     fecha: document.getElementById('fecha'),
     tiempo: document.getElementById('tiempo'),
     rpmRealTime: document.getElementById('rpm'),
+    idTaxiReal: document.getElementById('idTaxi'),
     realTimeError: document.getElementById('realTimeError'),
     historicalError: document.getElementById('historicalError'),
     // Nuevos elementos para selección de punto
@@ -64,6 +65,7 @@ function updateInfoPanel(data) {
     domElements.fecha.textContent = data.DATE || "N/A";
     domElements.tiempo.textContent = data.TIME || "N/A";
     domElements.rpmRealTime.textContent = data.RPM || "N/A";
+    domElements.idTaxiReal.textContent = data.ID_TAXI || "N/A";
 }
 
 function showError(element, message) {
@@ -717,8 +719,9 @@ async function loadHistoricalData() {
             const timelineSlider = document.getElementById('timelineSlider');
             const currentTimeInfo = document.getElementById('currentTimeInfo');
             const distanceInfo = document.getElementById('distanceInfo');
+            const rpmHist = document.getElementById('rpmHist');
 
-            if (timelineSlider && currentTimeInfo) {
+            if (timelineSlider && currentTimeInfo && rpmHist) {
                 // Resetear slider
                 timelineSlider.value = 0;
                 appState.historical.timelineAnimation.setProgress(0);
@@ -734,6 +737,7 @@ async function loadHistoricalData() {
                     if (currentPoint) {
                         // Actualizar información de tiempo
                         currentTimeInfo.textContent = `${currentPoint.date} ${currentPoint.time}`;
+                        rpmHist.textContent = `RPM: ${currentPoint.RPM || 'N/A'}`;
                         
                         // Si hay un punto seleccionado, mostrar la distancia
                         if (domElements.enablePointSelection.checked) {
