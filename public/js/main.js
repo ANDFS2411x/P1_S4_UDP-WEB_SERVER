@@ -710,58 +710,60 @@ async function loadHistoricalData() {
             appState.historical.timelineAnimation.setPoints(allPoints, 'route');
         }
 
-        timelineSlider.addEventListener('input', function(e) {
-            const progress = parseInt(e.target.value);
-            appState.historical.timelineAnimation.setProgress(progress);
-          
-            const points = domElements.enablePointSelection.checked ? relevantPoints : allPoints;
-            const currentPoint = points[Math.floor((progress / 100) * (points.length - 1))];
-          
-            if (currentPoint) {
-              // ——————— PARSEO DE LA FECHA ———————
-              // Creamos un Date a partir del ISO string
-              const dateObj = new Date(currentPoint.date);
-              // Formateamos día/mes/año
-              const formattedDate = dateObj.toLocaleDateString('es-ES', {
-                day:   '2-digit',
-                month: '2-digit',
-                year:  'numeric'
-              });
-              // Formateamos hora:min:seg
-              const formattedTime = dateObj.toLocaleTimeString('es-ES', {
-                hour:   '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-              });
-              currentTimeInfo.textContent = `${formattedDate} ${formattedTime}`;
-              // ————————————————————————————————
-          
-              // Si hay selección de punto, calculamos distancia
-              if (domElements.enablePointSelection.checked) {
-                const selectedPoint = {
-                  lat: parseFloat(domElements.selectedLat.value),
-                  lng: parseFloat(domElements.selectedLng.value)
-                };
-                const distance = calculateDistance(
-                  selectedPoint.lat,
-                  selectedPoint.lng,
-                  currentPoint.lat,
-                  currentPoint.lng
-                );
-                distanceInfo.textContent = `Distancia al punto: ${Math.round(distance)} m`;
-                distanceInfo.style.display = 'block';
-              } else {
-                distanceInfo.style.display = 'none';
-              }
-          
-              // Centramos el mapa
-              appState.historical.map.panTo({
-                lat: currentPoint.lat,
-                lng: currentPoint.lng
-              });
+        // Configurar y mostrar controles de línea de tiempo
+        if (timelineControls) {
+            const timelineSlider = document.getElementById('timelineSlider');
+            const currentTimeInfo = document.getElementById('currentTimeInfo');
+            const distanceInfo = document.getElementById('distanceInfo');
+
+            if (timelineSlider && currentTimeInfo) {
+                // Resetear slider
+                timelineSlider.value = 0;
+                appState.historical.timelineAnimation.setProgress(0);
+
+                // Actualizar la información cuando se mueve el slider
+                timelineSlider.addEventListener('input', function(e) {
+                    const progress = parseInt(e.target.value);
+                    appState.historical.timelineAnimation.setProgress(progress);
+                    
+                    const points = domElements.enablePointSelection.checked ? relevantPoints : allPoints;
+                    const currentPoint = points[Math.floor((progress / 100) * (points.length - 1))];
+                    
+                    if (currentPoint) {
+                        // Actualizar información de tiempo
+                        currentTimeInfo.textContent = `${currentPoint.date} ${currentPoint.time}`;
+                        
+                        // Si hay un punto seleccionado, mostrar la distancia
+                        if (domElements.enablePointSelection.checked) {
+                            const selectedPoint = {
+                                lat: parseFloat(domElements.selectedLat.value),
+                                lng: parseFloat(domElements.selectedLng.value)
+                            };
+                            const distance = calculateDistance(
+                                selectedPoint.lat,
+                                selectedPoint.lng,
+                                currentPoint.lat,
+                                currentPoint.lng
+                            );
+                            distanceInfo.textContent = `Distancia al punto: ${Math.round(distance)} m`;
+                            distanceInfo.style.display = 'block';
+                        } else {
+                            distanceInfo.style.display = 'none';
+                        }
+
+                        // Centrar el mapa en la posición actual
+                        appState.historical.map.panTo({
+                            lat: currentPoint.lat,
+                            lng: currentPoint.lng
+                        });
+                    }
+                });
+
+                // Mostrar controles
+                timelineControls.style.display = 'block';
             }
-          });
-          
+        }
+
         // Ajustar vista del mapa
         const bounds = new google.maps.LatLngBounds();
         relevantPoints.forEach(point => bounds.extend(point));
