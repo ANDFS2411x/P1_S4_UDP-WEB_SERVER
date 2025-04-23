@@ -12,7 +12,8 @@
         /* Contenedor principal */
         .container {
             max-width: 1200px;
-            padding: 0px 50px 0px 50px;
+            margin: 0 auto; /* esto centra el contenido */
+            padding: 0 30px; /* espaciado lateral */
             border-radius: 15px;
             background-color: #1e1e2e;
         }
@@ -34,6 +35,7 @@
             grid-template-columns: repeat(3, 1fr);
             gap: 20px;
             background-color: #1e1e2e;
+
         }
 
         .about-us-content {
@@ -43,7 +45,7 @@
             border-radius: 12px;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
             text-align: justify;
-        }
+        }        
 
         .about-us-content h2 {
             margin-top: 0;
@@ -101,6 +103,19 @@
             opacity: 0.9;
             color: white;
         }
+
+        .bio {
+            font-size: 0.95rem;
+            color: #cfcfd6;
+            margin-top: 10px;
+            line-height: 1.4;
+        }
+        .member-photo {
+            width: 100%;
+            height: auto;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        } 
 
         /* El quinto miembro centrado en la tercera fila */
         .center {
@@ -183,24 +198,34 @@
             <h1>Meet the Team</h1>
             <div class="team-members">
                 <div class="member">
+                    <img src="/images/luciana.jpeg" alt="Luciana De La Rosa" class="member-photo">
                     <h3>Luciana De La Rosa</h3>
                     <p>Designer</p>
+                    <p class="bio">Experta en UI/UX y animaciones web avanzadas con CSS y JavaScript.</p>
                 </div>
                 <div class="member">
+                    <img src="/images/gabriela.jpeg" alt="Gabriela Becerra" class="member-photo">
                     <h3>Gabriela Becerra</h3>
                     <p>Frontend developer</p>
+                    <p class="bio">Especialista en React con experiencia en diseño de interfaces interactivas.</p>
                 </div>
                 <div class="member">
+                    <img src="/images/andrew.jpeg" alt="Andrés Narvaez" class="member-photo">
                     <h3>Andrés Narvaez</h3>
                     <p>Backend developer</p>
+                    <p class="bio">Desarrollador enfocado en optimización y rendimiento de aplicaciones web.</p>
                 </div>
                 <div class="member">
+                    <img src="/images/andres.jpeg" alt="Andrés Fabregas" class="member-photo">
                     <h3>Andrés Fabregas</h3>
                     <p>Dev Ops</p>
+                    <p class="bio">Especialista en integraciones con APIs y manejo de datos en tiempo real.</p>
                 </div>
                 <div class="member center">
+                    <img src="/images/ali.jpeg" alt="Ali Rada" class="member-photo">
                     <h3>Ali Rada</h3>
                     <p>SCRUM Master</p>
+                    <p class="bio">Desarrollador con experiencia en visualización de datos y mapas interactivos.</p>
                 </div>
             </div>
         </div>

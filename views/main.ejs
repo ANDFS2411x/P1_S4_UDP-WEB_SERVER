@@ -117,11 +117,21 @@
                                     <input type="text" id="selectedLng" disabled>
                                 </div>
                             </div>
-                            
+
                             <div class="radius-container">
-                                <label for="searchRadius">Radio de búsqueda (metros):</label>
-                                <input type="number" id="searchRadius" min="10" max="1000" value="50">
+                                <label for="searchRadius">Radio de búsqueda (metros): <span id="radius-value"></span></label>
+                                <input type="range" id="searchRadius" min="100" max="2000" value="50" step="10">
                             </div>
+                            
+                            <script>
+                                const slider = document.getElementById('searchRadius');
+                                const radiusDisplay = document.getElementById('radius-value');
+                            
+                                slider.addEventListener('input', () => {
+                                    radiusDisplay.textContent = slider.value;
+                                });
+                            </script>
+                            
                             
                             <div class="button-group">
                                 <button id="clearPointBtn" class="secondary-button" disabled>Borrar punto</button>
