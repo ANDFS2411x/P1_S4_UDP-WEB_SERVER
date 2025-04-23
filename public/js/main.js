@@ -44,6 +44,8 @@ const domElements = {
     longitud: document.getElementById('longitud'),
     fecha: document.getElementById('fecha'),
     tiempo: document.getElementById('tiempo'),
+    rpmRealTime: document.getElementById('rpm'),
+    idTaxiReal: document.getElementById('idTaxi'),
     realTimeError: document.getElementById('realTimeError'),
     historicalError: document.getElementById('historicalError'),
     // Nuevos elementos para selección de punto
@@ -62,6 +64,8 @@ function updateInfoPanel(data) {
     domElements.longitud.textContent = data.LONGITUDE || "N/A";
     domElements.fecha.textContent = data.DATE || "N/A";
     domElements.tiempo.textContent = data.TIME || "N/A";
+    domElements.rpmRealTime.textContent = data.RPM || "N/A";
+    domElements.idTaxiReal.textContent = data.ID_TAXI || "N/A";
 }
 
 function showError(element, message) {
@@ -667,7 +671,9 @@ async function loadHistoricalData() {
             lat: parseFloat(item.LATITUDE),
             lng: parseFloat(item.LONGITUDE),
             time: item.TIME,
-            date: item.DATE
+            date: item.DATE,
+            RPM: item.RPM || 'N/A',
+            ID_TAXI: item.ID_TAXI || 'N/A'
         })).filter(coord => !isNaN(coord.lat) && !isNaN(coord.lng));
 
         if (allPoints.length === 0) {
@@ -715,8 +721,9 @@ async function loadHistoricalData() {
             const timelineSlider = document.getElementById('timelineSlider');
             const currentTimeInfo = document.getElementById('currentTimeInfo');
             const distanceInfo = document.getElementById('distanceInfo');
+            const rpmHist = document.getElementById('rpmHist');
 
-            if (timelineSlider && currentTimeInfo) {
+            if (timelineSlider && currentTimeInfo && rpmHist) {
                 // Resetear slider
                 timelineSlider.value = 0;
                 appState.historical.timelineAnimation.setProgress(0);
@@ -732,6 +739,7 @@ async function loadHistoricalData() {
                     if (currentPoint) {
                         // Actualizar información de tiempo
                         currentTimeInfo.textContent = `${currentPoint.date} ${currentPoint.time}`;
+                        rpmHist.textContent = `RPM: ${currentPoint.RPM || 'N/A'}`;
                         
                         // Si hay un punto seleccionado, mostrar la distancia
                         if (domElements.enablePointSelection.checked) {
