@@ -29,11 +29,11 @@ server.on('message', (msg, rinfo) => {
   try {
     const data = JSON.parse(msg.toString());
 
-    if (data.ID_TAXI && data.LONGITUDE && data.LATITUDE && data.DATE && data.TIME) {
+    if (data.ID_TAXI && data.LONGITUDE && data.LATITUDE && data.DATE && data.TIME && data.RPM) {
 
-      const query = 'INSERT INTO registros (ID_TAXI, LONGITUDE, LATITUDE, DATE, TIME) VALUES (?, ?, ?, ?, ?)';
+      const query = 'INSERT INTO registros (ID_TAXI, LONGITUDE, LATITUDE, DATE, TIME, RPM) VALUES (?, ?, ?, ?, ?, ?)';
 
-      connection.query(query, [data.ID_TAXI, data.LONGITUDE, data.LATITUDE,data.DATE, data.TIME], (error, results) => {
+      connection.query(query, [data.ID_TAXI, data.LONGITUDE, data.LATITUDE,data.DATE, data.TIME, data.RPM], (error, results) => {
         if (error) {
           return console.error('❌ Error al insertar datos: ' + error.message);
         }

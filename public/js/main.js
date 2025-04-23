@@ -44,6 +44,7 @@ const domElements = {
     longitud: document.getElementById('longitud'),
     fecha: document.getElementById('fecha'),
     tiempo: document.getElementById('tiempo'),
+    rpmRealTime: document.getElementById('rpm'),
     realTimeError: document.getElementById('realTimeError'),
     historicalError: document.getElementById('historicalError'),
     // Nuevos elementos para selección de punto
@@ -62,6 +63,7 @@ function updateInfoPanel(data) {
     domElements.longitud.textContent = data.LONGITUDE || "N/A";
     domElements.fecha.textContent = data.DATE || "N/A";
     domElements.tiempo.textContent = data.TIME || "N/A";
+    domElements.rpmRealTime.textContent = data.RPM || "N/A";
 }
 
 function showError(element, message) {
