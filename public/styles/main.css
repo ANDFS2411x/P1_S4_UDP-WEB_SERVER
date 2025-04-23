@@ -370,7 +370,7 @@ h2.panel-title {
     padding: 8px 10px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
-    background-color: var(--background-primary);
+    background-color: rgb(177, 3, 252);
     color: var(--text-secondary);
     font-size: 14px;
 }
@@ -471,14 +471,14 @@ h2.panel-title {
     background: #8c96db;
     cursor: pointer;
     border: 4px solid #fff;
-    box-shadow: -407px 0 0 400px #FF0000;
+    box-shadow: -407px 0 0 400px rgb(177, 3, 252);
 }
 
 .timeline-slider::-moz-range-thumb {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: #8c96db;
+    background: rgb(177, 3, 252);
     cursor: pointer;
     border: 4px solid #fff;
 }
@@ -487,7 +487,7 @@ h2.panel-title {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: #8c96db;
+    background: rgb(177, 3, 252);
     cursor: pointer;
     border: 4px solid #fff;
 }
