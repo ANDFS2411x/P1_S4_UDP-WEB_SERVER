@@ -258,10 +258,10 @@ function handleMapClick(event) {
     }
     
     // Añadir breve animación de pulso
-    appState.historical.pointMarker.setAnimation(google.maps.Animation.BOUNCE);
+    /*appState.historical.pointMarker.setAnimation(google.maps.Animation.BOUNCE);
     setTimeout(() => {
         appState.historical.pointMarker.setAnimation(null);
-    }, 1500);
+    }, 1500);*/
     
     // Actualizar estado y botones
     appState.historical.pointSelected = true;
