@@ -732,7 +732,9 @@ async function loadHistoricalData() {
                 // Actualizar la información cuando se mueve el slider
                 timelineSlider.addEventListener('input', function(e) {
                     const progress = parseInt(e.target.value);
+                    this.style.backgroundSize = `${progress}% 100%`;
                     appState.historical.timelineAnimation.setProgress(progress);
+                      appState.historical.timelineAnimation.setProgress(progress);
                     
                     const points = domElements.enablePointSelection.checked ? relevantPoints : allPoints;
                     const currentPoint = points[Math.floor((progress / 100) * (points.length - 1))];
