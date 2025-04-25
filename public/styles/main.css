@@ -452,10 +452,9 @@ h2.panel-title {
 }
 
 .timeline-slider {
-    /* 1) espacio a los lados igual a la mitad del thumb */
-    padding: 0 10px;
+
+/*    padding: 0 10px;
     box-sizing: border-box;
-    /* 2) que no oculte lo que sobresale */
     overflow: visible;
     width: 100%;
     height: 20px;
@@ -463,19 +462,18 @@ h2.panel-title {
     border-radius: 10px;
     background-image: linear-gradient(rgb(177,3,252), rgb(177,3,252));
     background-repeat: no-repeat;
-    /* aquí el JS actualiza este size en % según el valor */
     background-size: 0% 100%;
-    transition: background-size 0.1s;
-   
-    /* width: 100%;
+    transition: background-size 0.1s;*/
+    
+    width: 100%;
     height: 20px;
     background: var(--background-tertiary);
     border-radius: 10px;
-    overflow: hidden;
+    overflow: visible;
     background-image: linear-gradient(rgb(177,3,252), rgb(177,3,252));
     background-repeat: no-repeat;
     background-size: 0% 100%;
-    transition: background-size 0.1s;*/
+    transition: background-size 0.1s;
 
 
     box-shadow: inset 0 0 5px var(--shadow-color);

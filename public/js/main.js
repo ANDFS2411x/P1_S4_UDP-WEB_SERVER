@@ -583,6 +583,10 @@ function highlightPointOnMap(point) {
         zIndex: 1000,
         animation: google.maps.Animation.BOUNCE
     });
+
+    setTimeout(() => {
+        highlightMarker.setAnimation(null);
+      }, 1500);
     
     // Centrar mapa en este punto
     appState.historical.map.setCenter(position);
@@ -739,7 +743,7 @@ async function loadHistoricalData() {
                     if (currentPoint) {
                         // Actualizar información de tiempo
                         currentTimeInfo.textContent = `${currentPoint.date} ${currentPoint.time}`;
-                        rpmHist.textContent = `RPM: ${currentPoint.RPM || 'N/A'}`;
+                        rpmHist.textContent = `RPM: ${currentPoint.RPM || '0'}`;
                         
                         // Si hay un punto seleccionado, mostrar la distancia
                         if (domElements.enablePointSelection.checked) {
