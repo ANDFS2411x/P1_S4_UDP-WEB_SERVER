@@ -581,13 +581,20 @@ function highlightPointOnMap(point) {
             strokeWeight: 2
         },
         zIndex: 1000,
-        animation: google.maps.Animation.BOUNCE
     });
 
-    setTimeout(() => {
-        highlightMarker.setAnimation(null);
-      }, 1500);
-    
+    timelineSlider.addEventListener('input', function(e) {
+        // calculas currentPoint, sacas position...
+        highlightMarker.setPosition(position);
+      
+        // haces que bote un instante
+        highlightMarker.setAnimation(google.maps.Animation.BOUNCE);
+      
+        // y lo paras en 600 ms (ajusta a tu gusto)
+        window.setTimeout(() => {
+          highlightMarker.setAnimation(null);
+        }, 600);
+      });
     // Centrar mapa en este punto
     appState.historical.map.setCenter(position);
     
