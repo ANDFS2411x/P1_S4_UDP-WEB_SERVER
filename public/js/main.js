@@ -593,13 +593,13 @@ function highlightPointOnMap(point) {
     infoWindow.open(appState.historical.map, highlightMarker);
     
     // Eliminar marcador después de unos segundos
-    setTimeout(() => {
+    /*setTimeout(() => {
         highlightMarker.setAnimation(null);
         setTimeout(() => {
             highlightMarker.setMap(null);
             infoWindow.close();
         }, 2000);
-    }, 3000);
+    }, 3000);*/
 }
 
 // Función auxiliar para verificar si un elemento existe
