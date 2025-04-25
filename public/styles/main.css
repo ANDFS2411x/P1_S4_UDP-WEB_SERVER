@@ -452,13 +452,12 @@ h2.panel-title {
 }
 
 .timeline-slider {
-
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
     width: 100%;
     height: 8px;                    /* alto del track */
-    margin: 5px 0 15px;
+    margin: 5px 0 10px;
     border-radius: 4px;
     background: var(--background-tertiary);
     
@@ -485,9 +484,8 @@ h2.panel-title {
     background: #8c96db;
     cursor: pointer;
     border: 4px solid #fff;
-    /*box-shadow: -407px 0 0 400px rgb(177, 3, 252);*/
     z-index: 1;
-    margin-top: 0;
+    margin-top: -6px;
 }
 
 .timeline-slider::-moz-range-thumb {
