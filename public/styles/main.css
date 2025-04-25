@@ -476,7 +476,7 @@ h2.panel-title {
     transition: background-size 0.1s;
 
 
-    box-shadow: inset 0 0 5px var(--shadow-color);
+    /*box-shadow: inset 0 0 5px var(--shadow-color);
     margin: 5px 0 15px;
     appearance: none;
     -webkit-appearance: none;*/
