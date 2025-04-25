@@ -64,7 +64,7 @@ function updateInfoPanel(data) {
     domElements.longitud.textContent = data.LONGITUDE || "N/A";
     domElements.fecha.textContent = data.DATE || "N/A";
     domElements.tiempo.textContent = data.TIME || "N/A";
-    domElements.rpmRealTime.textContent = data.RPM || "N/A";
+    domElements.rpmRealTime.textContent = data.RPM || "0";
     domElements.idTaxiReal.textContent = data.ID_TAXI || "N/A";
 }
 
@@ -725,6 +725,8 @@ async function loadHistoricalData() {
             if (timelineSlider && currentTimeInfo && rpmHist) {
                 // Resetear slider
                 timelineSlider.value = 0;
+                timelineSlider.style.backgroundSize = `${timelineSlider.value}% 100%`;
+
                 appState.historical.timelineAnimation.setProgress(0);
 
                 // Actualizar la información cuando se mueve el slider
