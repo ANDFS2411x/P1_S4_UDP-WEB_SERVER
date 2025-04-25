@@ -581,17 +581,10 @@ function highlightPointOnMap(point) {
             strokeWeight: 2
         },
         zIndex: 1000,
-        animation: google.maps.Animation.BOUNCE
     });
-
-    setTimeout(() => {
-        highlightMarker.setAnimation(null);
-    }, 1500);
-
-    appState.historical.map.panTo(position);
-
+    
     // Centrar mapa en este punto
-    /*appState.historical.map.setCenter(position);*/
+    appState.historical.map.setCenter(position);
     
     // Añadir etiqueta con fecha y hora
     const infoWindow = new google.maps.InfoWindow({
