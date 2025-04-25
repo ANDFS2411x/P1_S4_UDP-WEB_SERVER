@@ -581,6 +581,7 @@ function highlightPointOnMap(point) {
             strokeWeight: 2
         },
         zIndex: 1000,
+        setAnimation: google.maps.Animation.BOUNCE
     });
 
     // Centrar mapa en este punto
