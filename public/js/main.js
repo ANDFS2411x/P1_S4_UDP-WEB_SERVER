@@ -64,7 +64,7 @@ function updateInfoPanel(data) {
     domElements.longitud.textContent = data.LONGITUDE || "N/A";
     domElements.fecha.textContent = data.DATE || "N/A";
     domElements.tiempo.textContent = data.TIME || "N/A";
-    domElements.rpmRealTime.textContent = data.RPM || "N/A";
+    domElements.rpmRealTime.textContent = data.RPM || "0";
     domElements.idTaxiReal.textContent = data.ID_TAXI || "N/A";
 }
 
@@ -258,10 +258,10 @@ function handleMapClick(event) {
     }
     
     // Añadir breve animación de pulso
-    appState.historical.pointMarker.setAnimation(google.maps.Animation.BOUNCE);
+    /*appState.historical.pointMarker.setAnimation(google.maps.Animation.BOUNCE);
     setTimeout(() => {
         appState.historical.pointMarker.setAnimation(null);
-    }, 1500);
+    }, 1500);*/
     
     // Actualizar estado y botones
     appState.historical.pointSelected = true;
@@ -581,9 +581,8 @@ function highlightPointOnMap(point) {
             strokeWeight: 2
         },
         zIndex: 1000,
-        animation: google.maps.Animation.BOUNCE
     });
-    
+
     // Centrar mapa en este punto
     appState.historical.map.setCenter(position);
     
@@ -594,7 +593,7 @@ function highlightPointOnMap(point) {
     infoWindow.open(appState.historical.map, highlightMarker);
     
     // Eliminar marcador después de unos segundos
-    setTimeout(() => {
+    SetTimeout(() => {
         highlightMarker.setAnimation(null);
         setTimeout(() => {
             highlightMarker.setMap(null);
@@ -672,7 +671,7 @@ async function loadHistoricalData() {
             lng: parseFloat(item.LONGITUDE),
             time: item.TIME,
             date: item.DATE,
-            RPM: item.RPM || 'N/A',
+            RPM: item.RPM || '0',
             ID_TAXI: item.ID_TAXI || 'N/A'
         })).filter(coord => !isNaN(coord.lat) && !isNaN(coord.lng));
 
@@ -726,12 +725,16 @@ async function loadHistoricalData() {
             if (timelineSlider && currentTimeInfo && rpmHist) {
                 // Resetear slider
                 timelineSlider.value = 0;
+                timelineSlider.style.backgroundSize = `${timelineSlider.value}% 100%`;
+
                 appState.historical.timelineAnimation.setProgress(0);
 
                 // Actualizar la información cuando se mueve el slider
                 timelineSlider.addEventListener('input', function(e) {
                     const progress = parseInt(e.target.value);
+                    this.style.backgroundSize = `${progress}% 100%`;
                     appState.historical.timelineAnimation.setProgress(progress);
+                      appState.historical.timelineAnimation.setProgress(progress);
                     
                     const points = domElements.enablePointSelection.checked ? relevantPoints : allPoints;
                     const currentPoint = points[Math.floor((progress / 100) * (points.length - 1))];
@@ -739,7 +742,7 @@ async function loadHistoricalData() {
                     if (currentPoint) {
                         // Actualizar información de tiempo
                         currentTimeInfo.textContent = `${currentPoint.date} ${currentPoint.time}`;
-                        rpmHist.textContent = `RPM: ${currentPoint.RPM || 'N/A'}`;
+                        rpmHist.textContent = `RPM: ${currentPoint.RPM || '0'}`;
                         
                         // Si hay un punto seleccionado, mostrar la distancia
                         if (domElements.enablePointSelection.checked) {

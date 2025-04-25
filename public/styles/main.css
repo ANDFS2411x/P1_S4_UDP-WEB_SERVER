@@ -452,42 +452,27 @@ h2.panel-title {
 }
 
 .timeline-slider {
-    /* 1) espacio a los lados igual a la mitad del thumb */
-    padding: 0 10px;
-    box-sizing: border-box;
-    /* 2) que no oculte lo que sobresale */
-    overflow: visible;
-    width: 100%;
-    height: 20px;
-    background: var(--background-tertiary);
-    border-radius: 10px;
-    background-image: linear-gradient(rgb(177,3,252), rgb(177,3,252));
-    background-repeat: no-repeat;
-    /* aquí el JS actualiza este size en % según el valor */
-    background-size: 0% 100%;
-    transition: background-size 0.1s;
-   
-    /* width: 100%;
-    height: 20px;
-    background: var(--background-tertiary);
-    border-radius: 10px;
-    overflow: hidden;
-    background-image: linear-gradient(rgb(177,3,252), rgb(177,3,252));
-    background-repeat: no-repeat;
-    background-size: 0% 100%;
-    transition: background-size 0.1s;*/
-
-
-    box-shadow: inset 0 0 5px var(--shadow-color);
-    margin: 5px 0 15px;
     appearance: none;
-    -webkit-appearance: none;*/
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 100%;
+    height: 8px;                    /* alto del track */
+    margin: 5px 0 10px;
+    border-radius: 4px;
+    background: var(--background-tertiary);
+    
+    /* degradado morado que irá creciendo */
+    background-image: linear-gradient(rgb(177,3,252), rgb(177,3,252));
+    background-repeat: no-repeat;
+    background-size: 0% 100%;       /* se actualizará con JS */
+    transition: background-size 0.1s;
+    box-shadow: inset 0 0 5px var(--shadow-color);
 }
 
 .timeline-slider::-webkit-slider-runnable-track {
-    height: 20px;
-    border-radius: 10px;
-    background: var(--background-tertiary);
+    height: 8px;
+    border-radius: 4px;
+    background: transparent; 
 }
 
 .timeline-slider::-webkit-slider-thumb {
@@ -499,9 +484,8 @@ h2.panel-title {
     background: #8c96db;
     cursor: pointer;
     border: 4px solid #fff;
-    /*box-shadow: -407px 0 0 400px rgb(177, 3, 252);*/
     z-index: 1;
-    margin-top: 0;
+    margin-top: -6px;
 }
 
 .timeline-slider::-moz-range-thumb {
@@ -513,14 +497,14 @@ h2.panel-title {
     border: 4px solid #fff;
 }
 
-.timeline-slider::-ms-thumb {
+/*.timeline-slider::-ms-thumb {
     width: 20px;
     height: 20px;
     border-radius: 50%;
     background: rgb(177, 3, 252);
     cursor: pointer;
     border: 4px solid #fff;
-}
+}*/
 
 .timeline-info {
     display: flex;
@@ -537,6 +521,29 @@ h2.panel-title {
     background: rgba(255,255,255,0.1);
     border-radius: 4px;
     font-weight: 500;
+}
+
+.timeline-slider::-ms-track {
+    height: 8px;
+    border-radius: 4px;
+    background: transparent;
+    border-color: transparent;
+    color: transparent;
+}
+
+.timeline-slider::-ms-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #8c96db;
+    cursor: pointer;
+    border: 4px solid #fff;
+    margin-top: 0;                  /* IE ya alinea el thumb correctamente */
+}
+
+/* Para que el fill morado no “rebase” al hacer focus */
+.timeline-slider:focus {
+    outline: none;
 }
 
 /*-----------------*/
