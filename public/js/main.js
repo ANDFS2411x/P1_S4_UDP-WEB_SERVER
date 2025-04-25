@@ -201,7 +201,7 @@ function initHistoricalMapInstance() {
     console.log('Mapa histórico inicializado');
 }
 
-function handleMapClick(event) {
+/*function handleMapClick(event) {
     // Verificar si la selección de punto está habilitada
     if (!domElements.enablePointSelection.checked) {
         return;
@@ -266,7 +266,67 @@ function handleMapClick(event) {
     // Actualizar estado y botones
     appState.historical.pointSelected = true;
     domElements.clearPointBtn.disabled = false;
+}*/
+
+function handleMapClick(event) {
+    // Sólo si está activada la selección de punto
+    if (!domElements.enablePointSelection.checked) return;
+
+    const clickPosition = {
+        lat: event.latLng.lat(),
+        lng: event.latLng.lng()
+    };
+    domElements.selectedLat.value = clickPosition.lat.toFixed(6);
+    domElements.selectedLng.value = clickPosition.lng.toFixed(6);
+
+    // 1) Crear O actualizar el marcador
+    if (!appState.historical.pointMarker) {
+        // Primera vez: lo creamos y le damos bounce 1.5 s
+        appState.historical.pointMarker = new google.maps.Marker({
+            position: clickPosition,
+            map: appState.historical.map,
+            title: "Punto seleccionado",
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 8,
+                fillColor: "#4CAF50",
+                fillOpacity: 1,
+                strokeColor: "#45a049",
+                strokeWeight: 2
+            }
+        });
+        appState.historical.pointMarker.setAnimation(google.maps.Animation.BOUNCE);
+        setTimeout(() => {
+            appState.historical.pointMarker.setAnimation(null);
+        }, 1500);
+    } else {
+        // Ya existe: sólo movemos, sin volver a rebotar
+        appState.historical.pointMarker.setPosition(clickPosition);
+    }
+
+    // 2) Crear O actualizar el círculo de búsqueda
+    const radius = parseInt(domElements.searchRadius.value, 10);
+    if (!appState.historical.pointCircle) {
+        appState.historical.pointCircle = new google.maps.Circle({
+            strokeColor: "#4CAF50",
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: "#4CAF50",
+            fillOpacity: 0.2,
+            map: appState.historical.map,
+            center: clickPosition,
+            radius: radius
+        });
+    } else {
+        appState.historical.pointCircle.setCenter(clickPosition);
+        appState.historical.pointCircle.setRadius(radius);
+    }
+
+    // 3) Habilitar botón de limpiar
+    appState.historical.pointSelected = true;
+    domElements.clearPointBtn.disabled = false;
 }
+
 
 function clearSelectedPoint() {
     if (appState.historical.pointMarker) {
