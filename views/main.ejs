@@ -71,6 +71,8 @@
                             <span>Cargando datos históricos...</span>
                         </div>
                     </div>
+
+                    <div id="historicalError" class="error-message"></div>
                     
                     <!-- Timeline controls directly below map -->
                     <div id="timelineControls" class="timeline-controls" style="display: none;">
@@ -85,6 +87,7 @@
                         </div>
                     </div>
                 </div>
+                <div id="historicalError" class="error-message"></div>
                 
                 <!-- Column 2: Side panel for filters and controls -->
                 <div class="side-panel">
@@ -132,16 +135,12 @@
                                     radiusDisplay.textContent = slider.value;
                                 });
                             </script>
-                            
-                            
                             <div class="button-group">
                                 <button id="clearPointBtn" class="secondary-button" disabled>Borrar punto</button>
                                 <button id="loadHistory" class="action-button">Cargar Trayectoria</button>
                             </div>
                         </div>
                     </div>
-                    <div id="realTimeError" class="error-message"></div>
-                    <div id="historicalError" class="error-message"></div>
                 </div>
             </div>
         </div>
