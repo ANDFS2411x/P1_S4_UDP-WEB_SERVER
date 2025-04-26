@@ -65,23 +65,36 @@ app.get("/api-key", (req, res) => {
 /* ------------------- 🔧 RUTA PARA OBTENER LOS DATOS DE LA TABLA REGISTROS ------------------- */
 // Cuando alguien visite /data, le damos el último registro guardado en la base de datos
 app.get("/data", (req, res) => {
-    // Consulta SQL para traer el último registro de la tabla "registros"
-    const query = "SELECT * FROM registros ORDER BY DATE DESC, TIME DESC LIMIT 1";
-    // Hacemos la consulta a la base de datos
-    db.query(query, (err, result) => {
-        if (err) {
-            // ❌ Si hay un error en la consulta, lo mostramos
-            console.error("❌ Error en la consulta:", err);
-            return res.status(500).json({ error: "Error en la consulta" });
-        }
-        // Si no hay resultados, mandamos un mensaje
-        if (result.length === 0) {
-            return res.status(404).json({ error: "No hay registros disponibles" });
-        }
-        // ✅ Si todo sale bien, enviamos el primer (y único) registro encontrado
-        res.json(result[0]);
+    const query = `
+      SELECT r1.ID_TAXI,
+             r1.LATITUDE,
+             r1.LONGITUDE,
+             r1.DATE,
+             r1.TIME,
+             r1.RPM
+      FROM registros r1
+      JOIN (
+        SELECT
+          ID_TAXI,
+          MAX(CONCAT(DATE, ' ', TIME)) AS max_dt
+        FROM registros
+        GROUP BY ID_TAXI
+      ) grp
+        ON r1.ID_TAXI = grp.ID_TAXI
+       AND CONCAT(r1.DATE, ' ', r1.TIME) = grp.max_dt;
+    `;
+    db.query(query, (err, results) => {
+      if (err) {
+        console.error("❌ Error en la consulta:", err);
+        return res.status(500).json({ error: "Error en la consulta" });
+      }
+      if (results.length === 0) {
+        return res.status(404).json({ error: "No hay registros disponibles" });
+      }
+      // Devuelve directamente un array de objetos
+      res.json(results);
     });
-});
+  });
 
 /* ------------------- 🔧 RUTA PARA DATOS HISTÓRICOS ------------------- */
 app.get("/historical-data", (req, res) => {
