@@ -248,6 +248,12 @@ h2.panel-title {
     margin-bottom: 20px;
 }
 
+.info-grid.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+
 .info-panel p {
     margin: 0;
     line-height: 1.4;
