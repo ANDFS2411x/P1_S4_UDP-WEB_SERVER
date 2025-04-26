@@ -438,9 +438,9 @@ async function initMap() {
 
         // Obtener posiciones iniciales
         const ubicaciones = await fetchData('/data');
-        if (!ubicaciones || !Array.isArray(ubicaciones) || ubicaciones.length === 0) {
+        /*if (!ubicaciones || !Array.isArray(ubicaciones) || ubicaciones.length === 0) {
             throw new Error("Datos de ubicación inicial incompletos");
-        }
+        }*/
 
         // Inicializar recorridos para cada taxi
         ubicaciones.forEach(taxi => {
