@@ -438,6 +438,7 @@ async function initMap() {
 
         // Obtener posiciones iniciales
         const ubicaciones = await fetchData('/data');
+        log(ubicaciones);
         /*if (!ubicaciones || !Array.isArray(ubicaciones) || ubicaciones.length === 0) {
             throw new Error("Datos de ubicación inicial incompletos");
         }*/
