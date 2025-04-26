@@ -356,7 +356,7 @@ function initRealMapInstance() {
     });
 
     // Inicializar spinner de selección de taxi
-    domElements.idSpinnerReal.addEventListener('change', function() {
+    domElements.spinnerReal.addEventListener('change', function() {
         const selectedTaxiId = this.value;
         appState.realTime.currentTaxiId = selectedTaxiId;
         
