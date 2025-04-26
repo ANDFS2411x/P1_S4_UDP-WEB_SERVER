@@ -347,11 +347,11 @@ function initRadiusChangeHandler() {
 function initRealMapInstance() {
     console.log('Inicializando mapa en tiempo real...');
     
-    const centerReal = { lat: 10.96854, lng: -74.78132 };
+    const centerReal = { lat: 11.006374, lng: -74.812042 };
 
     appState.realTime.map = new google.maps.Map(domElements.realMapContainer, {
         center: centerReal,
-        zoom: 14,
+        zoom: 13,
         streetViewControl: false
     });
 
