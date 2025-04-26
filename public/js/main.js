@@ -60,14 +60,31 @@ const domElements = {
     resultsTable: document.getElementById('resultsTable')
 };  
 
-function updateInfoPanel(data) {
+/*function updateInfoPanel(data) {
     domElements.latitud.textContent = data.LATITUDE || "N/A";
     domElements.longitud.textContent = data.LONGITUDE || "N/A";
     domElements.fecha.textContent = data.DATE || "N/A";
     domElements.tiempo.textContent = data.TIME || "N/A";
     domElements.rpmRealTime.textContent = data.RPM || "0";
     domElements.idTaxiReal.textContent = data.ID_TAXI || "N/A";
+}*/
+
+function updateInfoPanel(data) {
+    domElements.latitud.textContent = data.LATITUDE || "N/A";
+    domElements.longitud.textContent = data.LONGITUDE || "N/A";
+
+    // Quita la parte "T00:00:00.000Z" si existe
+    let rawDate = data.DATE || "N/A";
+    if (rawDate.includes("T")) {
+        rawDate = rawDate.split("T")[0];
+    }
+    domElements.fecha.textContent = rawDate;
+
+    domElements.tiempo.textContent = data.TIME || "N/A";
+    domElements.rpmRealTime.textContent = data.RPM || "0";
+    domElements.idTaxiReal.textContent = data.ID_TAXI || "N/A";
 }
+
 
 function showError(element, message) {
     element.textContent = message;
@@ -306,10 +323,10 @@ function handleMapClick(event) {
     }
     
     // Añadir breve animación de pulso
-    /*appState.historical.pointMarker.setAnimation(google.maps.Animation.BOUNCE);
+    appState.historical.pointMarker.setAnimation(google.maps.Animation.BOUNCE);
     setTimeout(() => {
         appState.historical.pointMarker.setAnimation(null);
-    }, 1500);*/
+    }, 1500);
     
     // Actualizar estado y botones
     appState.historical.pointSelected = true;
@@ -717,13 +734,13 @@ function highlightPointOnMap(point) {
     infoWindow.open(appState.historical.map, highlightMarker);
     
     // Eliminar marcador después de unos segundos
-    SetTimeout(() => {
+    /*SetTimeout(() => {
         highlightMarker.setAnimation(null);
         setTimeout(() => {
             highlightMarker.setMap(null);
             infoWindow.close();
         }, 2000);
-    }, 3000);
+    }, 3000);*/
 }
 
 // Función auxiliar para verificar si un elemento existe
@@ -865,7 +882,13 @@ async function loadHistoricalData() {
                     
                     if (currentPoint) {
                         // Actualizar información de tiempo
-                        currentTimeInfo.textContent = `${currentPoint.date} ${currentPoint.time}`;
+                        /*currentTimeInfo.textContent = `${currentPoint.date} ${currentPoint.time}`;*/
+                        let rawDate = currentPoint.date;
+                        if (rawDate.includes("T")) {
+                            rawDate = rawDate.split("T")[0];
+                        }
+                        currentTimeInfo.textContent = `${rawDate} ${currentPoint.time}`;
+                        
                         rpmHist.textContent = `RPM: ${currentPoint.RPM || '0'}`;
                         
                         // Si hay un punto seleccionado, mostrar la distancia
