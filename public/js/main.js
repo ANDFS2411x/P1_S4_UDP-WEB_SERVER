@@ -792,7 +792,8 @@ async function loadHistoricalData() {
         }
 
         // Obtener datos históricos
-        const url = `${config.basePath}/historical-data?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
+        const taxiId = document.getElementById('idSpinnerHist') ? document.getElementById('idSpinnerHist').value : '0';
+        const url = `${config.basePath}/historical-data?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&taxiId=${encodeURIComponent(taxiId)}`;
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
 
