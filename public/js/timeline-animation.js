@@ -1,23 +1,24 @@
 class TimelineAnimation {
-    constructor(map, color = '#FF0000') {
+    constructor(map) {
         this.map = map;
         this.points = [];
         this.currentIndex = 0;
         this.mode = 'route'; // 'route' o 'point'
-        this.color = color;
+        
         this.animationPath = new google.maps.Polyline({
             geodesic: true,
-            strokeColor: color,
+            strokeColor: "#FF0000",
             strokeOpacity: 1.0,
             strokeWeight: 4,
             map: this.map
         });
+        
         this.currentMarker = new google.maps.Marker({
             map: this.map,
             icon: {
                 path: google.maps.SymbolPath.CIRCLE,
                 scale: 10,
-                fillColor: color,
+                fillColor: "#FF0000",
                 fillOpacity: 1.0,
                 strokeColor: "#FFFFFF",
                 strokeWeight: 2

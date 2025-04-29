@@ -23,8 +23,7 @@ const appState = {
         pointMarker: null,  // Marcador para punto seleccionado
         pointCircle: null,  // Círculo para radio de búsqueda
         pointSelected: false, // Estado de selección de punto      
-        timelineAnimation: null,
-        timelineAnimations: {} // Soporte para múltiples taxis
+        timelineAnimation: null
     },
 };
 
@@ -593,10 +592,6 @@ function switchToHistorical() {
     if (appState.realTime.polyline) {
         appState.realTime.polyline.setMap(null);
     }
-    // Limpiar animaciones históricas de todos los taxis
-    if (appState.historical.timelineAnimations) {
-        Object.values(appState.historical.timelineAnimations).forEach(anim => anim.clear());
-    }
 }
 
 function switchToMembers() {
@@ -647,31 +642,6 @@ function findPointsNearby(point, data, radius) {
 
 // Función para construir la tabla de resultados
 function buildResultsTable(nearbyPoints) {
-    // Si no hay puntos cercanos, mostrar mensaje
-    if (nearbyPoints.length === 0) {
-        domElements.resultsSummary.textContent = "No se encontraron registros cercanos al punto seleccionado.";
-        domElements.resultsTable.innerHTML = '<div class="no-results">Sin resultados</div>';
-        return;
-    }
-    // Actualizar resumen
-    domElements.resultsSummary.textContent = `Se encontraron ${nearbyPoints.length} registros cercanos al punto seleccionado.`;
-    // Construir tabla
-    let tableHTML = `<table class="results-table"><thead><tr><th>#</th><th>Fecha</th><th>Hora</th><th>Latitud</th><th>Longitud</th><th>RPM</th><th>ID Taxi</th><th>Acción</th></tr></thead><tbody>`;
-    nearbyPoints.forEach((point, i) => {
-        tableHTML += `<tr><td>${i + 1}</td><td>${point.date}</td><td>${point.time}</td><td>${point.lat}</td><td>${point.lng}</td><td>${point.RPM}</td><td>${point.ID_TAXI}</td><td><button class="highlight-btn" data-index="${i}">Resaltar</button></td></tr>`;
-    });
-    tableHTML += '</tbody></table>';
-    domElements.resultsTable.innerHTML = tableHTML;
-    // Agregar manejadores de eventos para los botones de resaltar
-    const highlightButtons = domElements.resultsTable.querySelectorAll('.highlight-btn');
-    highlightButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const pointIndex = parseInt(this.getAttribute('data-index'));
-            highlightPointOnMap(nearbyPoints[pointIndex]);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-    });
-}
     // Si no hay puntos cercanos, mostrar mensaje
     if (nearbyPoints.length === 0) {
         domElements.resultsSummary.textContent = "No se encontraron registros cercanos al punto seleccionado.";
@@ -1002,11 +972,6 @@ function initHistoricalTracking() {
 
         // Configurar evento del botón de cargar historia
         domElements.loadHistory.addEventListener('click', loadHistoricalData);
-        // Evento para el selector de taxi histórico
-        const spinnerHist = document.getElementById('idSpinnerHist');
-        if (spinnerHist) {
-            spinnerHist.addEventListener('change', loadHistoricalData);
-        }
 
         // Configurar eventos para selección de punto
         domElements.enablePointSelection.addEventListener('change', function() {
