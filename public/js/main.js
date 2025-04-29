@@ -755,183 +755,28 @@ function elementExists(elementId) {
 
 async function loadHistoricalData() {
     try {
+        showLoading(true);
         const startDate = domElements.startDate.value;
         const endDate = domElements.endDate.value;
 
         if (!startDate || !endDate) {
-            throw new Error("Debe seleccionar ambas fechas");
+            throw new Error("Por favor seleccione un rango de fechas válido");
         }
 
-        // Verificar si hay un punto seleccionado cuando se está en modo de selección
-        if (domElements.enablePointSelection.checked) {
-            const selectedLat = parseFloat(domElements.selectedLat.value);
-            const selectedLng = parseFloat(domElements.selectedLng.value);
-            
-            if (isNaN(selectedLat) || isNaN(selectedLng)) {
-                throw new Error("Debe seleccionar un punto en el mapa primero");
-            }
-        }
-
-        showLoading(true);
+        const response = await fetchData(`/historical-data?startDate=${startDate}&endDate=${endDate}`);
         
-        if (domElements.historicalError) {
-            domElements.historicalError.style.display = "none";
+        if (!response.success || !response.data || response.data.length === 0) {
+            throw new Error("No se encontraron datos para el rango seleccionado");
         }
 
-        const timelineControls = document.getElementById('timelineControls');
-        if (timelineControls) {
-            timelineControls.style.display = 'none';
-        }
-
-        // Detener actualizaciones en tiempo real si están activas
-        stopRealTimeUpdates();
-
-        // Limpiar visualizaciones anteriores
-        if (appState.historical.timelineAnimation) {
-            appState.historical.timelineAnimation.clear();
-        }
-
-        // Obtener datos históricos
-        const url = `${config.basePath}/historical-data?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
-
-        const result = await response.json();
+        // Actualizar datos de taxis históricos
+        updateHistoricalTaxiData(response.data);
         
-        if (!result?.success || !Array.isArray(result.data)) {
-            throw new Error("Formato de datos incorrecto");
-        }
+        // Mostrar controles de timeline
+        document.getElementById('timelineControls').style.display = 'block';
         
-        if (result.data.length === 0) {
-            throw new Error("No hay datos para el rango seleccionado");
-        }
-
-        // Procesar coordenadas
-        const allPoints = result.data.map(item => ({
-            lat: parseFloat(item.LATITUDE),
-            lng: parseFloat(item.LONGITUDE),
-            time: item.TIME,
-            date: item.DATE,
-            RPM: item.RPM || '0',
-            ID_TAXI: item.ID_TAXI || 'N/A'
-        })).filter(coord => !isNaN(coord.lat) && !isNaN(coord.lng));
-
-        if (allPoints.length === 0) {
-            throw new Error("No hay coordenadas válidas en los datos recibidos");
-        }
-
-        // Si está en modo de selección de punto, filtrar solo los puntos cercanos
-        let relevantPoints = allPoints;
-        if (domElements.enablePointSelection.checked) {
-            const selectedPoint = {
-                lat: parseFloat(domElements.selectedLat.value),
-                lng: parseFloat(domElements.selectedLng.value)
-            };
-            const radius = parseInt(domElements.searchRadius.value);
-
-            relevantPoints = allPoints.filter(point => {
-                const distance = calculateDistance(
-                    selectedPoint.lat,
-                    selectedPoint.lng,
-                    point.lat,
-                    point.lng
-                );
-                return distance <= radius;
-            });
-
-            if (relevantPoints.length === 0) {
-                throw new Error("No se encontraron momentos en que el vehículo pasara por el punto seleccionado");
-            }
-        }
-
-        // Inicializar o actualizar la animación
-        if (!appState.historical.timelineAnimation) {
-            appState.historical.timelineAnimation = new TimelineAnimation(appState.historical.map);
-        }
-
-        // En modo de selección de punto, mostrar solo los puntos relevantes
-        if (domElements.enablePointSelection.checked) {
-            appState.historical.timelineAnimation.setPoints(relevantPoints, 'point');
-        } else {
-            appState.historical.timelineAnimation.setPoints(allPoints, 'route');
-        }
-
-        // Configurar y mostrar controles de línea de tiempo
-        if (timelineControls) {
-            const timelineSlider = document.getElementById('timelineSlider');
-            const currentTimeInfo = document.getElementById('currentTimeInfo');
-            const distanceInfo = document.getElementById('distanceInfo');
-            const rpmHist = document.getElementById('rpmHist');
-
-            if (timelineSlider && currentTimeInfo && rpmHist) {
-                // Resetear slider
-                timelineSlider.value = 0;
-                timelineSlider.style.backgroundSize = `${timelineSlider.value}% 100%`;
-
-                appState.historical.timelineAnimation.setProgress(0);
-
-                // Actualizar la información cuando se mueve el slider
-                timelineSlider.addEventListener('input', function(e) {
-                    const progress = parseInt(e.target.value);
-                    this.style.backgroundSize = `${progress}% 100%`;
-                    appState.historical.timelineAnimation.setProgress(progress);
-                      appState.historical.timelineAnimation.setProgress(progress);
-                    
-                    const points = domElements.enablePointSelection.checked ? relevantPoints : allPoints;
-                    const currentPoint = points[Math.floor((progress / 100) * (points.length - 1))];
-                    
-                    if (currentPoint) {
-                        // Actualizar información de tiempo
-                        /*currentTimeInfo.textContent = `${currentPoint.date} ${currentPoint.time}`;*/
-                        let rawDate = currentPoint.date;
-                        if (rawDate.includes("T")) {
-                            rawDate = rawDate.split("T")[0];
-                        }
-                        currentTimeInfo.textContent = `${rawDate} ${currentPoint.time}`;
-                        
-                        rpmHist.textContent = `RPM: ${currentPoint.RPM || '0'}`;
-                        
-                        // Si hay un punto seleccionado, mostrar la distancia
-                        if (domElements.enablePointSelection.checked) {
-                            const selectedPoint = {
-                                lat: parseFloat(domElements.selectedLat.value),
-                                lng: parseFloat(domElements.selectedLng.value)
-                            };
-                            const distance = calculateDistance(
-                                selectedPoint.lat,
-                                selectedPoint.lng,
-                                currentPoint.lat,
-                                currentPoint.lng
-                            );
-                            distanceInfo.textContent = `Distancia al punto: ${Math.round(distance)} m`;
-                            distanceInfo.style.display = 'block';
-                        } else {
-                            distanceInfo.style.display = 'none';
-                        }
-
-                        // Centrar el mapa en la posición actual
-                        appState.historical.map.panTo({
-                            lat: currentPoint.lat,
-                            lng: currentPoint.lng
-                        });
-                    }
-                });
-
-                // Mostrar controles
-                timelineControls.style.display = 'block';
-            }
-        }
-
-        // Ajustar vista del mapa
-        const bounds = new google.maps.LatLngBounds();
-        relevantPoints.forEach(point => bounds.extend(point));
-        appState.historical.map.fitBounds(bounds);
-
     } catch (error) {
-        console.error('Error cargando datos históricos:', error);
-        if (domElements.historicalError) {
-            showError(domElements.historicalError, error.message);
-        }
+        showError(domElements.historicalError, error.message);
     } finally {
         showLoading(false);
     }
