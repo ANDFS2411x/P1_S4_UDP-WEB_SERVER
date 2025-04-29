@@ -17,14 +17,14 @@ const appState = {
     },
     historical: {
         map: null,
-        recorridos: {},      // Cambiado: ahora almacena recorridos por ID de taxi
-        polylines: {},      // Polilíneas por taxi
+        recorrido: [],
+        polyline: null, // Polilínea histórica
         mapsLoaded: false,
         pointMarker: null,  // Marcador para punto seleccionado
         pointCircle: null,  // Círculo para radio de búsqueda
         pointSelected: false, // Estado de selección de punto      
-        timelineAnimations: {}, // Animaciones por taxi
-        selectedTaxis: ["1","2"], // Por defecto dos taxis
+        timelineAnimation: null,
+        timelineAnimations: {} // Soporte para múltiples taxis
     },
 };
 
@@ -240,8 +240,8 @@ async function fetchData(endpoint) {
 function initHistoricalMapInstance() {
     console.log('Inicializando mapa histórico...');
     
-    const centerHistorical = appState.historical.recorridos.length > 0 ? 
-        appState.historical.recorridos[0] : 
+    const centerHistorical = appState.historical.recorrido.length > 0 ? 
+        appState.historical.recorrido[0] : 
         { lat: 11.0193213, lng: -74.8601743 }; // Coordenadas por defecto para Bogotá
 
     appState.historical.map = new google.maps.Map(domElements.historicalMapContainer, {
@@ -593,6 +593,10 @@ function switchToHistorical() {
     if (appState.realTime.polyline) {
         appState.realTime.polyline.setMap(null);
     }
+    // Limpiar animaciones históricas de todos los taxis
+    if (appState.historical.timelineAnimations) {
+        Object.values(appState.historical.timelineAnimations).forEach(anim => anim.clear());
+    }
 }
 
 function switchToMembers() {
@@ -643,6 +647,31 @@ function findPointsNearby(point, data, radius) {
 
 // Función para construir la tabla de resultados
 function buildResultsTable(nearbyPoints) {
+    // Si no hay puntos cercanos, mostrar mensaje
+    if (nearbyPoints.length === 0) {
+        domElements.resultsSummary.textContent = "No se encontraron registros cercanos al punto seleccionado.";
+        domElements.resultsTable.innerHTML = '<div class="no-results">Sin resultados</div>';
+        return;
+    }
+    // Actualizar resumen
+    domElements.resultsSummary.textContent = `Se encontraron ${nearbyPoints.length} registros cercanos al punto seleccionado.`;
+    // Construir tabla
+    let tableHTML = `<table class="results-table"><thead><tr><th>#</th><th>Fecha</th><th>Hora</th><th>Latitud</th><th>Longitud</th><th>RPM</th><th>ID Taxi</th><th>Acción</th></tr></thead><tbody>`;
+    nearbyPoints.forEach((point, i) => {
+        tableHTML += `<tr><td>${i + 1}</td><td>${point.date}</td><td>${point.time}</td><td>${point.lat}</td><td>${point.lng}</td><td>${point.RPM}</td><td>${point.ID_TAXI}</td><td><button class="highlight-btn" data-index="${i}">Resaltar</button></td></tr>`;
+    });
+    tableHTML += '</tbody></table>';
+    domElements.resultsTable.innerHTML = tableHTML;
+    // Agregar manejadores de eventos para los botones de resaltar
+    const highlightButtons = domElements.resultsTable.querySelectorAll('.highlight-btn');
+    highlightButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const pointIndex = parseInt(this.getAttribute('data-index'));
+            highlightPointOnMap(nearbyPoints[pointIndex]);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    });
+}
     // Si no hay puntos cercanos, mostrar mensaje
     if (nearbyPoints.length === 0) {
         domElements.resultsSummary.textContent = "No se encontraron registros cercanos al punto seleccionado.";
@@ -763,114 +792,124 @@ async function loadHistoricalData() {
             throw new Error("Debe seleccionar ambas fechas");
         }
 
-        // Obtener taxis seleccionados (hasta dos)
-        const taxiSelect1 = document.getElementById('historicalTaxi1');
-        const taxiSelect2 = document.getElementById('historicalTaxi2');
-        const taxiId1 = taxiSelect1 ? taxiSelect1.value : "1";
-        const taxiId2 = taxiSelect2 ? taxiSelect2.value : "2";
-        appState.historical.selectedTaxis = [taxiId1, taxiId2];
-
         // Verificar si hay un punto seleccionado cuando se está en modo de selección
         if (domElements.enablePointSelection.checked) {
             const selectedLat = parseFloat(domElements.selectedLat.value);
             const selectedLng = parseFloat(domElements.selectedLng.value);
+            
             if (isNaN(selectedLat) || isNaN(selectedLng)) {
                 throw new Error("Debe seleccionar un punto en el mapa primero");
             }
         }
 
         showLoading(true);
+        
         if (domElements.historicalError) {
             domElements.historicalError.style.display = "none";
         }
+
         const timelineControls = document.getElementById('timelineControls');
-        if (timelineControls) timelineControls.style.display = 'none';
+        if (timelineControls) {
+            timelineControls.style.display = 'none';
+        }
+
+        // Detener actualizaciones en tiempo real si están activas
         stopRealTimeUpdates();
 
         // Limpiar visualizaciones anteriores
-        if (appState.historical.timelineAnimations) {
-            Object.values(appState.historical.timelineAnimations).forEach(anim => anim.clear());
+        if (appState.historical.timelineAnimation) {
+            appState.historical.timelineAnimation.clear();
         }
-        if (appState.historical.polylines) {
-            Object.values(appState.historical.polylines).forEach(poly => poly.setMap(null));
-        }
-        appState.historical.recorridos = {};
-        appState.historical.polylines = {};
-        appState.historical.timelineAnimations = {};
 
         // Obtener datos históricos
         const url = `${config.basePath}/historical-data?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
+
         const result = await response.json();
+        
         if (!result?.success || !Array.isArray(result.data)) {
             throw new Error("Formato de datos incorrecto");
         }
+        
         if (result.data.length === 0) {
             throw new Error("No hay datos para el rango seleccionado");
         }
 
-        // Filtrar por cada taxi seleccionado
-        appState.historical.selectedTaxis.forEach((taxiId, idx) => {
-            const taxiPoints = result.data.filter(item => String(item.ID_TAXI) === String(taxiId)).map(item => ({
-                lat: parseFloat(item.LATITUDE),
-                lng: parseFloat(item.LONGITUDE),
-                time: item.TIME,
-                date: item.DATE,
-                RPM: item.RPM || '0',
-                ID_TAXI: item.ID_TAXI || 'N/A'
-            })).filter(coord => !isNaN(coord.lat) && !isNaN(coord.lng));
-            if (taxiPoints.length > 0) {
-                appState.historical.recorridos[taxiId] = taxiPoints;
-            }
-        });
+        // Procesar coordenadas
+        const allPoints = result.data.map(item => ({
+            lat: parseFloat(item.LATITUDE),
+            lng: parseFloat(item.LONGITUDE),
+            time: item.TIME,
+            date: item.DATE,
+            RPM: item.RPM || '0',
+            ID_TAXI: item.ID_TAXI || 'N/A'
+        })).filter(coord => !isNaN(coord.lat) && !isNaN(coord.lng));
 
-        // Mostrar ambos recorridos en el mapa
-        Object.entries(appState.historical.recorridos).forEach(([taxiId, points], idx) => {
-            // Polilínea de color diferente por taxi
-            const color = idx === 0 ? '#024abf' : '#FF4500';
-            if (appState.historical.polylines[taxiId]) {
-                appState.historical.polylines[taxiId].setMap(null);
-            }
-            appState.historical.polylines[taxiId] = new google.maps.Polyline({
-                path: points,
-                geodesic: true,
-                strokeColor: color,
-                strokeOpacity: 1.0,
-                strokeWeight: 4,
-                map: appState.historical.map
+        if (allPoints.length === 0) {
+            throw new Error("No hay coordenadas válidas en los datos recibidos");
+        }
+
+        // Si está en modo de selección de punto, filtrar solo los puntos cercanos
+        let relevantPoints = allPoints;
+        if (domElements.enablePointSelection.checked) {
+            const selectedPoint = {
+                lat: parseFloat(domElements.selectedLat.value),
+                lng: parseFloat(domElements.selectedLng.value)
+            };
+            const radius = parseInt(domElements.searchRadius.value);
+
+            relevantPoints = allPoints.filter(point => {
+                const distance = calculateDistance(
+                    selectedPoint.lat,
+                    selectedPoint.lng,
+                    point.lat,
+                    point.lng
+                );
+                return distance <= radius;
             });
-            // Animación de timeline para cada taxi
-            if (!appState.historical.timelineAnimations[taxiId]) {
-                appState.historical.timelineAnimations[taxiId] = new TimelineAnimation(appState.historical.map);
+
+            if (relevantPoints.length === 0) {
+                throw new Error("No se encontraron momentos en que el vehículo pasara por el punto seleccionado");
             }
-            appState.historical.timelineAnimations[taxiId].setPoints(points, 'route');
-        });
+        }
 
-        // Ajustar vista del mapa
-        const bounds = new google.maps.LatLngBounds();
-        Object.values(appState.historical.recorridos).forEach(points => {
-            points.forEach(point => bounds.extend(point));
-        });
-        appState.historical.map.fitBounds(bounds);
+        // Inicializar o actualizar la animación
+        if (!appState.historical.timelineAnimation) {
+            appState.historical.timelineAnimation = new TimelineAnimation(appState.historical.map);
+        }
 
-        // Timeline y controles: solo para el primer taxi seleccionado
-        const taxiIdMain = appState.historical.selectedTaxis[0];
-        const pointsMain = appState.historical.recorridos[taxiIdMain] || [];
+        // En modo de selección de punto, mostrar solo los puntos relevantes
+        if (domElements.enablePointSelection.checked) {
+            appState.historical.timelineAnimation.setPoints(relevantPoints, 'point');
+        } else {
+            appState.historical.timelineAnimation.setPoints(allPoints, 'route');
+        }
+
+        // Configurar y mostrar controles de línea de tiempo
         if (timelineControls) {
             const timelineSlider = document.getElementById('timelineSlider');
             const currentTimeInfo = document.getElementById('currentTimeInfo');
             const distanceInfo = document.getElementById('distanceInfo');
             const rpmHist = document.getElementById('rpmHist');
+
             if (timelineSlider && currentTimeInfo && rpmHist) {
+                // Resetear slider
                 timelineSlider.value = 0;
                 timelineSlider.style.backgroundSize = `${timelineSlider.value}% 100%`;
-                appState.historical.timelineAnimations[taxiIdMain].setProgress(0);
-                timelineSlider.oninput = function(e) {
+
+                appState.historical.timelineAnimation.setProgress(0);
+
+                // Actualizar la información cuando se mueve el slider
+                timelineSlider.addEventListener('input', function(e) {
                     const progress = parseInt(e.target.value);
                     this.style.backgroundSize = `${progress}% 100%`;
-                    appState.historical.timelineAnimations[taxiIdMain].setProgress(progress);
-                    const currentPoint = pointsMain[Math.floor((progress / 100) * (pointsMain.length - 1))];
+                    appState.historical.timelineAnimation.setProgress(progress);
+                      appState.historical.timelineAnimation.setProgress(progress);
+                    
+                    const points = domElements.enablePointSelection.checked ? relevantPoints : allPoints;
+                    const currentPoint = points[Math.floor((progress / 100) * (points.length - 1))];
+                    
                     if (currentPoint) {
                         // Actualizar información de tiempo
                         /*currentTimeInfo.textContent = `${currentPoint.date} ${currentPoint.time}`;*/
@@ -963,6 +1002,11 @@ function initHistoricalTracking() {
 
         // Configurar evento del botón de cargar historia
         domElements.loadHistory.addEventListener('click', loadHistoricalData);
+        // Evento para el selector de taxi histórico
+        const spinnerHist = document.getElementById('idSpinnerHist');
+        if (spinnerHist) {
+            spinnerHist.addEventListener('change', loadHistoricalData);
+        }
 
         // Configurar eventos para selección de punto
         domElements.enablePointSelection.addEventListener('change', function() {
