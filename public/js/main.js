@@ -50,7 +50,6 @@ const domElements = {
     realTimeError: document.getElementById('realTimeError'),
     historicalError: document.getElementById('historicalError'),
     spinnerReal: document.getElementById('idSpinnerReal'),
-    spinnerHist: document.getElementById('idSpinnerHist'), // Nuevo selector para históricos
     enablePointSelection: document.getElementById('enablePointSelection'),
     selectedLat: document.getElementById('selectedLat'),
     selectedLng: document.getElementById('selectedLng'),
@@ -60,43 +59,6 @@ const domElements = {
     resultsSummary: document.getElementById('resultsSummary'),
     resultsTable: document.getElementById('resultsTable')
 };  
-
-// ------------------ HISTÓRICOS: Cargar taxis y manejar selector ------------------
-async function loadTaxiListForHistorical() {
-    try {
-        const response = await fetch('/taxi-list');
-        const data = await response.json();
-        if (data.success && Array.isArray(data.taxis)) {
-            const spinner = domElements.spinnerHist;
-            // Limpiar opciones
-            spinner.innerHTML = '<option value="0" selected>Todos</option>';
-            data.taxis.forEach(taxiId => {
-                const option = document.createElement('option');
-                option.value = taxiId;
-                option.textContent = `Taxi ${taxiId}`;
-                spinner.appendChild(option);
-            });
-        }
-    } catch (err) {
-        console.error('Error cargando lista de taxis para históricos:', err);
-    }
-}
-
-function setupHistoricalTaxiSelector() {
-    const spinner = domElements.spinnerHist;
-    if (!spinner) return;
-    spinner.addEventListener('change', function() {
-        const selectedTaxiId = this.value;
-        console.log('[Histórico] Taxi seleccionado:', selectedTaxiId);
-        // Aquí puedes imprimir más info relevante si lo deseas
-        if (selectedTaxiId !== "0") {
-            // Ejemplo: podrías mostrar info adicional, o filtrar datos históricos
-            console.log(`[Histórico] Mostrar info para taxi ID: ${selectedTaxiId}`);
-        } else {
-            console.log('[Histórico] Mostrando todos los taxis');
-        }
-    });
-}
 
 /*function updateInfoPanel(data) {
     domElements.latitud.textContent = data.LATITUDE || "N/A";
@@ -976,9 +938,6 @@ async function loadHistoricalData() {
 }
 
 function initHistoricalTracking() {
-    // Cargar lista de taxis y preparar selector
-    loadTaxiListForHistorical();
-    setupHistoricalTaxiSelector();
     try {
         // Configurar fechas por defecto (última hora)
         const now = new Date();

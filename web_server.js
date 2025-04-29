@@ -96,21 +96,6 @@ app.get("/data", (req, res) => {
     });
   });
 
-// ------------------- 🔧 RUTA PARA OBTENER IDS DE TAXIS -------------------
-app.get('/taxi-list', (req, res) => {
-    const query = 'SELECT DISTINCT ID_TAXI FROM registros ORDER BY ID_TAXI';
-    db.query(query, (err, results) => {
-        if (err) {
-            console.error('❌ Error en la consulta de taxis:', err);
-            return res.status(500).json({ error: 'Error en la consulta de taxis' });
-        }
-        res.json({
-            success: true,
-            taxis: results.map(row => row.ID_TAXI)
-        });
-    });
-});
-
 /* ------------------- 🔧 RUTA PARA DATOS HISTÓRICOS ------------------- */
 app.get("/historical-data", (req, res) => {
     const { startDate, endDate } = req.query;
