@@ -98,10 +98,9 @@ app.get("/data", (req, res) => {
 
 /* ------------------- 🔧 RUTA PARA DATOS HISTÓRICOS ------------------- */
 app.get("/historical-data", (req, res) => {
-    const { startDate, endDate, id_taxi } = req.query;
+    const { startDate, endDate } = req.query;
     console.log("StartDate recibido:", startDate);
     console.log("EndDate recibido:", endDate);
-    console.log("ID_TAXI recibido:", id_taxi);
 
     if (!startDate || !endDate) {
         return res.status(400).json({ 
@@ -111,22 +110,18 @@ app.get("/historical-data", (req, res) => {
         });
     }
 
-    // Construir query dinámico según si hay filtro de taxi
-    let query = `
+    const query = `
         SELECT * FROM registros 
-        WHERE CONCAT(DATE, ' ', TIME) BETWEEN ? AND ?`;
+        WHERE CONCAT(DATE, ' ', TIME) BETWEEN ? AND ?
+        ORDER BY DATE ASC, TIME ASC
+    `;
+
     const params = [
         startDate.replace('T', ' ') + ':00',  // Formato: 'YYYY-MM-DD HH:MM:00'
         endDate.replace('T', ' ') + ':00'
     ];
-    if (id_taxi) {
-        query += ` AND ID_TAXI = ?`;
-        params.push(id_taxi);
-    }
-    query += `\n        ORDER BY DATE ASC, TIME ASC`;
 
     console.log("Query ejecutado:", query.replace(/\?/g, (_, i) => params[i]));
-    console.log("Parámetros ejecutados:", params);
 
     db.query(query, params, (err, results) => {
         if (err) {
