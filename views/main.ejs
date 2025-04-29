@@ -143,6 +143,14 @@
                                     radiusDisplay.textContent = slider.value;
                                 });
                             </script>
+                            <div class="form-group">
+                                <label for="idSpinnerHist">Seleccionar taxi (histórico):</label>
+                                <select id="idSpinnerHist" name="idHist" class="select-dropdown">
+                                    <option value="0" selected>Todos</option>
+                                    <option value="1">Taxi 1</option>
+                                    <option value="2">Taxi 2</option>
+                                </select>
+                            </div>
                             <div class="button-group">
                                 <button id="clearPointBtn" class="secondary-button" disabled>Borrar punto</button>
                                 <button id="loadHistory" class="action-button">Cargar Trayectoria</button>
