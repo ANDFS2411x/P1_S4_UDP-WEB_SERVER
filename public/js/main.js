@@ -757,6 +757,8 @@ async function loadHistoricalData() {
     try {
         const startDate = domElements.startDate.value;
         const endDate = domElements.endDate.value;
+        const taxiId = document.getElementById('idSpinnerHist') ? document.getElementById('idSpinnerHist').value : "0";
+        console.log("TaxiId seleccionado para histórico:", taxiId);
 
         if (!startDate || !endDate) {
             throw new Error("Debe seleccionar ambas fechas");
@@ -792,7 +794,8 @@ async function loadHistoricalData() {
         }
 
         // Obtener datos históricos
-        const url = `${config.basePath}/historical-data?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
+        const url = `${config.basePath}/historical-data?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&taxiId=${encodeURIComponent(taxiId)}`;
+        console.log("URL de consulta histórica:", url);
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
 
@@ -914,6 +917,8 @@ async function loadHistoricalData() {
                             lat: currentPoint.lat,
                             lng: currentPoint.lng
                         });
+                        // Imprimir info relevante del punto actual
+                        console.log("Info punto histórico:", currentPoint);
                     }
                 });
 
