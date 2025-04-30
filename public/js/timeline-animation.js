@@ -56,11 +56,14 @@ class TimelineAnimation {
                 // Actualizar la visibilidad de la polilínea y el marcador
                 if (this.animationPaths[taxiId]) {
                     this.animationPaths[taxiId].setMap(isVisible ? this.map : null);
+                    this.animationPaths[taxiId].setVisible(isVisible);
+
                 }
                 console.log(this.currentMarkers[taxiId]);
                 // Actualizar la visibilidad del marcador
                 if (this.currentMarkers[taxiId]) {
                     this.currentMarkers[taxiId].setMap(isVisible ? this.map : null);
+                    this.currentMarkers[taxiId].setVisible(isVisible);
                 }
             });
         } else {
