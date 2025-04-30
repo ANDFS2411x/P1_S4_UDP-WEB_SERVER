@@ -965,6 +965,7 @@ function elementExists(elementId) {
     }
 }*/
 // Función para gestionar la visibilidad de las polilíneas de los taxis
+
 function updateTaxiVisibility(selectedTaxiId) {
     // Habilitar/deshabilitar panel de información
     const infoPanelEl = document.querySelector('.info-grid');
