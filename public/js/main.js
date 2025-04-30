@@ -964,7 +964,6 @@ function elementExists(elementId) {
         showLoading(false);
     }
 }*/
-
 // Función para gestionar la visibilidad de las polilíneas de los taxis
 function updateTaxiVisibility(selectedTaxiId) {
     // Habilitar/deshabilitar panel de información
@@ -997,7 +996,69 @@ function updateTaxiVisibility(selectedTaxiId) {
     }
 }
 
-// Cuando se cargan los datos históricos, asegurarse de que todas las polilíneas de los taxis estén visibles
+// Función para crear y actualizar las polilíneas de los taxis (con colores diferenciados)
+function createTaxiMarkers() {
+    // Crear marcadores y polilíneas para cada taxi
+    Object.keys(appState.realTime.recorridos).forEach((taxiId, index) => {
+        const recorrido = appState.realTime.recorridos[taxiId];
+        const position = recorrido[recorrido.length - 1]; // Última posición conocida
+        
+        // Crear marcador
+        appState.realTime.markers[taxiId] = new google.maps.Marker({
+            position: position,
+            map: appState.realTime.map,
+            title: `Taxi ${taxiId} 🚕`,
+            icon: {
+                url: "https://cdn-icons-png.flaticon.com/128/2401/2401174.png",
+                scaledSize: new google.maps.Size(50, 50)
+            }
+        });
+        
+        // **Asignar color diferente para cada taxi**
+        const colors = ["#FF0000", "#0000FF"]; // Rojo para un taxi, azul para otro
+        const color = colors[index % colors.length]; // Ciclo de colores para cada taxi
+        
+        appState.realTime.polylines[taxiId] = new google.maps.Polyline({
+            path: recorrido,
+            geodesic: true,
+            strokeColor: color,  // Asignar color al taxi
+            strokeOpacity: 1.0,
+            strokeWeight: 4,
+            map: appState.realTime.map
+        });
+    });
+    
+    // Configurar visibilidad inicial (mostrar todos)
+    updateTaxiVisibility("0");
+}
+
+// Función para gestionar la visibilidad de las polilíneas en el mapa histórico
+function createHistoricalPolylines(taxisData) {
+    taxisData.forEach((taxiData, index) => {
+        const taxiId = taxiData.ID_TAXI;
+        const coordinates = taxiData.coordinates || [];  // Asegúrate de que tienes las coordenadas de cada taxi
+
+        // Asignar color único a cada taxi
+        const colors = ["#FF0000", "#0000FF"];
+        const color = colors[index % colors.length];
+
+        if (!appState.historical.polylines[taxiId]) {
+            appState.historical.polylines[taxiId] = new google.maps.Polyline({
+                path: coordinates,
+                geodesic: true,
+                strokeColor: color, // Asignar color al taxi
+                strokeOpacity: 1.0,
+                strokeWeight: 4,
+                map: appState.historical.map
+            });
+        } else {
+            // Si la polilínea ya existe, actualiza su path
+            appState.historical.polylines[taxiId].setPath(coordinates);
+        }
+    });
+}
+
+// Función para cargar datos históricos y manejar polilíneas
 async function loadHistoricalData() {
     try {
         const startDate = domElements.startDate.value;
@@ -1052,77 +1113,8 @@ async function loadHistoricalData() {
             throw new Error("No hay datos para el rango seleccionado");
         }
 
-        // Procesar coordenadas
-        const allPoints = result.data.map(item => ({
-            lat: parseFloat(item.LATITUDE),
-            lng: parseFloat(item.LONGITUDE),
-            time: item.TIME,
-            date: item.DATE,
-            RPM: item.RPM,
-            ID_TAXI: item.ID_TAXI || 'N/A'
-        })).filter(coord => !isNaN(coord.lat) && !isNaN(coord.lng));
-
-        if (allPoints.length === 0) {
-            throw new Error("No hay coordenadas válidas en los datos recibidos");
-        }
-
-        // Si está en modo de selección de punto, filtrar solo los puntos cercanos
-        let relevantPoints = allPoints;
-        if (domElements.enablePointSelection.checked) {
-            const selectedPoint = {
-                lat: parseFloat(domElements.selectedLat.value),
-                lng: parseFloat(domElements.selectedLng.value)
-            };
-            const radius = parseInt(domElements.searchRadius.value);
-
-            relevantPoints = allPoints.filter(point => {
-                const distance = calculateDistance(
-                    selectedPoint.lat,
-                    selectedPoint.lng,
-                    point.lat,
-                    point.lng
-                );
-                return distance <= radius;
-            });
-
-            if (relevantPoints.length === 0) {
-                throw new Error("No se encontraron momentos en que el vehículo pasara por el punto seleccionado");
-            }
-        }
-
-        // Inicializar o actualizar la animación
-        if (!appState.historical.timelineAnimation) {
-            appState.historical.timelineAnimation = new TimelineAnimation(appState.historical.map);
-        }
-
-        // En modo de selección de punto, mostrar solo los puntos relevantes
-        if (domElements.enablePointSelection.checked) {
-            appState.historical.timelineAnimation.setPoints(relevantPoints, 'point');
-        } else {
-            appState.historical.timelineAnimation.setPoints(allPoints, 'route');
-        }
-
-        // **Cambios en la creación de polilíneas**: 
         // Crear o actualizar polilíneas para cada taxi
-        result.data.forEach(taxiData => {
-            const taxiId = taxiData.ID_TAXI;
-            const coordinates = taxiData.coordinates; // Asegúrate de que las coordenadas son correctas para cada taxi
-
-            // **Asegurarte de que cada taxi tenga su propia polilínea**:
-            if (!appState.historical.polylines[taxiId]) {
-                appState.historical.polylines[taxiId] = new google.maps.Polyline({
-                    path: coordinates,
-                    geodesic: true,
-                    strokeColor: "#FF0000",  // Cambia el color según el taxi, puedes usar un color único por taxi
-                    strokeOpacity: 1.0,
-                    strokeWeight: 4,
-                    map: appState.historical.map
-                });
-            } else {
-                // Si la polilínea ya existe, actualiza su path
-                appState.historical.polylines[taxiId].setPath(coordinates);
-            }
-        });
+        createHistoricalPolylines(result.data);
 
         // Mostrar todas las polilíneas para todos los taxis
         Object.values(appState.historical.polylines).forEach(polyline => {
@@ -1206,6 +1198,7 @@ async function loadHistoricalData() {
         showLoading(false);
     }
 }
+
 
 function initHistoricalTracking() {
     try {
