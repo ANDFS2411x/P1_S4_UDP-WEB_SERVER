@@ -339,7 +339,7 @@ h2.panel-title {
 }
 
 .coord-group {
-    flex: 1;
+    display: none;
 }
 
 .coord-group label {
