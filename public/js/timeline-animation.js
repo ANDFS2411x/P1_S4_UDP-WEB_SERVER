@@ -4,10 +4,17 @@ class TimelineAnimation {
         this.points = [];
         this.currentIndex = 0;
         this.mode = 'route'; // 'route' o 'point'
+        this.taxiId = "1"; // Default taxi ID
+        
+        // Definir colores por ID de taxi (mismo esquema que en tiempo real)
+        this.taxiColors = {
+            "1": "#FF0000", // Rojo para Taxi 1
+            "2": "#0000FF"  // Azul para Taxi 2
+        };
         
         this.animationPath = new google.maps.Polyline({
             geodesic: true,
-            strokeColor: "#FF0000",
+            strokeColor: this.taxiColors["1"], // Color por defecto
             strokeOpacity: 1.0,
             strokeWeight: 4,
             map: this.map
@@ -18,7 +25,7 @@ class TimelineAnimation {
             icon: {
                 path: google.maps.SymbolPath.CIRCLE,
                 scale: 10,
-                fillColor: "#FF0000",
+                fillColor: this.taxiColors["1"], // Color por defecto
                 fillOpacity: 1.0,
                 strokeColor: "#FFFFFF",
                 strokeWeight: 2
@@ -42,6 +49,21 @@ class TimelineAnimation {
     setPoints(points, mode = 'route') {
         this.points = points;
         this.currentIndex = 0;
+        
+        // Determinar el ID del taxi a partir del primer punto
+        if (points.length > 0 && points[0].ID_TAXI) {
+            this.taxiId = points[0].ID_TAXI.toString();
+            
+            // Actualizar color de la polilínea según el ID del taxi
+            const taxiColor = this.taxiColors[this.taxiId] || "#FF0000"; // Rojo por defecto si no hay color definido
+            this.animationPath.setOptions({ strokeColor: taxiColor });
+            
+            // Actualizar color del marcador
+            const markerIcon = this.currentMarker.getIcon();
+            markerIcon.fillColor = taxiColor;
+            this.currentMarker.setIcon(markerIcon);
+        }
+        
         this.setMode(mode);
         this.updateVisualization();
     }
@@ -76,4 +98,4 @@ class TimelineAnimation {
         this.points = [];
         this.currentIndex = 0;
     }
-} 
+}
