@@ -304,7 +304,7 @@ h2.panel-title {
 
 /* Point selection styles */
 .point-selection-container {
-    margin-top: 20px;
+    margin-top: 15px;
     padding-top: 15px;
     border-top: 1px solid var(--border-color);
 }
@@ -333,13 +333,13 @@ h2.panel-title {
 }
 
 .coordinates-container {
-    display: flex;
+    display: none;
     gap: 15px;
     margin-bottom: 15px;
 }
 
 .coord-group {
-    flex: 1;
+    display: none;
 }
 
 .coord-group label {
@@ -361,7 +361,7 @@ h2.panel-title {
 }
 
 .radius-container {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 .radius-container label {
@@ -513,7 +513,7 @@ h2.panel-title {
 }*/
 
 .timeline-info {
-    display: flex;
+    display: none;
     justify-content: space-between;
     align-items: center;
     padding: 10px;
