@@ -18,7 +18,7 @@ const appState = {
     historical: {
         map: null,
         recorrido: [],
-        polyline: null, // Polilínea histórica
+        polylines: null, // Polilínea histórica
         mapsLoaded: false,
         pointMarker: null,  // Marcador para punto seleccionado
         pointCircle: null,  // Círculo para radio de búsqueda
@@ -65,7 +65,7 @@ const domElements = {
     domElements.longitud.textContent = data.LONGITUDE || "N/A";
     domElements.fecha.textContent = data.DATE || "N/A";
     domElements.tiempo.textContent = data.TIME || "N/A";
-    domElements.rpmRealTime.textContent = data.RPM || "0";
+    domElements.rpmRealTime.textContent = data.RPM || "N/A";
     domElements.idTaxiReal.textContent = data.ID_TAXI || "N/A";
 }*/
 
@@ -241,7 +241,7 @@ function initHistoricalMapInstance() {
     
     const centerHistorical = appState.historical.recorrido.length > 0 ? 
         appState.historical.recorrido[0] : 
-        { lat: 11.0193213, lng: -74.8601743 }; // Coordenadas por defecto para Bogotá
+        { lat: 11.0193213, lng: -74.8601743 }; 
 
     appState.historical.map = new google.maps.Map(domElements.historicalMapContainer, {
         center: centerHistorical,
@@ -249,7 +249,30 @@ function initHistoricalMapInstance() {
         streetViewControl: false
     });
 
-    appState.historical.polyline = new google.maps.Polyline({
+    // Crear polilíneas para cada taxi en el histórico
+    appState.historical.recorrido.forEach(taxiData => {
+        const taxiId = taxiData.ID_TAXI; // Suponiendo que ID_TAXI está en los datos
+        const coordinates = taxiData.coordinates; // Asume que cada taxi tiene su propia ruta
+
+        appState.historical.polylines[taxiId] = new google.maps.Polyline({
+            path: coordinates,
+            geodesic: true,
+            strokeColor: "#FF0000",  // Cambiar el color por cada taxi si es necesario
+            strokeOpacity: 1.0,
+            strokeWeight: 4,
+            map: appState.historical.map
+        });
+    });
+    
+    // Configurar evento de clic en el mapa para selección de punto
+    appState.historical.map.addListener('click', function(event) {
+        handleMapClick(event);
+    });
+
+    console.log('Mapa histórico inicializado');
+}
+
+ /*   appState.historical.polylines = new google.maps.Polyline({
         path: appState.historical.recorrido,
         geodesic: true,
         strokeColor: "#024abf",
@@ -264,7 +287,7 @@ function initHistoricalMapInstance() {
     });
     
     console.log('Mapa histórico inicializado');
-}
+} */
 
 function handleMapClick(event) {
     // Verificar si la selección de punto está habilitada
@@ -753,7 +776,7 @@ function elementExists(elementId) {
     return true;
 }
 
-async function loadHistoricalData() {
+/*async function loadHistoricalData() {
     try {
         const startDate = domElements.startDate.value;
         const endDate = domElements.endDate.value;
@@ -815,7 +838,7 @@ async function loadHistoricalData() {
             lng: parseFloat(item.LONGITUDE),
             time: item.TIME,
             date: item.DATE,
-            RPM: item.RPM || '0',
+            RPM: item.RPM,
             ID_TAXI: item.ID_TAXI || 'N/A'
         })).filter(coord => !isNaN(coord.lat) && !isNaN(coord.lng));
 
@@ -885,7 +908,7 @@ async function loadHistoricalData() {
                     
                     if (currentPoint) {
                         // Actualizar información de tiempo
-                        /*currentTimeInfo.textContent = `${currentPoint.date} ${currentPoint.time}`;*/
+                        //currentTimeInfo.textContent = `${currentPoint.date} ${currentPoint.time}`;
                         let rawDate = currentPoint.date;
                         if (rawDate.includes("T")) {
                             rawDate = rawDate.split("T")[0];
@@ -940,7 +963,216 @@ async function loadHistoricalData() {
     } finally {
         showLoading(false);
     }
+}*/
+
+async function loadHistoricalData() {
+    try {
+        const startDate = domElements.startDate.value;
+        const endDate = domElements.endDate.value;
+        const taxiId = document.getElementById('idSpinnerHist') ? document.getElementById('idSpinnerHist').value : "0";
+
+        if (!startDate || !endDate) {
+            throw new Error("Debe seleccionar ambas fechas");
+        }
+
+        // Verificar si hay un punto seleccionado cuando se está en modo de selección
+        if (domElements.enablePointSelection.checked) {
+            const selectedLat = parseFloat(domElements.selectedLat.value);
+            const selectedLng = parseFloat(domElements.selectedLng.value);
+            
+            if (isNaN(selectedLat) || isNaN(selectedLng)) {
+                throw new Error("Debe seleccionar un punto en el mapa primero");
+            }
+        }
+
+        showLoading(true);
+        
+        if (domElements.historicalError) {
+            domElements.historicalError.style.display = "none";
+        }
+
+        const timelineControls = document.getElementById('timelineControls');
+        if (timelineControls) {
+            timelineControls.style.display = 'none';
+        }
+
+        // Detener actualizaciones en tiempo real si están activas
+        stopRealTimeUpdates();
+
+        // Limpiar visualizaciones anteriores
+        if (appState.historical.timelineAnimation) {
+            appState.historical.timelineAnimation.clear();
+        }
+
+        // Obtener datos históricos
+        const url = `${config.basePath}/historical-data?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&taxiId=${encodeURIComponent(taxiId)}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
+
+        const result = await response.json();
+        
+        if (!result?.success || !Array.isArray(result.data)) {
+            throw new Error("Formato de datos incorrecto");
+        }
+        
+        if (result.data.length === 0) {
+            throw new Error("No hay datos para el rango seleccionado");
+        }
+
+        // Procesar coordenadas
+        const allPoints = result.data.map(item => ({
+            lat: parseFloat(item.LATITUDE),
+            lng: parseFloat(item.LONGITUDE),
+            time: item.TIME,
+            date: item.DATE,
+            RPM: item.RPM,
+            ID_TAXI: item.ID_TAXI || 'N/A'
+        })).filter(coord => !isNaN(coord.lat) && !isNaN(coord.lng));
+
+        if (allPoints.length === 0) {
+            throw new Error("No hay coordenadas válidas en los datos recibidos");
+        }
+
+        // Si está en modo de selección de punto, filtrar solo los puntos cercanos
+        let relevantPoints = allPoints;
+        if (domElements.enablePointSelection.checked) {
+            const selectedPoint = {
+                lat: parseFloat(domElements.selectedLat.value),
+                lng: parseFloat(domElements.selectedLng.value)
+            };
+            const radius = parseInt(domElements.searchRadius.value);
+
+            relevantPoints = allPoints.filter(point => {
+                const distance = calculateDistance(
+                    selectedPoint.lat,
+                    selectedPoint.lng,
+                    point.lat,
+                    point.lng
+                );
+                return distance <= radius;
+            });
+
+            if (relevantPoints.length === 0) {
+                throw new Error("No se encontraron momentos en que el vehículo pasara por el punto seleccionado");
+            }
+        }
+
+        // Inicializar o actualizar la animación
+        if (!appState.historical.timelineAnimation) {
+            appState.historical.timelineAnimation = new TimelineAnimation(appState.historical.map);
+        }
+
+        // En modo de selección de punto, mostrar solo los puntos relevantes
+        if (domElements.enablePointSelection.checked) {
+            appState.historical.timelineAnimation.setPoints(relevantPoints, 'point');
+        } else {
+            appState.historical.timelineAnimation.setPoints(allPoints, 'route');
+        }
+
+        // Crear o actualizar polilíneas para cada taxi
+        result.data.forEach(taxiData => {
+            const taxiId = taxiData.ID_TAXI;
+            const coordinates = taxiData.coordinates; // Aquí asumimos que `coordinates` ya está en el formato correcto
+
+            // Crear o actualizar la polilínea para este taxi
+            if (!appState.historical.polylines[taxiId]) {
+                appState.historical.polylines[taxiId] = new google.maps.Polyline({
+                    path: coordinates,
+                    geodesic: true,
+                    strokeColor: "#FF0000",  // Cambiar el color por cada taxi si es necesario
+                    strokeOpacity: 1.0,
+                    strokeWeight: 4,
+                    map: appState.historical.map
+                });
+            } else {
+                // Si la polilínea ya existe, actualizar su path
+                appState.historical.polylines[taxiId].setPath(coordinates);
+            }
+        });
+
+        // Mostrar todas las polilíneas en el mapa histórico
+        Object.values(appState.historical.polylines).forEach(polyline => {
+            polyline.setMap(appState.historical.map);
+        });
+
+        // Configurar y mostrar controles de línea de tiempo
+        if (timelineControls) {
+            const timelineSlider = document.getElementById('timelineSlider');
+            const currentTimeInfo = document.getElementById('currentTimeInfo');
+            const distanceInfo = document.getElementById('distanceInfo');
+            const rpmHist = document.getElementById('rpmHist');
+
+            if (timelineSlider && currentTimeInfo && rpmHist) {
+                // Resetear slider
+                timelineSlider.value = 0;
+                timelineSlider.style.backgroundSize = `${timelineSlider.value}% 100%`;
+
+                appState.historical.timelineAnimation.setProgress(0);
+
+                // Actualizar la información cuando se mueve el slider
+                timelineSlider.addEventListener('input', function(e) {
+                    const progress = parseInt(e.target.value);
+                    this.style.backgroundSize = `${progress}% 100%`;
+                    appState.historical.timelineAnimation.setProgress(progress);
+                    
+                    const points = domElements.enablePointSelection.checked ? relevantPoints : allPoints;
+                    const currentPoint = points[Math.floor((progress / 100) * (points.length - 1))];
+                    
+                    if (currentPoint) {
+                        let rawDate = currentPoint.date;
+                        if (rawDate.includes("T")) {
+                            rawDate = rawDate.split("T")[0];
+                        }
+                        currentTimeInfo.textContent = `${rawDate} ${currentPoint.time}`;
+                        
+                        rpmHist.textContent = `RPM: ${currentPoint.RPM || '0'}`;
+                        
+                        // Si hay un punto seleccionado, mostrar la distancia
+                        if (domElements.enablePointSelection.checked) {
+                            const selectedPoint = {
+                                lat: parseFloat(domElements.selectedLat.value),
+                                lng: parseFloat(domElements.selectedLng.value)
+                            };
+                            const distance = calculateDistance(
+                                selectedPoint.lat,
+                                selectedPoint.lng,
+                                currentPoint.lat,
+                                currentPoint.lng
+                            );
+                            distanceInfo.textContent = `Distancia al punto: ${Math.round(distance)} m`;
+                            distanceInfo.style.display = 'block';
+                        } else {
+                            distanceInfo.style.display = 'none';
+                        }
+
+                        // Centrar el mapa en la posición actual
+                        appState.historical.map.panTo({
+                            lat: currentPoint.lat,
+                            lng: currentPoint.lng
+                        });
+                    }
+                });
+
+                // Mostrar controles
+                timelineControls.style.display = 'block';
+            }
+        }
+
+        // Ajustar vista del mapa
+        const bounds = new google.maps.LatLngBounds();
+        relevantPoints.forEach(point => bounds.extend(point));
+        appState.historical.map.fitBounds(bounds);
+
+    } catch (error) {
+        console.error('Error cargando datos históricos:', error);
+        if (domElements.historicalError) {
+            showError(domElements.historicalError, error.message);
+        }
+    } finally {
+        showLoading(false);
+    }
 }
+
 
 function initHistoricalTracking() {
     try {
