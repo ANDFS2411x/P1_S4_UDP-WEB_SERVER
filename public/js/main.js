@@ -965,6 +965,39 @@ function elementExists(elementId) {
     }
 }*/
 
+// Función para gestionar la visibilidad de las polilíneas de los taxis
+function updateTaxiVisibility(selectedTaxiId) {
+    // Habilitar/deshabilitar panel de información
+    const infoPanelEl = document.querySelector('.info-grid');
+    const seguirBtnEl = document.getElementById('seguirBtn');
+    
+    if (selectedTaxiId === "0") {
+        // Si "Todos" está seleccionado, mostrar todas las polilíneas
+        Object.keys(appState.realTime.polylines).forEach(taxiId => {
+            appState.realTime.polylines[taxiId].setMap(appState.realTime.map);
+        });
+        
+        // Desactivar panel de información
+        if (infoPanelEl) infoPanelEl.classList.add('disabled');
+        if (seguirBtnEl) seguirBtnEl.disabled = true;
+        clearInfoPanel();
+    } else {
+        // Si un taxi específico está seleccionado, ocultar todas las polilíneas excepto la del taxi seleccionado
+        Object.keys(appState.realTime.polylines).forEach(taxiId => {
+            const visible = taxiId === selectedTaxiId;
+            appState.realTime.polylines[taxiId].setMap(visible ? appState.realTime.map : null);
+        });
+        
+        // Activar panel de información
+        if (infoPanelEl) infoPanelEl.classList.remove('disabled');
+        if (seguirBtnEl) seguirBtnEl.disabled = false;
+        
+        // Intentar actualizar la información del taxi seleccionado
+        fetchTaxiInfo(selectedTaxiId);
+    }
+}
+
+// Cuando se cargan los datos históricos, asegurarse de que todas las polilíneas de los taxis estén visibles
 async function loadHistoricalData() {
     try {
         const startDate = domElements.startDate.value;
