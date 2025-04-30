@@ -58,7 +58,8 @@ const domElements = {
     pointSearchResults: document.getElementById('pointSearchResults'),
     resultsSummary: document.getElementById('resultsSummary'),
     resultsTable: document.getElementById('resultsTable'),
-    idSpinnerHist: document.getElementById('idSpinnerHist')
+    idSpinnerHist: document.getElementById('idSpinnerHist'),
+    timelineInfo: document.getElementById('timeline-info'),
 };  
 
 /*function updateInfoPanel(data) {
@@ -256,6 +257,12 @@ function initHistoricalMapInstance() {
     // Configurar el spinner de selección de taxi histórico
     domElements.idSpinnerHist.addEventListener('change', function() {
         const selectedTaxiId = this.value;
+        if (selectedTaxiId === "0") {
+            domElements.timelineInfo.style.display = 'none';
+        } else {
+            domElements.timelineInfo.style.display = 'flex';
+        }
+
         if (appState.historical.timelineAnimation) {
             appState.historical.timelineAnimation.setSelectedTaxiId(selectedTaxiId);
             
