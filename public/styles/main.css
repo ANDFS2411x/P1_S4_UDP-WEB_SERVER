@@ -304,7 +304,7 @@ h2.panel-title {
 
 /* Point selection styles */
 .point-selection-container {
-    margin-top: 20px;
+    margin-top: 15px;
     padding-top: 15px;
     border-top: 1px solid var(--border-color);
 }
