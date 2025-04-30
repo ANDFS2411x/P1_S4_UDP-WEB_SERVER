@@ -56,14 +56,14 @@ class TimelineAnimation {
                 // Actualizar la visibilidad de la polilínea y el marcador
                 if (this.animationPaths[taxiId]) {
                     this.animationPaths[taxiId].setMap(isVisible ? this.map : null);
-                    this.animationPaths[taxiId].setVisible(isVisible);
+                    this.animationPaths[taxiId].setVisible(isVisible ? this.visible: false);
 
                 }
                 console.log(this.currentMarkers[taxiId]);
                 // Actualizar la visibilidad del marcador
                 if (this.currentMarkers[taxiId]) {
                     this.currentMarkers[taxiId].setMap(isVisible ? this.map : null);
-                    this.currentMarkers[taxiId].setVisible(isVisible);
+                    this.currentMarkers[taxiId].setVisible(isVisible ? this.visible: false);
                 }
             });
         } else {
@@ -71,9 +71,11 @@ class TimelineAnimation {
             Object.keys(this.animationPaths).forEach(taxiId => {
                 if (this.animationPaths[taxiId]) {
                     this.animationPaths[taxiId].setMap(this.map);
+                    this.animationPaths[taxiId].setVisible(true);
                 }
                 if (this.currentMarkers[taxiId]) {
                     this.currentMarkers[taxiId].setMap(this.map);
+                    this.currentMarkers[taxiId].setVisible(true);
                 }
             });
         }
