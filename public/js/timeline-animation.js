@@ -50,9 +50,13 @@ class TimelineAnimation {
         if (this.selectedTaxiId !== "0") {
             Object.keys(this.animationPaths).forEach(taxiId => {
                 const isVisible = taxiId === this.selectedTaxiId;
+                console.log(`Taxi ${taxiId} visible: ${isVisible}`);
+                // Actualizar la visibilidad de la polilínea y el marcador
                 if (this.animationPaths[taxiId]) {
                     this.animationPaths[taxiId].setMap(isVisible ? this.map : null);
                 }
+                console.log(this.currentMarkers[taxiId]);
+                // Actualizar la visibilidad del marcador
                 if (this.currentMarkers[taxiId]) {
                     this.currentMarkers[taxiId].setMap(isVisible ? this.map : null);
                 }
