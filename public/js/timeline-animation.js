@@ -1,207 +1,240 @@
 class TimelineAnimation {
     constructor(map) {
         this.map = map;
-        this.points = [];
-        this.currentIndex = 0;
+        this.taxiData = {}; // Objeto para almacenar datos por taxiId
         this.mode = 'route'; // 'route' o 'point'
-        this.taxiId = "1"; // Default taxi ID
-        this.showAllTaxis = false; // Flag para mostrar todos los taxis
+        this.progress = 0; // Progreso actual (0-100)
+        this.selectedTaxiId = "0"; // "0" para todos
         
-        // Definir colores por ID de taxi (mismo esquema que en tiempo real)
+        // Colores para taxis
         this.taxiColors = {
-            "1": "#FF0000", // Rojo para Taxi 1
-            "2": "#0000FF"  // Azul para Taxi 2
+            "1": "#FF0000", // Rojo para taxi 1
+            "2": "#0000FF"  // Azul para taxi 2
         };
         
-        // Objeto para almacenar polylines por ID de taxi
-        this.polylines = {};
+        // Almacenar las polilíneas y marcadores por taxiId
+        this.animationPaths = {};
+        this.currentMarkers = {};
         
-        // Polyline principal (para un solo taxi)
-        this.animationPath = new google.maps.Polyline({
-            geodesic: true,
-            strokeColor: this.taxiColors["1"], // Color por defecto
-            strokeOpacity: 1.0,
-            strokeWeight: 4,
-            map: this.map
-        });
-        
-        this.currentMarker = new google.maps.Marker({
-            map: this.map,
-            icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 10,
-                fillColor: this.taxiColors["1"], // Color por defecto
-                fillOpacity: 1.0,
-                strokeColor: "#FFFFFF",
-                strokeWeight: 2
-            },
-            animation: google.maps.Animation.BOUNCE
-        });
+        // Información temporal
+        this.startTimestamp = null;
+        this.endTimestamp = null;
+    }
+
+    setSelectedTaxiId(taxiId) {
+        this.selectedTaxiId = taxiId;
+        this.updateVisibility();
     }
 
     setMode(mode) {
         this.mode = mode;
+        this.updateVisibility();
+    }
+    
+    // Método para convertir fecha y hora en timestamp
+    getTimestamp(dateStr, timeStr) {
+        if (!dateStr || !timeStr) return null;
         
-        // En modo punto, ocultar las polilíneas
-        if (mode === 'point') {
-            if (this.showAllTaxis) {
-                Object.values(this.polylines).forEach(polyline => polyline.setMap(null));
-            } else {
-                this.animationPath.setMap(null);
-            }
-        } else {
-            if (this.showAllTaxis) {
-                Object.values(this.polylines).forEach(polyline => polyline.setMap(this.map));
-            } else {
-                this.animationPath.setMap(this.map);
-            }
+        // Procesar la fecha que puede venir en formato ISO o regular
+        let formattedDate = dateStr;
+        if (dateStr.includes("T")) {
+            formattedDate = dateStr.split("T")[0];
         }
         
-        // Asegurarse de que el marcador esté visible en ambos modos
-        this.currentMarker.setMap(this.map);
+        return new Date(`${formattedDate} ${timeStr}`).getTime();
+    }
+    
+    // Método para actualizar la visibilidad según el taxi seleccionado
+    updateVisibility() {
+        // Si solo se muestra un taxi específico
+        if (this.selectedTaxiId !== "0") {
+            Object.keys(this.animationPaths).forEach(taxiId => {
+                const isVisible = taxiId === this.selectedTaxiId;
+                console.log(`Taxi ${taxiId} visible: ${isVisible}`);
+
+                console.log(this.animationPaths[taxiId]);
+                // Actualizar la visibilidad de la polilínea y el marcador
+                if (this.animationPaths[taxiId]) {
+                    this.animationPaths[taxiId].setMap(isVisible ? this.map : null);
+                    this.animationPaths[taxiId].setVisible(isVisible ? this.visible: false);
+
+                }
+                console.log(this.currentMarkers[taxiId]);
+                // Actualizar la visibilidad del marcador
+                if (this.currentMarkers[taxiId]) {
+                    this.currentMarkers[taxiId].setMap(isVisible ? this.map : null);
+                    this.currentMarkers[taxiId].setVisible(isVisible ? this.visible: false);
+                }
+            });
+        } else {
+            // Mostrar todos los taxis
+            Object.keys(this.animationPaths).forEach(taxiId => {
+                if (this.animationPaths[taxiId]) {
+                    this.animationPaths[taxiId].setMap(this.map);
+                    this.animationPaths[taxiId].setVisible(true);
+                }
+                if (this.currentMarkers[taxiId]) {
+                    this.currentMarkers[taxiId].setMap(this.map);
+                    this.currentMarkers[taxiId].setVisible(true);
+                }
+            });
+        }
     }
 
-    setPoints(points, mode = 'route') {
-        this.points = points;
-        this.currentIndex = 0;
+    setPoints(pointsData, mode = 'route') {
+        // Limpiar datos anteriores
+        this.clear();
         
-        // Obtener el taxiId de la selección
-        const firstPoint = points.length > 0 ? points[0] : null;
-        const selectedTaxiId = document.getElementById('idSpinnerHist') ? 
-                              document.getElementById('idSpinnerHist').value : "0";
+        this.mode = mode;
         
-        console.log("Puntos recibidos:", points.length);
-        console.log("Taxi seleccionado:", selectedTaxiId);
+        // Organizar los puntos por taxiId
+        this.taxiData = {};
+        this.startTimestamp = Infinity;
+        this.endTimestamp = -Infinity;
         
-        // Verificar si se seleccionó "Todos" (taxiId = 0) o si hay múltiples taxis en los datos
-        const uniqueTaxiIds = [...new Set(points.map(p => p.ID_TAXI?.toString()))];
-        this.showAllTaxis = selectedTaxiId === "0" && uniqueTaxiIds.length > 1;
-        
-        if (this.showAllTaxis) {
-            // Modo "Todos" - mostrar múltiples polylines
-            console.log("Modo todos taxis, mostrando múltiples polylines");
+        pointsData.forEach(point => {
+            const taxiId = point.ID_TAXI.toString();
+            const timestamp = this.getTimestamp(point.date, point.time);
             
-            // Limpiar polylines anteriores
-            Object.values(this.polylines).forEach(polyline => polyline.setMap(null));
-            this.polylines = {};
-            this.animationPath.setMap(null);
-            
-            // Agrupar puntos por ID de taxi
-            const pointsByTaxi = {};
-            points.forEach(point => {
-                const id = point.ID_TAXI?.toString() || "1";
-                if (!pointsByTaxi[id]) {
-                    pointsByTaxi[id] = [];
-                }
-                pointsByTaxi[id].push(point);
-            });
-            
-            console.log("Taxis encontrados:", Object.keys(pointsByTaxi));
-            
-            // Crear polyline para cada taxi
-            Object.entries(pointsByTaxi).forEach(([taxiId, taxiPoints]) => {
-                const taxiColor = this.taxiColors[taxiId] || "#FF0000"; // Color por defecto si no hay color definido
-                console.log(`Creando polyline para taxi ${taxiId} con ${taxiPoints.length} puntos, color: ${taxiColor}`);
+            if (!this.taxiData[taxiId]) {
+                this.taxiData[taxiId] = [];
                 
-                this.polylines[taxiId] = new google.maps.Polyline({
-                    path: taxiPoints,
+                // Crear la polilínea para este taxi
+                this.animationPaths[taxiId] = new google.maps.Polyline({
                     geodesic: true,
-                    strokeColor: taxiColor,
+                    strokeColor: this.taxiColors[taxiId] || "#" + ((1 << 24) * Math.random() | 0).toString(16).padStart(6, "0"),
                     strokeOpacity: 1.0,
                     strokeWeight: 4,
-                    map: mode === 'point' ? null : this.map
+                    map: this.map
                 });
+                
+                // Crear el marcador para este taxi
+                this.currentMarkers[taxiId] = new google.maps.Marker({
+                    map: this.map,
+                    title: `Taxi ${taxiId}`,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 10,
+                        fillColor: this.taxiColors[taxiId] || "#" + ((1 << 24) * Math.random() | 0).toString(16).padStart(6, "0"),
+                        fillOpacity: 1.0,
+                        strokeColor: "#FFFFFF",
+                        strokeWeight: 2
+                    }
+                });
+            }
+            
+            // Añadir punto con su timestamp
+            this.taxiData[taxiId].push({
+                ...point, 
+                timestamp: timestamp
             });
             
-            // Configurar marcador con el color del primer taxi (solo visual)
-            const firstTaxiId = Object.keys(pointsByTaxi)[0] || "1";
-            const markerColor = this.taxiColors[firstTaxiId] || "#FF0000";
-            const markerIcon = this.currentMarker.getIcon();
-            markerIcon.fillColor = markerColor;
-            this.currentMarker.setIcon(markerIcon);
-        } else {
-            // Modo de un solo taxi específico
-            console.log("Modo taxi específico:", selectedTaxiId);
-            
-            // Determinar el ID del taxi a usar (el seleccionado o el del primer punto)
-            this.taxiId = selectedTaxiId !== "0" ? selectedTaxiId : 
-                         (firstPoint && firstPoint.ID_TAXI ? firstPoint.ID_TAXI.toString() : "1");
-            
-            // Ocultar polylines múltiples si existen
-            Object.values(this.polylines).forEach(polyline => polyline.setMap(null));
-            
-            // Actualizar color de la polilínea según el ID del taxi
-            const taxiColor = this.taxiColors[this.taxiId] || "#FF0000"; // Rojo por defecto si no hay color definido
-            console.log(`Usando color ${taxiColor} para taxi ${this.taxiId}`);
-            
-            this.animationPath.setOptions({ 
-                strokeColor: taxiColor,
-                path: points // Establecer todos los puntos de una vez para mostrar la polilínea completa
-            });
-            this.animationPath.setMap(mode === 'point' ? null : this.map);
-            
-            // Actualizar color del marcador
-            const markerIcon = this.currentMarker.getIcon();
-            markerIcon.fillColor = taxiColor;
-            this.currentMarker.setIcon(markerIcon);
-        }
+            // Actualizar timestamps mínimo y máximo
+            if (timestamp) {
+                this.startTimestamp = Math.min(this.startTimestamp, timestamp);
+                this.endTimestamp = Math.max(this.endTimestamp, timestamp);
+            }
+        });
         
-        this.setMode(mode);
-        this.updateVisualization();
+        // Ordenar cada array de taxiData por timestamp
+        Object.keys(this.taxiData).forEach(taxiId => {
+            this.taxiData[taxiId].sort((a, b) => a.timestamp - b.timestamp);
+        });
+        
+        // Actualizar visibilidad inicial
+        this.updateVisibility();
+        
+        // Establecer progreso inicial
+        this.setProgress(0);
     }
 
     updateVisualization() {
-        if (this.points.length === 0) return;
+        if (this.startTimestamp === Infinity || this.endTimestamp === -Infinity) return;
         
-        // Actualizar la polilínea solo en modo ruta
-        if (this.mode === 'route') {
-            if (this.showAllTaxis) {
-                // En modo "Todos", las polylines ya están completas, no necesitan actualizarse
-                // Solo actualizar la posición del marcador
-            } else {
-                // En modo de un solo taxi, mostrar la polyline completa
-                // Ya no necesitamos actualizar incrementalmente la polyline
-                // this.animationPath.setPath(this.points);
-                
-                // Si estamos usando el slider, mostrar solo hasta el índice actual
-                if (document.getElementById('timelineSlider')) {
-                    const pathToShow = this.points.slice(0, this.currentIndex + 1);
-                    this.animationPath.setPath(pathToShow);
-                }
-            }
-        }
+        // Calcular el timestamp actual basado en el progreso
+        const totalTimeSpan = this.endTimestamp - this.startTimestamp;
+        const currentTimestamp = this.startTimestamp + (totalTimeSpan * (this.progress / 100));
         
-        // Actualizar posición del marcador
-        if (this.currentIndex < this.points.length) {
-            const currentPoint = this.points[this.currentIndex];
-            this.currentMarker.setPosition(currentPoint);
+        // Para cada taxi, actualizar su visualización basada en el tiempo actual
+        Object.keys(this.taxiData).forEach(taxiId => {
+            const taxiPoints = this.taxiData[taxiId];
+            if (!taxiPoints || taxiPoints.length === 0) return;
             
-            // Asegurarse de que el marcador esté visible
-            this.currentMarker.setMap(this.map);
-        }
+            // Encontrar todos los puntos hasta el timestamp actual
+            const visiblePoints = taxiPoints.filter(p => p.timestamp <= currentTimestamp);
+            
+            if (visiblePoints.length === 0) {
+                // No hay puntos visibles aún para este taxi
+                this.animationPaths[taxiId].setPath([]);
+                this.currentMarkers[taxiId].setMap(null);
+                return;
+            }
+            
+            // Obtener el punto más reciente para el marcador
+            const lastPoint = visiblePoints[visiblePoints.length - 1];
+            
+            // Actualizar la polilínea con todos los puntos visibles
+            const pathCoords = visiblePoints.map(p => ({ lat: p.lat, lng: p.lng }));
+            this.animationPaths[taxiId].setPath(pathCoords);
+            
+            // Actualizar posición del marcador
+            this.currentMarkers[taxiId].setPosition({ lat: lastPoint.lat, lng: lastPoint.lng });
+            this.currentMarkers[taxiId].setMap(this.map);
+        });
     }
 
     setProgress(progressPercent) {
-        if (this.points.length === 0) return;
-        
-        this.currentIndex = Math.floor((progressPercent / 100) * (this.points.length - 1));
+        this.progress = progressPercent;
         this.updateVisualization();
+        
+        // Devolver información del punto actual en el tiempo
+        return this.getCurrentTimeInfo();
+    }
+    
+    getCurrentTimeInfo() {
+        if (this.startTimestamp === Infinity || this.endTimestamp === -Infinity) {
+            return { timestamp: null };
+        }
+        
+        // Calcular el timestamp actual
+        const totalTimeSpan = this.endTimestamp - this.startTimestamp;
+        const currentTimestamp = this.startTimestamp + (totalTimeSpan * (this.progress / 100));
+        
+        // Para el taxi seleccionado (o el primero si es "todos")
+        const taxiId = this.selectedTaxiId !== "0" ? this.selectedTaxiId : Object.keys(this.taxiData)[0];
+        const taxiPoints = this.taxiData[taxiId];
+        
+        if (!taxiPoints || taxiPoints.length === 0) {
+            return { timestamp: currentTimestamp };
+        }
+        
+        // Encontrar el punto más cercano al timestamp actual
+        let closestPoint = taxiPoints[0];
+        let minTimeDiff = Math.abs(currentTimestamp - closestPoint.timestamp);
+        
+        for (let i = 1; i < taxiPoints.length; i++) {
+            const timeDiff = Math.abs(currentTimestamp - taxiPoints[i].timestamp);
+            if (timeDiff < minTimeDiff) {
+                minTimeDiff = timeDiff;
+                closestPoint = taxiPoints[i];
+            }
+        }
+        
+        return {
+            ...closestPoint,
+            timestamp: currentTimestamp
+        };
     }
 
     clear() {
-        this.animationPath.setPath([]);
-        this.animationPath.setMap(null);
+        // Limpiar todas las polilíneas y marcadores
+        Object.values(this.animationPaths).forEach(path => path.setPath([]));
+        Object.values(this.currentMarkers).forEach(marker => marker.setMap(null));
         
-        // Limpiar todas las polylines
-        Object.values(this.polylines).forEach(polyline => {
-            polyline.setPath([]);
-            polyline.setMap(null);
-        });
-        this.polylines = {};
-        
-        this.currentMarker.setMap(null);
-        this.points = [];
-        this.currentIndex = 0;
-        this.showAllTaxis = false;
+        this.animationPaths = {};
+        this.currentMarkers = {};
+        this.taxiData = {};
+        this.startTimestamp = Infinity;
+        this.endTimestamp = -Infinity;
     }
 }
