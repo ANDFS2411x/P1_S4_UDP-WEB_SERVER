@@ -472,17 +472,19 @@ function updateTaxiVisibility(selectedTaxiId) {
     const seguirBtnEl = document.getElementById('seguirBtn');
     
     if (selectedTaxiId === "0") {
+        infoPanelEl.style.display = 'none';
+        seguirBtnEl.style.display = 'none';
+
         // Si "Todos" está seleccionado, mostrar todos los taxis
         Object.keys(appState.realTime.markers).forEach(taxiId => {
             appState.realTime.markers[taxiId].setMap(appState.realTime.map);
             appState.realTime.polylines[taxiId].setMap(appState.realTime.map);
         });
         
-        // Desactivar panel de información
-        if (infoPanelEl) infoPanelEl.classList.add('disabled');
-        if (seguirBtnEl) seguirBtnEl.disabled = true;
         clearInfoPanel();
     } else {
+        infoPanelEl.style.display = 'grid';
+        seguirBtnEl.style.display = 'block';
         // Si un taxi específico está seleccionado
         Object.keys(appState.realTime.markers).forEach(taxiId => {
             const visible = taxiId === selectedTaxiId;
