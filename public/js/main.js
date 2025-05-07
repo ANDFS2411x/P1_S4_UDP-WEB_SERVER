@@ -257,11 +257,11 @@ function initHistoricalMapInstance() {
     // Configurar el spinner de selección de taxi histórico
     domElements.idSpinnerHist.addEventListener('change', function() {
         const selectedTaxiId = this.value;
-      /*  if (selectedTaxiId === "0") {
+        if (selectedTaxiId === "0") {
             domElements.timelineInfo.style.display = 'none';
         } else {
             domElements.timelineInfo.style.display = 'flex';
-        }*/
+        }
         if (appState.historical.timelineAnimation) {
             appState.historical.timelineAnimation.setSelectedTaxiId(selectedTaxiId);
             
@@ -819,56 +819,45 @@ function elementExists(elementId) {
     return true;
 }
 
+// Estado local para histórico
+const historicalState = {
+    fullPathPolyline: null,
+    historyMarker:    null,
+    sortedPoints:     []
+  };
+  
 async function loadHistoricalData() {
     try {
+      // 1) Leer y validar fechas/taxi
       const startDate      = domElements.startDate.value;
       const endDate        = domElements.endDate.value;
       const selectedTaxiId = domElements.idSpinnerHist.value;
-  
       if (!startDate || !endDate) {
         throw new Error("Debe seleccionar ambas fechas");
       }
   
-      // Si está en modo de selección de punto, validar coordenadas
-      if (domElements.enablePointSelection.checked) {
-        const selLat = parseFloat(domElements.selectedLat.value);
-        const selLng = parseFloat(domElements.selectedLng.value);
-        if (isNaN(selLat) || isNaN(selLng)) {
-          throw new Error("Debe seleccionar un punto en el mapa primero");
-        }
-      }
-  
+      // 2) Mostrar loader y ocultar errores/controles
       showLoading(true);
-      if (domElements.historicalError) {
-        domElements.historicalError.style.display = "none";
-      }
+      domElements.historicalError?.style.setProperty('display','none');
       const timelineControls = document.getElementById('timelineControls');
-      if (timelineControls) {
-        timelineControls.style.display = 'none';
-      }
+      timelineControls?.style.setProperty('display','none');
   
-      // Detener tiempo real y limpiar animación anterior
+      // 3) Detener RT y limpiar viejos elementos
       stopRealTimeUpdates();
-      if (appState.historical.timelineAnimation) {
-        appState.historical.timelineAnimation.clear();
-      }
+      historicalState.fullPathPolyline?.setMap(null);
+      historicalState.historyMarker?.setMap(null);
   
-      // 1) Fetch de datos históricos
+      // 4) Traer datos
       const url  = `${config.basePath}/historical-data?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
       const resp = await fetch(url);
-      if (!resp.ok) {
-        throw new Error(`Error del servidor: ${resp.status}`);
-      }
-      const result = await resp.json();
-      if (!result?.success || !Array.isArray(result.data)) {
-        throw new Error("Formato de datos incorrecto");
-      }
-      if (result.data.length === 0) {
+      if (!resp.ok) throw new Error(`Error del servidor: ${resp.status}`);
+      const { success, data } = await resp.json();
+      if (!success || !Array.isArray(data) || data.length === 0) {
         throw new Error("No hay datos para el rango seleccionado");
       }
   
-      // 2) Procesar coordenadas
-      let allPoints = result.data
+      // 5) Mapear coordenadas y filtrar invalidados
+      let allPoints = data
         .map(item => ({
           lat: parseFloat(item.LATITUDE),
           lng: parseFloat(item.LONGITUDE),
@@ -879,11 +868,7 @@ async function loadHistoricalData() {
         }))
         .filter(p => !isNaN(p.lat) && !isNaN(p.lng));
   
-      if (allPoints.length === 0) {
-        throw new Error("No hay coordenadas válidas en los datos recibidos");
-      }
-  
-      // 3) Filtrar por taxi seleccionado
+      // 6) Filtrar por taxi si no es “0”
       if (selectedTaxiId !== "0") {
         allPoints = allPoints.filter(p => p.ID_TAXI.toString() === selectedTaxiId);
         if (allPoints.length === 0) {
@@ -891,7 +876,7 @@ async function loadHistoricalData() {
         }
       }
   
-      // 4) Filtrar por punto (si aplica)
+      // 7) (opcional) Filtrar por punto y radio
       if (domElements.enablePointSelection.checked) {
         const sel = {
           lat: parseFloat(domElements.selectedLat.value),
@@ -906,33 +891,44 @@ async function loadHistoricalData() {
         }
       }
   
-      // 5) Ordenar por timestamp
+      // 8) Ordenar por timestamp
       const sortedPoints = allPoints
-        .map(pt => ({
-          ...pt,
-          timestamp: new Date(`${pt.date} ${pt.time}`).getTime()
-        }))
+        .map(pt => ({ ...pt, timestamp: new Date(`${pt.date} ${pt.time}`).getTime() }))
         .sort((a, b) => a.timestamp - b.timestamp);
-      appState.historical.sortedPoints = sortedPoints;
-  
-      // 6) Crear o reutilizar animación
-      let anim = appState.historical.timelineAnimation;
-      if (!anim) {
-        anim = new TimelineAnimation(appState.historical.map);
-        appState.historical.timelineAnimation = anim;
+      if (sortedPoints.length === 0) {
+        throw new Error("Tras ordenar no quedan puntos válidos");
       }
-      anim.setSelectedTaxiId(selectedTaxiId);
-      anim.setMode('route');
-      // Esto inicializa polilíneas y marcadores y dibuja la ruta completa
-      anim.setPoints(sortedPoints, 'route');
+      historicalState.sortedPoints = sortedPoints;
   
-      // 7) Configurar slider para mover solo el marcador
+      // 9) Dibujar la ruta completa
       const fullPath = sortedPoints.map(p => ({ lat: p.lat, lng: p.lng }));
-      const taxiId   = selectedTaxiId !== "0"
-        ? selectedTaxiId
-        : sortedPoints[0].ID_TAXI;
-      const marker   = anim.currentMarkers[taxiId];
+      const poly = new google.maps.Polyline({
+        map:       appState.historical.map,
+        path:      fullPath,
+        geodesic:  true,
+        strokeColor: "#5667d8",
+        strokeOpacity: 0.8,
+        strokeWeight: 4
+      });
+      historicalState.fullPathPolyline = poly;
   
+      // 10) Crear el marcador en el primer punto
+      const startPos = fullPath[0];
+      const marker = new google.maps.Marker({
+        position: startPos,
+        map:      appState.historical.map,
+        icon: {
+          path:        google.maps.SymbolPath.CIRCLE,
+          scale:       8,
+          fillColor:   "#FF0000",
+          fillOpacity: 1,
+          strokeColor: "#FFFFFF",
+          strokeWeight: 2
+        }
+      });
+      historicalState.historyMarker = marker;
+  
+      // 11) Configurar slider para recorrer índice a índice
       const slider = document.getElementById('timelineSlider');
       const infoEl = document.getElementById('currentTimeInfo');
       if (slider && infoEl && timelineControls) {
@@ -948,12 +944,11 @@ async function loadHistoricalData() {
           const pct = (idx / (fullPath.length - 1)) * 100;
           this.style.backgroundSize = `${pct}% 100%`;
   
-          // Mover marcador al punto exacto
+          // 11.1) Mover marcador
           const { lat, lng } = fullPath[idx];
           marker.setPosition({ lat, lng });
-          marker.setMap(anim.map);
   
-          // Actualizar info con el registro correspondiente
+          // 11.2) Mostrar datos completos
           const pt = sortedPoints[idx];
           infoEl.innerHTML = `
             <div><strong>Taxi:</strong> ${pt.ID_TAXI}</div>
@@ -965,32 +960,30 @@ async function loadHistoricalData() {
           `;
         });
   
-        // Inicializar posición en el primer punto
+        // Inicializar en el primer registro
         slider.dispatchEvent(new Event('input'));
       }
   
-      // 8) Ajustar vista al recorrido completo
+      // 12) Ajustar mapa a toda la ruta
       const bounds = new google.maps.LatLngBounds();
       fullPath.forEach(pt => bounds.extend(pt));
       appState.historical.map.fitBounds(bounds);
   
     } catch (err) {
       console.error('Error cargando datos históricos:', err);
-      if (domElements.historicalError) {
-        showError(domElements.historicalError, err.message);
-      }
+      domElements.historicalError && showError(domElements.historicalError, err.message);
     } finally {
       showLoading(false);
     }
   }
   
-  function initHistoricalTracking() {
+function initHistoricalTracking() {
     try {
       const now        = new Date();
       const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
       const maxDateTime = formatDateTimeInput(now);
   
-      // Valores y restricciones iniciales
+      // Valores predeterminados y restricciones
       domElements.startDate.value = formatDateTimeInput(oneHourAgo);
       domElements.endDate.value   = formatDateTimeInput(now);
       domElements.startDate.max   = maxDateTime;
@@ -1003,7 +996,6 @@ async function loadHistoricalData() {
         }
         domElements.endDate.min = domElements.startDate.value;
       });
-  
       domElements.endDate.addEventListener('change', () => {
         if (domElements.endDate.value < domElements.startDate.value) {
           domElements.startDate.value = domElements.endDate.value;
@@ -1011,10 +1003,8 @@ async function loadHistoricalData() {
         domElements.startDate.max = domElements.endDate.value;
       });
   
-      // Botón de carga
       domElements.loadHistory.addEventListener('click', loadHistoricalData);
   
-      // Toggle selección de punto
       domElements.enablePointSelection.addEventListener('change', function() {
         const isEnabled = this.checked;
         domElements.selectedLat.disabled  = !isEnabled;
@@ -1028,7 +1018,6 @@ async function loadHistoricalData() {
           : "#5667d8";
         if (!isEnabled) clearSelectedPoint();
       });
-  
       domElements.clearPointBtn.addEventListener('click', clearSelectedPoint);
       initRadiusChangeHandler();
   
@@ -1131,23 +1120,6 @@ async function loadHistoricalData() {
             }
         }
 
-        // 1.1) Ordenar por timestamp
-        const sortedPoints = relevantPoints
-        .map(pt => ({
-        ...pt,
-        timestamp: new Date(`${pt.date} ${pt.time}`).getTime()
-        }))
-        .sort((a, b) => a.timestamp - b.timestamp);
-
-        // 1.2) Guardarlo en tu estado para usarlo luego
-        appState.historical.sortedPoints = sortedPoints;
-
-        const fullPath = sortedPoints.map(p => ({ lat: p.lat, lng: p.lng }));
-        // si sólo un taxi seleccionado, usa su polyline:
-        const anim = appState.historical.timelineAnimation;
-        Object.values(anim.animationPaths).forEach(poly => poly.setPath(fullPath));
-
-
         // Inicializar o actualizar la animación
         if (!appState.historical.timelineAnimation) {
             appState.historical.timelineAnimation = new TimelineAnimation(appState.historical.map);
@@ -1172,10 +1144,6 @@ async function loadHistoricalData() {
                 // Resetear slider
                 timelineSlider.value = 0;
                 timelineSlider.style.backgroundSize = `${timelineSlider.value}% 100%`;
-                timelineSlider.min = 0;
-                timelineSlider.max = sortedPoints.length - 1;
-                timelineSlider.step = 1;
-                timelineControls.style.display = 'block';
 
                 // Actualizar la información inicial
                 updateTimelineInfo(0);
@@ -1183,15 +1151,7 @@ async function loadHistoricalData() {
                 // Actualizar la información cuando se mueve el slider
                 timelineSlider.addEventListener('input', function(e) {
                     const progress = parseInt(e.target.value);
-                    const pct = (idx / (sortedPoints.length - 1)) * 100;
                     this.style.backgroundSize = `${progress}% 100%`;
-
-                    const pt = sortedPoints[idx];
-
-                    const marker = appState.historical.timelineAnimation
-                    .currentMarkers[pt.ID_TAXI];
-                    marker.setPosition({ lat: pt.lat, lng: pt.lng });
-                    marker.setMap(appState.historical.map);
                     
                     // Actualizar visualización con el nuevo progreso
                     updateTimelineInfo(progress);
