@@ -1,4 +1,4 @@
-import { config } from './config.js';
+import { config } from '/js/config.js';
 
 export async function fetchData(endpoint) {
   const resp = await fetch(`${config.basePath}${endpoint}`);

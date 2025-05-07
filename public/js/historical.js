@@ -1,13 +1,13 @@
 // public/js/historical.js
 
-import { dom } from './dom.js';
-import { appState } from './state.js';
-import { config } from './config.js';
-import { fetchData } from './api.js';
-import { calculateDistance, findPointsNearby } from './utils.js';
-import { buildResultsTable, highlightPointOnMap } from './results.js';
-import UIManager from './uimanager.js';
-import TimelineAnimation from './timeline-animation.js';
+import { dom } from '/js/dom.js';
+import { appState } from '/js/state.js';
+import { config } from '/js/config.js';
+import { fetchData } from '/js/api.js';
+import { calculateDistance, findPointsNearby } from '/js/utils.js';
+import { buildResultsTable, highlightPointOnMap } from '/js/results.js';
+import UIManager from '/js/uimanager.js';
+import TimelineAnimation from '/js/timeline-animation.js';
 
 const ui = new UIManager(dom);
 

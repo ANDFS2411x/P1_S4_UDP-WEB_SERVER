@@ -1,16 +1,16 @@
 // public/js/main.js
-import { dom }                   from './dom.js';
-import { appState }              from './state.js';
+import { dom }                   from '/js/dom.js';
+import { appState }              from '/js/state.js';
 
-import { startRealTimeUpdates, stopRealTimeUpdates } from './realtime.js';
-import { initMap, mapsApiLoaded }                    from './realtimemap.js';
+import { startRealTimeUpdates, stopRealTimeUpdates } from '/js/realtime.js';
+import { initMap, mapsApiLoaded }                    from '/js/realtimemap.js';
 
-import { switchToRealTime, switchToHistorical, switchToMembers } from './navigation.js';
+import { switchToRealTime, switchToHistorical, switchToMembers } from '/js/navigation.js';
 
-import { initHistoricalTracking, loadHistoricalData } from './historical.js';
+import { initHistoricalTracking, loadHistoricalData } from '/js/historical.js';
 
-import { formatDateTimeInput }   from './utils.js';
-import TimelineAnimation from './timeline-animation.js';
+import { formatDateTimeInput }   from '/js/utils.js';
+import TimelineAnimation from '/js/timeline-animation.js';
 
 const config = {
     basePath: window.location.pathname.includes("/test") ? "/test" : "",

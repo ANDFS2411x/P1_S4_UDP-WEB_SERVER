@@ -1,7 +1,7 @@
 // public/js/navigation.js
-import { dom }       from './dom.js';
-import { startRealTimeUpdates, stopRealTimeUpdates } from './realtime.js';
-import { initHistoricalTracking } from './historical.js';
+import { dom }       from '/js/dom.js';
+import { startRealTimeUpdates, stopRealTimeUpdates } from '/js/realtime.js';
+import { initHistoricalTracking } from '/js/historical.js';
 
 export function switchToRealTime(appState, ui) {
   dom.realTimeSection.classList.add("active");

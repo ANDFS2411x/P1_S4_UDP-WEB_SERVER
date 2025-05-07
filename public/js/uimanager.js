@@ -1,4 +1,4 @@
-import { normalizeDate } from './utils.js';
+import { normalizeDate } from '/js/utils.js';
 
 export default class UIManager {
   constructor(dom) { this.dom = dom; }

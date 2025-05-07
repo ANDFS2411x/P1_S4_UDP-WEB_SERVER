@@ -1,8 +1,8 @@
 // public/js/realtimeMap.js
-import { dom }      from './dom.js';
-import { appState } from './state.js';
-import { fetchData }from './api.js';
-import UIManager    from './uimanager.js';
+import { dom }      from '/js/dom.js';
+import { appState } from '/js/state.js';
+import { fetchData }from '/js/api.js';
+import UIManager    from '/js/uimanager.js';
 
 const ui = new UIManager(dom);
 

@@ -1,5 +1,5 @@
 // public/js/results.js
-import { dom } from './dom.js';
+import { dom } from '/js/dom.js';
 
 export function elementExists(id) {
   const el = document.getElementById(id);
