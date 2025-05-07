@@ -62,31 +62,19 @@ const domElements = {
     timelineInfo: document.getElementById('timeline-info'),
 };  
 
-/*function updateInfoPanel(data) {
-    domElements.latitud.textContent = data.LATITUDE || "N/A";
-    domElements.longitud.textContent = data.LONGITUDE || "N/A";
-    domElements.fecha.textContent = data.DATE || "N/A";
-    domElements.tiempo.textContent = data.TIME || "N/A";
-    domElements.rpmRealTime.textContent = data.RPM || "0";
-    domElements.idTaxiReal.textContent = data.ID_TAXI || "N/A";
-}*/
-
 function updateInfoPanel(data) {
     domElements.latitud.textContent = data.LATITUDE || "N/A";
     domElements.longitud.textContent = data.LONGITUDE || "N/A";
-
     // Quita la parte "T00:00:00.000Z" si existe
     let rawDate = data.DATE || "N/A";
     if (rawDate.includes("T")) {
         rawDate = rawDate.split("T")[0];
     }
     domElements.fecha.textContent = rawDate;
-
     domElements.tiempo.textContent = data.TIME || "N/A";
     domElements.rpmRealTime.textContent = data.RPM || "0";
     domElements.idTaxiReal.textContent = data.ID_TAXI || "N/A";
 }
-
 
 function showError(element, message) {
     element.textContent = message;
