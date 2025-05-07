@@ -913,7 +913,6 @@ async function loadHistoricalData() {
           timestamp: new Date(`${pt.date} ${pt.time}`).getTime()
         }))
         .sort((a, b) => a.timestamp - b.timestamp);
-  
       appState.historical.sortedPoints = sortedPoints;
   
       // 6) Crear o reutilizar animación
@@ -923,15 +922,17 @@ async function loadHistoricalData() {
         appState.historical.timelineAnimation = anim;
       }
       anim.setSelectedTaxiId(selectedTaxiId);
+      anim.setMode('route');
+      // Esto inicializa polilíneas y marcadores y dibuja la ruta completa
+      anim.setPoints(sortedPoints, 'route');
   
-      // 7) Dibujar la ruta completa
+      // 7) Configurar slider para mover solo el marcador
       const fullPath = sortedPoints.map(p => ({ lat: p.lat, lng: p.lng }));
-      const taxiId = selectedTaxiId !== "0"
+      const taxiId   = selectedTaxiId !== "0"
         ? selectedTaxiId
         : sortedPoints[0].ID_TAXI;
-      anim.animationPaths[taxiId].setPath(fullPath);
+      const marker   = anim.currentMarkers[taxiId];
   
-      // 8) Configurar slider para mover el marcador punto a punto
       const slider = document.getElementById('timelineSlider');
       const infoEl = document.getElementById('currentTimeInfo');
       if (slider && infoEl && timelineControls) {
@@ -947,15 +948,12 @@ async function loadHistoricalData() {
           const pct = (idx / (fullPath.length - 1)) * 100;
           this.style.backgroundSize = `${pct}% 100%`;
   
-          // Mover marcador
+          // Mover marcador al punto exacto
           const { lat, lng } = fullPath[idx];
-          const marker = anim.currentMarkers[taxiId];
-          if (marker) {
-            marker.setPosition({ lat, lng });
-            marker.setMap(anim.map);
-          }
+          marker.setPosition({ lat, lng });
+          marker.setMap(anim.map);
   
-          // Actualizar info
+          // Actualizar info con el registro correspondiente
           const pt = sortedPoints[idx];
           infoEl.innerHTML = `
             <div><strong>Taxi:</strong> ${pt.ID_TAXI}</div>
@@ -971,7 +969,7 @@ async function loadHistoricalData() {
         slider.dispatchEvent(new Event('input'));
       }
   
-      // 9) Ajustar vista al recorrido completo
+      // 8) Ajustar vista al recorrido completo
       const bounds = new google.maps.LatLngBounds();
       fullPath.forEach(pt => bounds.extend(pt));
       appState.historical.map.fitBounds(bounds);
@@ -984,12 +982,12 @@ async function loadHistoricalData() {
     } finally {
       showLoading(false);
     }
-}
+  }
   
-function initHistoricalTracking() {
+  function initHistoricalTracking() {
     try {
-      const now         = new Date();
-      const oneHourAgo  = new Date(now.getTime() - 60 * 60 * 1000);
+      const now        = new Date();
+      const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
       const maxDateTime = formatDateTimeInput(now);
   
       // Valores y restricciones iniciales
