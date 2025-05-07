@@ -7,7 +7,7 @@ import { fetchData } from './api.js';
 import { calculateDistance, findPointsNearby } from './utils.js';
 import { buildResultsTable, highlightPointOnMap } from './results.js';
 import UIManager from './uimanager.js';
-import TimelineAnimation from './timelineAnimation.js';
+import TimelineAnimation from './timeline-animation.js';
 
 const ui = new UIManager(dom);
 

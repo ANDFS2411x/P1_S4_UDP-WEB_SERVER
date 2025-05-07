@@ -20,24 +20,34 @@ const config = {
 window.initMapsCallback = mapsApiLoaded;
 
 document.addEventListener('DOMContentLoaded', () => {
-  // ——— Inicialización de fechas ———
-  const now = new Date();
-  dom.startDate.value = formatDateTimeInput(new Date(now - 3600 * 1000)); // hace una hora
-  dom.endDate.value   = formatDateTimeInput(now);
-
-  // ——— Navegación entre secciones ———
-  dom.realTimeBtn    .addEventListener('click', () => switchToRealTime(appState));
-  dom.historicalBtn  .addEventListener('click', () => switchToHistorical(appState));
-  dom.membersBtn     .addEventListener('click', switchToMembers);
-
-  // ——— Tiempo real ———
-  dom.seguirBtn      .addEventListener('click', () => appState.realTime.seguirCentrando = true);
-  startRealTimeUpdates();
-
-  // ——— Histórico ———
-  initHistoricalTracking();
-  dom.loadHistory   .addEventListener('click', loadHistoricalData);
-
-  // ——— Google Maps ———
-  initMap(); // disparará la carga de la API y luego llamará a mapsApiLoaded
-});
+    // ——— 1. Inicialización de fechas por defecto ———
+    const now = new Date();
+    dom.startDate.value = formatDateTimeInput(new Date(now.getTime() - 3600 * 1000)); // hace una hora
+    dom.endDate.value   = formatDateTimeInput(now);
+  
+    // ——— 2. Navegación entre secciones ———
+    dom.realTimeBtn   .addEventListener('click', () => {
+      switchToRealTime(appState);
+      startRealTimeUpdates();
+    });
+    dom.historicalBtn .addEventListener('click', () => {
+      stopRealTimeUpdates();
+      switchToHistorical(appState);
+    });
+    dom.membersBtn    .addEventListener('click', switchToMembers);
+  
+    // ——— 3. Tiempo real ———
+    dom.seguirBtn     .addEventListener('click', () => {
+      appState.realTime.seguirCentrando = true;
+    });
+    // Inicia las actualizaciones periódicas
+    startRealTimeUpdates();
+  
+    // ——— 4. Histórico ———
+    initHistoricalTracking();
+    dom.loadHistory   .addEventListener('click', loadHistoricalData);
+  
+    // ——— 5. Carga de Google Maps ———
+    // Esto insertará dinámicamente el <script> de Maps y al cargar llamará a window.initMapsCallback
+    initMap();
+  });
