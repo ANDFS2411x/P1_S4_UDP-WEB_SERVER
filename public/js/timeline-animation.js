@@ -2,7 +2,7 @@ class TimelineAnimation {
     constructor(map) {
         this.map = map;
         this.taxiData = {}; // Objeto para almacenar datos por taxiId
-        this.mode = 'route'; // 'route' o 'point'
+        this.setMode = 'route'; // 'route' o 'point'
         this.progress = 0; // Progreso actual (0-100)
         this.selectedTaxiId = "0"; // "0" para todos
         
@@ -46,49 +46,69 @@ class TimelineAnimation {
     
     
     // Método para actualizar la visibilidad según el taxi seleccionado
-    updateVisibility() {
-        // Si solo se muestra un taxi específico
-        if (this.selectedTaxiId !== "0") {
-            Object.keys(this.animationPaths).forEach(taxiId => {
-                const isVisible = taxiId === this.selectedTaxiId;
-                console.log(`Taxi ${taxiId} visible: ${isVisible}`);
-
-                console.log(this.animationPaths[taxiId]);
-                // Actualizar la visibilidad de la polilínea y el marcador
-                if (this.animationPaths[taxiId]) {
-                    this.animationPaths[taxiId].setMap(isVisible ? this.map : null);
-                    this.animationPaths[taxiId].setVisible(isVisible ? this.visible: false);
-
+    updateVisualization() {
+        if (this.startTimestamp === Infinity || this.endTimestamp === -Infinity) return;
+    
+        // timestamp actual según el progreso
+        const totalTimeSpan = this.endTimestamp - this.startTimestamp;
+        const currentTimestamp = this.startTimestamp + totalTimeSpan * (this.progress / 100);
+    
+        Object.keys(this.taxiData).forEach(taxiId => {
+            const taxiPoints = this.taxiData[taxiId];
+            if (!taxiPoints || taxiPoints.length === 0) return;
+    
+            // Coordenadas completas de la ruta
+            const fullPathCoords = taxiPoints.map(p => ({ lat: p.lat, lng: p.lng }));
+    
+            if (this.mode === 'route') {
+                // 1) Fija siempre la ruta completa:
+                this.animationPaths[taxiId].setPath(fullPathCoords);
+    
+                // 2) Calcula el índice del marcador según el progreso
+                const idx = Math.floor((this.progress / 100) * (fullPathCoords.length - 1));
+                const pos = fullPathCoords[idx];
+    
+                // 3) Mueve el marcador
+                this.currentMarkers[taxiId].setPosition(pos);
+                this.currentMarkers[taxiId].setMap(this.map);
+    
+            } else {
+                // Modo “trail” o “point”: animar polilínea creciendo
+                const visiblePoints = taxiPoints.filter(p => p.timestamp <= currentTimestamp);
+                if (visiblePoints.length === 0) {
+                    this.animationPaths[taxiId].setPath([]);
+                    this.currentMarkers[taxiId].setMap(null);
+                    return;
                 }
-                console.log(this.currentMarkers[taxiId]);
-                // Actualizar la visibilidad del marcador
-                if (this.currentMarkers[taxiId]) {
-                    this.currentMarkers[taxiId].setMap(isVisible ? this.map : null);
-                    this.currentMarkers[taxiId].setVisible(isVisible ? this.visible: false);
-                }
-            });
-        } else {
-            // Mostrar todos los taxis
-            Object.keys(this.animationPaths).forEach(taxiId => {
-                if (this.animationPaths[taxiId]) {
-                    this.animationPaths[taxiId].setMap(this.map);
-                    this.animationPaths[taxiId].setVisible(true);
-                }
-                if (this.currentMarkers[taxiId]) {
-                    this.currentMarkers[taxiId].setMap(this.map);
-                    this.currentMarkers[taxiId].setVisible(true);
-                }
-            });
-        }
-    }
+                // ruta hasta ahora
+                const trailCoords = visiblePoints.map(p => ({ lat: p.lat, lng: p.lng }));
+                this.animationPaths[taxiId].setPath(trailCoords);
+    
+                // marcador al último punto
+                const lastPoint = visiblePoints[visiblePoints.length - 1];
+                this.currentMarkers[taxiId].setPosition({ lat: lastPoint.lat, lng: lastPoint.lng });
+                this.currentMarkers[taxiId].setMap(this.map);
+            }
+        });
+    }    
 
     setPoints(pointsData, mode = 'route') {
         // Limpiar datos anteriores
         this.clear();
         
         this.mode = mode;
+    // si el modo es 'route', fija la ruta completa desde el principio:
+    if (this.mode === 'route') {
+        Object.keys(this.animationPaths).forEach(taxiId => {
+            const fullCoords = this.taxiData[taxiId].map(p => ({ lat: p.lat, lng: p.lng }));
+            this.animationPaths[taxiId].setPath(fullCoords);
+        });
+    }
+    // visibilidad y progreso inicial
+    this.updateVisibility();
+    this.setProgress(0);
         
-        // Organizar los puntos por taxiId
+    /*    // Organizar los puntos por taxiId
         this.taxiData = {};
         this.startTimestamp = Infinity;
         this.endTimestamp = -Infinity;
@@ -146,7 +166,7 @@ class TimelineAnimation {
         this.updateVisibility();
         
         // Establecer progreso inicial
-        this.setProgress(0);
+        this.setProgress(0);*/
     }
 
     updateVisualization() {
