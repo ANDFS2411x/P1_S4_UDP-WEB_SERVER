@@ -238,7 +238,7 @@ async function fetchData(endpoint) {
     }
 }
 
-/*function initHistoricalMapInstance() {
+function initHistoricalMapInstance() {
     console.log('Inicializando mapa histórico...');
     
     const centerHistorical = { lat: 11.0193213, lng: -74.8601743 }; // Coordenadas por defecto
@@ -277,72 +277,7 @@ async function fetchData(endpoint) {
     });
     
     console.log('Mapa histórico inicializado');
-}*/
-
-function initHistoricalMapInstance() {
-    console.log('Inicializando mapa histórico...');
-    
-    const centerHistorical = { lat: 11.0193213, lng: -74.8601743 };
-    appState.historical.map = new google.maps.Map(domElements.historicalMapContainer, {
-      center: centerHistorical,
-      zoom: 14,
-      streetViewControl: false
-    });
-    
-    // Clic en el mapa para selección de punto
-    appState.historical.map.addListener('click', handleMapClick);
-    
-    // Cambio de taxi histórico (spinner)
-    domElements.idSpinnerHist.addEventListener('change', () => {
-      const id = domElements.idSpinnerHist.value;
-      domElements.timelineInfo.style.display = id === "0" ? 'none' : 'flex';
-      if (appState.historical.timelineAnimation) {
-        appState.historical.timelineAnimation.setSelectedTaxiId(id);
-        // refresca la info de la línea de tiempo
-        const pct = parseInt(domElements.timelineSlider.value);
-        updateTimelineInfo(pct);
-      }
-    });
-    
-    // **Aquí**: botón “Cargar Trayectoria”
-    domElements.loadHistoryBtn.addEventListener('click', async () => {
-      // 1) Obtén los datos según fechas, taxi, punto, etc.
-      const pointsData = await fetchHistoricalData(
-        domElements.dateFrom.value,
-        domElements.dateTo.value,
-        domElements.idSpinnerHist.value,
-        /* si usas radio o punto seleccionado, pásalo también */
-      );
-      
-      // 2) Limpia animación previa (opcional)
-      if (appState.historical.timelineAnimation) {
-        appState.historical.timelineAnimation.clear();
-      }
-      
-      // 3) Crea una nueva instancia de TimelineAnimation
-      const anim = new TimelineAnimation(appState.historical.map);
-      
-      // 4) Dale el modo “ruta completa + pointer móvil”
-      anim.setMode('route');
-      
-      // 5) Pásale los puntos en modo 'route'
-      anim.setPoints(pointsData, 'route');
-      
-      // 6) Guarda la instancia para poder controlarla luego
-      appState.historical.timelineAnimation = anim;
-      
-      // 7) Muestra el slider y conéctalo a la animación
-      domElements.timelineContainer.style.display = 'block';
-      domElements.timelineSlider.addEventListener('input', (e) => {
-        const pct = parseInt(e.target.value);
-        anim.setProgress(pct);
-        updateTimelineInfo(pct);
-      });
-    });
-    
-    console.log('Mapa histórico inicializado');
 }
-  
 
 function updateTimelineInfo(progress) {
     const currentTimeInfo = document.getElementById('currentTimeInfo');
