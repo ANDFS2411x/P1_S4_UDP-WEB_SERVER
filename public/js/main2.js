@@ -1,52 +1,83 @@
-// public/js/main.js
-import { dom }                   from '/js/dom.js';
-import { appState }              from '/js/state.js';
+// public/js/realtime.js
 
-import { startRealTimeUpdates, stopRealTimeUpdates } from '/js/realtime.js';
-import { initMap, mapsApiLoaded }                    from '/js/realtimeMap.js';
+import { fetchData }    from '/js/api.js';
+import { config }       from '/js/config.js';
+import { appState }     from '/js/state.js';
+import UIManager        from '/js/uiManager.js';
+import { dom }          from '/js/dom.js';
 
-import { switchToRealTime, switchToHistorical, switchToMembers } from '/js/navigation.js';
+const ui = new UIManager(dom);
 
-import { initHistoricalTracking, loadHistoricalData } from '/js/historical.js';
+/**
+ * Actualiza la información y la visualización de los taxis en tiempo real.
+ */
+export async function updateRealTimeData() {
+  ui.toggleLoading(true);
+  try {
+    const data = await fetchData('/data');
+    if (!Array.isArray(data) || data.length === 0) {
+      throw new Error('No hay datos disponibles');
+    }
 
-import { formatDateTimeInput }   from '/js/utils.js';
+    for (const taxiData of data) {
+      const { ID_TAXI, LATITUDE, LONGITUDE } = taxiData;
+      if (!ID_TAXI || !LATITUDE || !LONGITUDE) continue;
 
-const config = {
-    basePath: window.location.pathname.includes("/test") ? "/test" : "",
-    updateInterval: 5000
-};
+      const taxiId = ID_TAXI.toString();
+      const pos = { lat: parseFloat(LATITUDE), lng: parseFloat(LONGITUDE) };
+      if (isNaN(pos.lat) || isNaN(pos.lng)) continue;
 
-window.initMapsCallback = mapsApiLoaded;
+      // Inicializar recorrido si es necesario
+      if (!appState.realTime.recorridos[taxiId]) {
+        appState.realTime.recorridos[taxiId] = [];
+      }
 
-document.addEventListener('DOMContentLoaded', () => {
-    // ——— 1. Inicialización de fechas por defecto ———
-    const now = new Date();
-    dom.startDate.value = formatDateTimeInput(new Date(now.getTime() - 3600 * 1000)); // hace una hora
-    dom.endDate.value   = formatDateTimeInput(now);
-  
-    // ——— 2. Navegación entre secciones ———
-    dom.realTimeBtn   .addEventListener('click', () => {
-      switchToRealTime(appState);
-      startRealTimeUpdates();
-    });
-    dom.historicalBtn .addEventListener('click', () => {
-      stopRealTimeUpdates();
-      switchToHistorical(appState);
-    });
-    dom.membersBtn    .addEventListener('click', switchToMembers);
-  
-    // ——— 3. Tiempo real ———
-    dom.seguirBtn     .addEventListener('click', () => {
-      appState.realTime.seguirCentrando = true;
-    });
-    // Inicia las actualizaciones periódicas
-    startRealTimeUpdates();
-  
-    // ——— 4. Histórico ———
-    initHistoricalTracking();
-    dom.loadHistory   .addEventListener('click', loadHistoricalData);
-  
-    // ——— 5. Carga de Google Maps ———
-    // Esto insertará dinámicamente el <script> de Maps y al cargar llamará a window.initMapsCallback
-    initMap();
-  });
+      // Actualizar marcador
+      const marker = appState.realTime.markers[taxiId];
+      if (marker) marker.setPosition(pos);
+
+      // Actualizar recorrido y polilínea
+      const recorrido = appState.realTime.recorridos[taxiId];
+      if (recorrido.length > 500) recorrido.shift();
+      recorrido.push(pos);
+      const polyline = appState.realTime.polylines[taxiId];
+      if (polyline) polyline.setPath(recorrido);
+
+      // Actualizar panel de info
+      if (appState.realTime.currentTaxiId === taxiId) {
+        ui.updateInfo(taxiData);
+      }
+    }
+
+    // Si están todos los taxis seleccionados, limpiar el panel
+    if (appState.realTime.currentTaxiId === '0') {
+      ui.clearInfo();
+    }
+  } catch (err) {
+    console.error('Error actualizando datos en tiempo real:', err);
+    ui.showError(err.message, dom.realTimeError);
+  } finally {
+    ui.toggleLoading(false);
+  }
+}
+
+/**
+ * Inicia las actualizaciones periódicas en tiempo real.
+ */
+export function startRealTimeUpdates() {
+  stopRealTimeUpdates();
+  updateRealTimeData();
+  appState.realTime.intervalId = setInterval(updateRealTimeData, config.updateInterval);
+  console.log('Actualizaciones en tiempo real iniciadas');
+}
+
+/**
+ * Detiene las actualizaciones periódicas en tiempo real.
+ */
+export function stopRealTimeUpdates() {
+  if (appState.realTime.intervalId) {
+    clearInterval(appState.realTime.intervalId);
+    appState.realTime.intervalId = null;
+    console.log('Actualizaciones en tiempo real detenidas');
+  }
+}
