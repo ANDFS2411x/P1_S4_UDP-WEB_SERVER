@@ -1,4 +1,3 @@
-// public/js/api.js
 import { config } from '/js/config.js';
 
 export async function fetchData(endpoint) {
