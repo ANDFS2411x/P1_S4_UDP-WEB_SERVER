@@ -1,5 +1,5 @@
 // public/js/config.js
 export const config = {
-    basePath: window.location.pathname.includes("/test") ? "/test" : "",
+    basePath: window.location.pathname.includes('/test') ? '/test/' : '/',
     updateInterval: 5000
-};  
+  };  
