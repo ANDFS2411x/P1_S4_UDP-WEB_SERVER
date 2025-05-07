@@ -3,7 +3,7 @@ import { dom }                   from '/js/dom.js';
 import { appState }              from '/js/state.js';
 
 import { startRealTimeUpdates, stopRealTimeUpdates } from '/js/realtime.js';
-import { initMap, mapsApiLoaded }                    from '/js/realtimemap.js';
+import { initMap, mapsApiLoaded }                    from '/js/realtimeMap.js';
 
 import { switchToRealTime, switchToHistorical, switchToMembers } from '/js/navigation.js';
 

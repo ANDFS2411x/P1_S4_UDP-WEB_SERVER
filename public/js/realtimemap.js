@@ -56,6 +56,7 @@ export function initRealMapInstance() {
     appState.realTime.seguirCentrando = false;
   });
 
+  // Arranca actualizaciones
   startRealTimeUpdates();
 }
 
