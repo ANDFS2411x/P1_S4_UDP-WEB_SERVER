@@ -275,6 +275,31 @@ function initHistoricalMapInstance() {
             }
         }
     });
+
+    // Botón “Cargar Trayectoria”
+  domElements.loadHistoryBtn.addEventListener('click', async () => {
+    // 1) Llamas a tu API, localStorage, lo que sea, para obtener los puntos:
+    const pointsData = await fetchHistoricalData(
+      domElements.dateFrom.value,
+      domElements.dateTo.value,
+      /* tal vez taxiId… */
+    );
+
+    // 2) Instancias (o reseteas) tu animador:
+    const anim = new TimelineAnimation(appState.historical.map);
+
+    // 3) Le dices que entre en modo “ruta completa + pointer móvil”:
+    anim.setMode('route');
+
+    // 4) Le pasas los puntos (y le vuelves a indicar el modo si quieres):
+    anim.setPoints(pointsData, 'route');
+
+    // 5) Guardas la referencia para poder controlarlo luego:
+    appState.historical.timelineAnimation = anim;
+
+    // 6) Muestra tu slider/información:
+    domElements.timelineContainer.style.display = 'block';
+  });
     
     console.log('Mapa histórico inicializado');
 }
