@@ -2,7 +2,7 @@
 import { dom }      from '/js/dom.js';
 import { appState } from '/js/state.js';
 import { fetchData }from '/js/api.js';
-import UIManager    from '/js/uimanager.js';
+import UIManager    from '/js/uiManager.js';
 
 const ui = new UIManager(dom);
 

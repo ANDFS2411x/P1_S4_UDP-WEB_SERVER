@@ -3,7 +3,7 @@
 import { fetchData }    from '/js/api.js';
 import { config }       from '/js/config.js';
 import { appState }     from '/js/state.js';
-import UIManager        from '/js/uimanager.js';
+import UIManager        from '/js/uiManager.js';
 import { dom }          from '/js/dom.js';
 
 const ui = new UIManager(dom);
