@@ -55,7 +55,7 @@ export async function initMap() {
   }
 }
 
-/*function mapsApiLoaded() {
+export function mapsApiLoaded() {
     console.log('Google Maps API cargada');
     appState.realTime.mapsLoaded = true;
     appState.historical.mapsLoaded = true;
@@ -99,7 +99,7 @@ export function initRealMapInstance() {
   console.log('Mapa en tiempo real inicializado');
 }
 
-function initHistoricalMapInstance() {
+export function initHistoricalMapInstance() {
     console.log('Inicializando mapa histórico...');
     
     const centerHistorical = { lat: 11.0193213, lng: -74.8601743 }; // Coordenadas por defecto
@@ -195,8 +195,8 @@ export function createTaxiMarkers() {
 /**
  * Callback tras cargar la API: inicializa mapas y marcadores.
  */
-export function mapsApiLoaded() {
+/*export function mapsApiLoaded() {
   appState.realTime.mapsLoaded = appState.historical.mapsLoaded = true;
   initRealMapInstance();
   createTaxiMarkers();
-}
+}*/
