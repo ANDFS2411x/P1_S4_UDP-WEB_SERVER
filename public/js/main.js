@@ -825,9 +825,27 @@ const historicalState = {
     markers:       {},   // { taxiId: Marker inicial }
     sortedPoints:  [],   // todos los puntos ordenados
     sliderMarker:  null  // marcador que se mueve con el slider
-  };
+};
+
+function parseDateTime(dateStr, timeStr) {
+    // dateStr: "DD/MM/YYYY" ó "YYYY-MM-DD"
+    let day, month, year;
+    if (dateStr.includes('/')) {
+      [day, month, year] = dateStr.split('/').map(Number);
+    } else {
+      [year, month, day] = dateStr.split('-').map(Number);
+    }
+    // timeStr: "HH:mm:ss" ó "HH:mm:ss a.m." / "p.m."
+    // quitamos " a.m." y " p.m." para parsear hora 24h
+    const isPM = timeStr.toLowerCase().includes('p.m');
+    const raw = timeStr.replace(/ ?[ap]\.m\./i, '');
+    let [h, m, s] = raw.split(':').map(Number);
+    if (isPM && h < 12) h += 12;
+    if (!isPM && h === 12) h = 0; 
+    return new Date(year, month - 1, day, h, m, s).getTime();
+}
   
-  async function loadHistoricalData() {
+async function loadHistoricalData() {
     try {
       // 1) Leer y validar fechas/taxi
       const startDate      = domElements.startDate.value;
@@ -900,15 +918,11 @@ const historicalState = {
   
       // 8) Ordenar todos los puntos y agrupar por taxi
       const sortedAll = allPoints
-        .map(pt => ({ ...pt, timestamp: new Date(`${pt.date} ${pt.time}`).getTime() }))
-        .sort((a, b) => a.timestamp - b.timestamp);
-      if (sortedAll.length === 0) {
-        throw new Error("Tras ordenar no quedan puntos válidos");
-      }
-      historicalState.sortedPoints = sortedAll;
-      sortedAll.forEach(pt => {
-        (historicalState.byTaxi[pt.ID_TAXI] ??= []).push(pt);
-      });
+      .map(pt => ({
+        ...pt,
+        timestamp: parseDateTime(pt.date, pt.time)
+      }))
+      .sort((a, b) => a.timestamp - b.timestamp);    
   
       // 9) Dibujar polilíneas y marcadores iniciales de cada taxi
       Object.entries(historicalState.byTaxi).forEach(([taxiId, pts]) => {
@@ -982,13 +996,11 @@ const historicalState = {
       slider.style.backgroundSize = '0% 100%';
   
       slider.oninput = function() {
-        const idx = +this.value;
-        const pct = sequence.length > 1
-          ? (idx / (sequence.length - 1)) * 100
-          : 0;
-        this.style.backgroundSize = `${pct}% 100%`;
-  
-        const pt = sequence[idx];
+        const pt = sequence[+this.value];
+      
+        // En lugar de “new Date(pt.timestamp)” usamos los strings originales:
+        timeEl.textContent = `Taxi ${pt.ID_TAXI} | ${pt.date} ${pt.time}`;
+        rpmEl.textContent  = pt.RPM;
         // mover el sliderMarker
         sliderMarker.setPosition({ lat: pt.lat, lng: pt.lng });
   
