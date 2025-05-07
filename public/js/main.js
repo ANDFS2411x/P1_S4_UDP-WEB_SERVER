@@ -821,6 +821,7 @@ function elementExists(elementId) {
 
 // Estado local para histórico
 const historicalState = {
+    byTaxi: {},   
     fullPathPolyline: null,
     historyMarker:    null,
     sortedPoints:     []
@@ -828,26 +829,27 @@ const historicalState = {
   
 async function loadHistoricalData() {
     try {
-      // 1) Leer y validar fechas/taxi
+      // — 1) Leer y validar fechas/taxi
       const startDate      = domElements.startDate.value;
       const endDate        = domElements.endDate.value;
       const selectedTaxiId = domElements.idSpinnerHist.value;
-      if (!startDate || !endDate) {
-        throw new Error("Debe seleccionar ambas fechas");
-      }
+      if (!startDate || !endDate) throw new Error("Debe seleccionar ambas fechas");
   
-      // 2) Mostrar loader y ocultar errores/controles
+      // — 2) Mostrar loader y ocultar errores/controles
       showLoading(true);
       domElements.historicalError?.style.setProperty('display','none');
       const timelineControls = document.getElementById('timelineControls');
       timelineControls?.style.setProperty('display','none');
-  
-      // 3) Detener RT y limpiar viejos elementos
+      
+      // — 3) Detener RT y limpiar polylines y markers anteriores
       stopRealTimeUpdates();
-      historicalState.fullPathPolyline?.setMap(null);
-      historicalState.historyMarker?.setMap(null);
+      Object.values(historicalState.polylines).forEach(poly=> poly.setMap(null));
+      Object.values(historicalState.markers).forEach(m=> m.setMap(null));
+      historicalState.byTaxi = {};
+      historicalState.polylines = {};
+      historicalState.markers = {};
   
-      // 4) Traer datos
+      // — 4) Fetch de datos
       const url  = `${config.basePath}/historical-data?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
       const resp = await fetch(url);
       if (!resp.ok) throw new Error(`Error del servidor: ${resp.status}`);
@@ -856,9 +858,9 @@ async function loadHistoricalData() {
         throw new Error("No hay datos para el rango seleccionado");
       }
   
-      // 5) Mapear coordenadas y filtrar inválidos
+      // — 5) Procesar y filtrar coordenadas
       let allPoints = data
-        .map(item => ({
+        .map(item=>({
           lat: parseFloat(item.LATITUDE),
           lng: parseFloat(item.LONGITUDE),
           date: item.DATE,
@@ -866,130 +868,121 @@ async function loadHistoricalData() {
           RPM: item.RPM || '0',
           ID_TAXI: item.ID_TAXI || 'N/A'
         }))
-        .filter(p => !isNaN(p.lat) && !isNaN(p.lng));
+        .filter(p=>!isNaN(p.lat)&&!isNaN(p.lng));
   
-      // 6) Filtrar por taxi si no es “0”
+      // — 6) Filtrar por taxi si no es “Todos”
       if (selectedTaxiId !== "0") {
-        allPoints = allPoints.filter(p => p.ID_TAXI.toString() === selectedTaxiId);
-        if (allPoints.length === 0) {
-          throw new Error("Este taxi no tiene datos en el rango seleccionado");
-        }
+        allPoints = allPoints.filter(p=>p.ID_TAXI.toString()===selectedTaxiId);
+        if (!allPoints.length) throw new Error("Este taxi no tiene datos en el rango");
       }
   
-      // 7) Filtrar por punto y radio (si aplica)
+      // — 7) (opcional) Filtrar por punto y radio
       if (domElements.enablePointSelection.checked) {
-        const selLat  = parseFloat(domElements.selectedLat.value);
-        const selLng  = parseFloat(domElements.selectedLng.value);
-        const radius  = parseInt(domElements.searchRadius.value, 10);
-  
-        allPoints = allPoints.filter(pt =>
+        const selLat = parseFloat(domElements.selectedLat.value);
+        const selLng = parseFloat(domElements.selectedLng.value);
+        const radius = parseInt(domElements.searchRadius.value,10);
+        allPoints = allPoints.filter(pt=>
           calculateDistance(selLat, selLng, pt.lat, pt.lng) <= radius
         );
-        if (allPoints.length === 0) {
+        if (!allPoints.length) {
           throw new Error("No se encontraron pasos por el punto seleccionado");
         }
       }
   
-      // 8) Ordenar por timestamp
-      const sortedPoints = allPoints
-        .map(pt => ({ 
+      // — 8) Ordenar por timestamp y agrupar por taxi
+      const sortedAll = allPoints
+        .map(pt=>({ 
           ...pt, 
           timestamp: new Date(`${pt.date} ${pt.time}`).getTime() 
         }))
-        .sort((a, b) => a.timestamp - b.timestamp);
+        .sort((a,b)=>a.timestamp-b.timestamp);
+      if (!sortedAll.length) throw new Error("No quedan puntos tras ordenar");
+      historicalState.sortedPoints = sortedAll;
   
-      if (sortedPoints.length === 0) {
-        throw new Error("Tras ordenar no quedan puntos válidos");
-      }
-      historicalState.sortedPoints = sortedPoints;
-  
-      // 9) Dibujar la ruta completa
-      const fullPath = sortedPoints.map(p => ({ lat: p.lat, lng: p.lng }));
-      const poly = new google.maps.Polyline({
-        map:           appState.historical.map,
-        path:          fullPath,
-        geodesic:      true,
-        strokeColor:   "#5667d8",
-        strokeOpacity: 0.8,
-        strokeWeight:  4
+      // Agrupo:
+      sortedAll.forEach(pt=>{
+        (historicalState.byTaxi[pt.ID_TAXI] ??= []).push(pt);
       });
-      historicalState.fullPathPolyline = poly;
   
-      // 10) Crear el marcador en el primer punto
-      const startPos = fullPath[0];
-      const marker = new google.maps.Marker({
-        position: startPos,
-        map:      appState.historical.map,
-        icon: {
-          path:        google.maps.SymbolPath.CIRCLE,
-          scale:       8,
-          fillColor:   "#FF0000",
-          fillOpacity: 1,
-          strokeColor: "#FFFFFF",
-          strokeWeight: 2
-        }
+      // — 9) Dibujo cada taxi con su polyline y su marker inicial
+      Object.entries(historicalState.byTaxi).forEach(([taxiId, pts])=>{
+        const path = pts.map(p=>({ lat: p.lat, lng: p.lng }));
+        const poly = new google.maps.Polyline({
+          map: appState.historical.map,
+          path, geodesic: true,
+          strokeColor: (taxiId==="1"?"#FF0000":"#0000FF"),
+          strokeOpacity: 0.8, strokeWeight: 4
+        });
+        historicalState.polylines[taxiId] = poly;
+  
+        const m = new google.maps.Marker({
+          position: path[0],
+          map: appState.historical.map,
+          icon:{
+            path: google.maps.SymbolPath.CIRCLE, scale: 8,
+            fillColor: (taxiId==="1"?"#FF0000":"#0000FF"),
+            fillOpacity: 1, strokeColor:"#fff", strokeWeight:2
+          }
+        });
+        historicalState.markers[taxiId] = m;
       });
-      historicalState.historyMarker = marker;
   
-      // 11) Conectar slider con los <span> existentes
+      // — 10) Ajustar vista para incluir todo
+      const bounds = new google.maps.LatLngBounds();
+      sortedAll.forEach(pt=> bounds.extend({ lat:pt.lat, lng:pt.lng }));
+      appState.historical.map.fitBounds(bounds);
+  
+      // — 11) Slider: solo si seleccionó un taxi concreto
       const slider     = document.getElementById('timelineSlider');
       const timeEl     = document.getElementById('currentTimeInfo');
       const rpmEl      = document.getElementById('rpmHist');
-      const distanceEl = document.getElementById('distanceInfo');
+      const distEl     = document.getElementById('distanceInfo');
   
-      if (slider && timeEl && rpmEl && distanceEl && timelineControls) {
+      if (selectedTaxiId==="0") {
+        // “Todos” → oculto controles
+        timelineControls.style.display = 'none';
+      } else {
+        const pts = historicalState.byTaxi[selectedTaxiId];
+        const marker = historicalState.markers[selectedTaxiId];
+  
+        // config slider
         slider.min   = 0;
-        slider.max   = fullPath.length - 1;
+        slider.max   = pts.length - 1;
         slider.step  = 1;
         slider.value = 0;
         slider.style.backgroundSize = '0% 100%';
-        timelineControls.style.display = 'block';
+        timelineControls.style.display   = 'flex';
   
-        slider.addEventListener('input', function() {
-          const idx = parseInt(this.value, 10);
-          const pct = (idx / (fullPath.length - 1)) * 100;
+        slider.oninput = function() {
+          const idx = +this.value;
+          const pct = idx/(pts.length-1)*100;
           this.style.backgroundSize = `${pct}% 100%`;
   
-          // Mover marcador ▶
-          const { lat, lng } = fullPath[idx];
+          // mover marcador
+          const { lat, lng } = pts[idx];
           marker.setPosition({ lat, lng });
   
-          // Datos del punto ▶
-          const pt = sortedPoints[idx];
-  
-          // Fecha y hora formateada ▶
-          const dt = new Date(pt.timestamp);
-          const dateStr = dt.toLocaleDateString('es-CO', {
-            day: 'numeric', month: 'numeric', year: 'numeric'
-          });
-          const timeStr = dt.toLocaleTimeString('es-CO', {
-            hour: 'numeric', minute: 'numeric', second: 'numeric'
-          }).replace(' a. m.', ' a.m.').replace(' p. m.', ' p.m.');
+          // actualizar info
+          const dt = new Date(pts[idx].timestamp);
+          const dateStr = dt.toLocaleDateString('es-CO');
+          const timeStr = dt.toLocaleTimeString('es-CO')
+            .replace(' a. m.', ' a.m.').replace(' p. m.', ' p.m.');
           timeEl.textContent = `${dateStr} ${timeStr}`;
+          rpmEl.textContent  = pts[idx].RPM;
   
-          // RPM ▶
-          rpmEl.textContent = pt.RPM;
-  
-          // Distancia al punto seleccionado ▶
+          // distancia si aplica
           if (domElements.enablePointSelection.checked) {
             const selLat = parseFloat(domElements.selectedLat.value);
             const selLng = parseFloat(domElements.selectedLng.value);
-            const dist   = calculateDistance(selLat, selLng, pt.lat, pt.lng)
-                              .toFixed(2);
-            distanceEl.textContent = `Distancia al punto: ${dist} m`;
+            const d = calculateDistance(selLat, selLng, lat, lng).toFixed(2);
+            distEl.textContent = `Distancia al punto: ${d} m`;
           } else {
-            distanceEl.textContent = '';
+            distEl.textContent = '';
           }
-        });
-  
-        // Inicializar en idx = 0
+        };
+        // disparo inicial
         slider.dispatchEvent(new Event('input'));
       }
-  
-      // 12) Ajustar vista para toda la ruta
-      const bounds = new google.maps.LatLngBounds();
-      fullPath.forEach(pt => bounds.extend(pt));
-      appState.historical.map.fitBounds(bounds);
   
     } catch (err) {
       console.error('Error cargando datos históricos:', err);
@@ -997,7 +990,8 @@ async function loadHistoricalData() {
     } finally {
       showLoading(false);
     }
-  }
+}
+  
   
 function initHistoricalTracking() {
     try {
