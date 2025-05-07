@@ -931,66 +931,80 @@ async function loadHistoricalData() {
       const bounds = new google.maps.LatLngBounds();
       sortedAll.forEach(pt=> bounds.extend({ lat:pt.lat, lng:pt.lng }));
       appState.historical.map.fitBounds(bounds);
-  
-      // — 11) Slider: solo si seleccionó un taxi concreto
-      const slider     = document.getElementById('timelineSlider');
-      const timeEl     = document.getElementById('currentTimeInfo');
-      const rpmEl      = document.getElementById('rpmHist');
-      const distEl     = document.getElementById('distanceInfo');
-  
-      if (selectedTaxiId==="0") {
-        // “Todos” → oculto controles
-        timelineControls.style.display = 'none';
-      } else {
-        const pts = historicalState.byTaxi[selectedTaxiId];
-        const marker = historicalState.markers[selectedTaxiId];
-  
-        // config slider
-        slider.min   = 0;
-        slider.max   = pts.length - 1;
-        slider.step  = 1;
-        slider.value = 0;
-        slider.style.backgroundSize = '0% 100%';
-        timelineControls.style.display   = 'flex';
-  
-        slider.oninput = function() {
-          const idx = +this.value;
-          const pct = idx/(pts.length-1)*100;
-          this.style.backgroundSize = `${pct}% 100%`;
-  
-          // mover marcador
-          const { lat, lng } = pts[idx];
-          marker.setPosition({ lat, lng });
-  
-          // actualizar info
-          const dt = new Date(pts[idx].timestamp);
-          const dateStr = dt.toLocaleDateString('es-CO');
-          const timeStr = dt.toLocaleTimeString('es-CO')
-            .replace(' a. m.', ' a.m.').replace(' p. m.', ' p.m.');
-          timeEl.textContent = `${dateStr} ${timeStr}`;
-          rpmEl.textContent  = pts[idx].RPM;
-  
-          // distancia si aplica
-          if (domElements.enablePointSelection.checked) {
-            const selLat = parseFloat(domElements.selectedLat.value);
-            const selLng = parseFloat(domElements.selectedLng.value);
-            const d = calculateDistance(selLat, selLng, lat, lng).toFixed(2);
-            distEl.textContent = `Distancia al punto: ${d} m`;
-          } else {
-            distEl.textContent = '';
-          }
-        };
-        // disparo inicial
-        slider.dispatchEvent(new Event('input'));
-      }
+
+    // 1) Referencias al DOM:
+    const slider       = document.getElementById('timelineSlider');
+    const timelineInfo = document.getElementById('timeline-info');
+    const timeEl       = document.getElementById('currentTimeInfo');
+    const rpmEl        = document.getElementById('rpmHist');
+    const distEl       = document.getElementById('distanceInfo');
+
+    // 2) Si está en “Todos”, oculta el panel de info
+    if (selectedTaxiId === "0") {
+        timelineInfo.style.display = 'none';
+        // Nada más: todas las polylíneas visibles, marcadores estáticos
+     return;
+    }
+
+// 3) Si eligió un taxi concreto, muéstralo y conecta el slider
+timelineInfo.style.display = 'flex';
+
+// Agrupo puntos sólo de ese taxi:
+const pts   = historicalState.byTaxi[selectedTaxiId] || [];
+const marker = historicalState.markers[selectedTaxiId];
+
+// Configuración del slider
+slider.min   = 0;
+slider.max   = pts.length - 1;
+slider.step  = 1;
+slider.value = 0;
+slider.style.backgroundSize = '0% 100%';
+
+// Cada vez que cambie…
+slider.oninput = function() {
+  const idx = parseInt(this.value, 10);
+  const pct = idx / (pts.length - 1) * 100;
+  this.style.backgroundSize = `${pct}% 100%`;
+
+  // 3.1) Mueve el marcador
+  const { lat, lng, timestamp, RPM } = pts[idx];
+  marker.setPosition({ lat, lng });
+
+  // 3.2) Formatea fecha y hora en español
+  const dt = new Date(timestamp);
+  const dateStr = dt.toLocaleDateString('es-CO', {
+    day: 'numeric', month: 'numeric', year: 'numeric'
+  });
+  const timeStr = dt.toLocaleTimeString('es-CO', {
+    hour: 'numeric', minute: 'numeric', second: 'numeric'
+  }).replace(' a. m.', ' a.m.').replace(' p. m.', ' p.m.');
+
+  // 3.3) Rellena los spans
+  timeEl.textContent = `${dateStr} ${timeStr}`;
+  rpmEl.textContent  = RPM;
+
+  // 3.4) Si hay selección de punto, calcula distancia
+  if (domElements.enablePointSelection.checked) {
+    const selLat = parseFloat(domElements.selectedLat.value);
+    const selLng = parseFloat(domElements.selectedLng.value);
+    const d = calculateDistance(selLat, selLng, lat, lng).toFixed(2);
+    distEl.textContent = `Distancia al punto: ${d} m`;
+  } else {
+    distEl.textContent = '';
+  }
+};
+
+// Inicializa en idx=0
+    slider.dispatchEvent(new Event('input'));
   
     } catch (err) {
       console.error('Error cargando datos históricos:', err);
       domElements.historicalError && showError(domElements.historicalError, err.message);
     } finally {
       showLoading(false);
-    }
 }
+}
+
   
   
 function initHistoricalTracking() {
