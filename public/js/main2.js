@@ -10,7 +10,6 @@ import { switchToRealTime, switchToHistorical, switchToMembers } from '/js/navig
 import { initHistoricalTracking, loadHistoricalData } from '/js/historical.js';
 
 import { formatDateTimeInput }   from '/js/utils.js';
-import TimelineAnimation from '/js/timeline-animation.js';
 
 const config = {
     basePath: window.location.pathname.includes("/test") ? "/test" : "",
