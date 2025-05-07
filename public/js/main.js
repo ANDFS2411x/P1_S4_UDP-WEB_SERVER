@@ -829,7 +829,7 @@ const historicalState = {
   
 async function loadHistoricalData() {
     try {
-      // 1) Leer y validar fechas/taxi
+      // 1) Leer y validar fechas/taxi1
       const startDate      = domElements.startDate.value;
       const endDate        = domElements.endDate.value;
       const selectedTaxiId = domElements.idSpinnerHist.value;
