@@ -824,7 +824,7 @@ const historicalState = {
     fullPathPolyline: null,
     historyMarker:    null,
     sortedPoints:     []
-  };
+};
   
 async function loadHistoricalData() {
     try {
@@ -856,7 +856,7 @@ async function loadHistoricalData() {
         throw new Error("No hay datos para el rango seleccionado");
       }
   
-      // 5) Mapear coordenadas y filtrar invalidados
+      // 5) Mapear coordenadas y filtrar inválidos
       let allPoints = data
         .map(item => ({
           lat: parseFloat(item.LATITUDE),
@@ -876,15 +876,14 @@ async function loadHistoricalData() {
         }
       }
   
-      // 7) (opcional) Filtrar por punto y radio
+      // 7) Filtrar por punto y radio (si aplica)
       if (domElements.enablePointSelection.checked) {
-        const sel = {
-          lat: parseFloat(domElements.selectedLat.value),
-          lng: parseFloat(domElements.selectedLng.value)
-        };
-        const radius = parseInt(domElements.searchRadius.value, 10);
+        const selLat  = parseFloat(domElements.selectedLat.value);
+        const selLng  = parseFloat(domElements.selectedLng.value);
+        const radius  = parseInt(domElements.searchRadius.value, 10);
+  
         allPoints = allPoints.filter(pt =>
-          calculateDistance(sel.lat, sel.lng, pt.lat, pt.lng) <= radius
+          calculateDistance(selLat, selLng, pt.lat, pt.lng) <= radius
         );
         if (allPoints.length === 0) {
           throw new Error("No se encontraron pasos por el punto seleccionado");
@@ -893,8 +892,12 @@ async function loadHistoricalData() {
   
       // 8) Ordenar por timestamp
       const sortedPoints = allPoints
-        .map(pt => ({ ...pt, timestamp: new Date(`${pt.date} ${pt.time}`).getTime() }))
+        .map(pt => ({ 
+          ...pt, 
+          timestamp: new Date(`${pt.date} ${pt.time}`).getTime() 
+        }))
         .sort((a, b) => a.timestamp - b.timestamp);
+  
       if (sortedPoints.length === 0) {
         throw new Error("Tras ordenar no quedan puntos válidos");
       }
@@ -903,12 +906,12 @@ async function loadHistoricalData() {
       // 9) Dibujar la ruta completa
       const fullPath = sortedPoints.map(p => ({ lat: p.lat, lng: p.lng }));
       const poly = new google.maps.Polyline({
-        map:       appState.historical.map,
-        path:      fullPath,
-        geodesic:  true,
-        strokeColor: "#5667d8",
+        map:           appState.historical.map,
+        path:          fullPath,
+        geodesic:      true,
+        strokeColor:   "#5667d8",
         strokeOpacity: 0.8,
-        strokeWeight: 4
+        strokeWeight:  4
       });
       historicalState.fullPathPolyline = poly;
   
@@ -928,10 +931,13 @@ async function loadHistoricalData() {
       });
       historicalState.historyMarker = marker;
   
-      // 11) Configurar slider para recorrer índice a índice
-      const slider = document.getElementById('timelineSlider');
-      const infoEl = document.getElementById('currentTimeInfo');
-      if (slider && infoEl && timelineControls) {
+      // 11) Conectar slider con los <span> existentes
+      const slider     = document.getElementById('timelineSlider');
+      const timeEl     = document.getElementById('currentTimeInfo');
+      const rpmEl      = document.getElementById('rpmHist');
+      const distanceEl = document.getElementById('distanceInfo');
+  
+      if (slider && timeEl && rpmEl && distanceEl && timelineControls) {
         slider.min   = 0;
         slider.max   = fullPath.length - 1;
         slider.step  = 1;
@@ -944,20 +950,43 @@ async function loadHistoricalData() {
           const pct = (idx / (fullPath.length - 1)) * 100;
           this.style.backgroundSize = `${pct}% 100%`;
   
-          // 11.1) Mover marcador
+          // Mover marcador ▶
           const { lat, lng } = fullPath[idx];
           marker.setPosition({ lat, lng });
   
-          // 11.2) Mostrar datos completos
+          // Datos del punto ▶
           const pt = sortedPoints[idx];
-          
+  
+          // Fecha y hora formateada ▶
+          const dt = new Date(pt.timestamp);
+          const dateStr = dt.toLocaleDateString('es-CO', {
+            day: 'numeric', month: 'numeric', year: 'numeric'
+          });
+          const timeStr = dt.toLocaleTimeString('es-CO', {
+            hour: 'numeric', minute: 'numeric', second: 'numeric'
+          }).replace(' a. m.', ' a.m.').replace(' p. m.', ' p.m.');
+          timeEl.textContent = `${dateStr} ${timeStr}`;
+  
+          // RPM ▶
+          rpmEl.textContent = pt.RPM;
+  
+          // Distancia al punto seleccionado ▶
+          if (domElements.enablePointSelection.checked) {
+            const selLat = parseFloat(domElements.selectedLat.value);
+            const selLng = parseFloat(domElements.selectedLng.value);
+            const dist   = calculateDistance(selLat, selLng, pt.lat, pt.lng)
+                              .toFixed(2);
+            distanceEl.textContent = `Distancia al punto: ${dist} m`;
+          } else {
+            distanceEl.textContent = '';
+          }
         });
   
-        // Inicializar en el primer registro
+        // Inicializar en idx = 0
         slider.dispatchEvent(new Event('input'));
       }
   
-      // 12) Ajustar mapa a toda la ruta
+      // 12) Ajustar vista para toda la ruta
       const bounds = new google.maps.LatLngBounds();
       fullPath.forEach(pt => bounds.extend(pt));
       appState.historical.map.fitBounds(bounds);
