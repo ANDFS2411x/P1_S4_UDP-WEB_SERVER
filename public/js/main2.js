@@ -11,6 +11,8 @@ import { switchToRealTime, switchToHistorical, switchToMembers } from './navigat
 import { initHistoricalTracking, loadHistoricalData } from './historical.js';
 
 import { formatDateTimeInput }   from './utils.js';
+import TimelineAnimation from './timeline-animation.js';
+
 
 window.initMapsCallback = mapsApiLoaded;
 
