@@ -947,17 +947,22 @@ async function loadHistoricalData() {
           // 11.1) Mover marcador
           const { lat, lng } = fullPath[idx];
           marker.setPosition({ lat, lng });
-  
-          // 11.2) Mostrar datos completos
           const pt = sortedPoints[idx];
-          infoEl.innerHTML = `
-            <div><strong>Taxi:</strong> ${pt.ID_TAXI}</div>
-            <div><strong>Fecha:</strong> ${pt.date}</div>
-            <div><strong>Hora:</strong> ${pt.time}</div>
-            <div><strong>RPM:</strong> ${pt.RPM}</div>
-            <div><strong>Latitud:</strong> ${pt.lat.toFixed(6)}</div>
-            <div><strong>Longitud:</strong> ${pt.lng.toFixed(6)}</div>
-          `;
+          const dt = new Date(pt.timestamp);
+          const dateStr = dt.toLocaleDateString('es-CO', {
+            day: 'numeric', month: 'numeric', year: 'numeric'
+          });
+          const timeStr = dt.toLocaleTimeString('es-CO', {
+            hour: 'numeric', minute: 'numeric', second: 'numeric'
+          })
+          .replace(' a. m.', ' a.m.')
+          .replace(' p. m.', ' p.m.');
+        
+          tsBox.textContent = `${dateStr} ${timeStr}`;
+        
+          // 3) RPM
+          rpmBox.textContent = `RPM: ${pt.RPM}`;
+
         });
   
         // Inicializar en el primer registro
