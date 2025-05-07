@@ -819,15 +819,15 @@ function elementExists(elementId) {
     return true;
 }
 
-// Estado auxiliar global (defínelo fuera de la función)
 const historicalState = {
-    byTaxi:     {},   // { taxiId: [puntos…] }
-    polylines:  {},   // { taxiId: Polyline }
-    markers:    {},   // { taxiId: Marker }
-    sortedPoints: []
-};
+    byTaxi:        {},   // { taxiId: [puntos…] }
+    polylines:     {},   // { taxiId: Polyline }
+    markers:       {},   // { taxiId: Marker inicial }
+    sortedPoints:  [],   // todos los puntos ordenados
+    sliderMarker:  null  // marcador que se mueve con el slider
+  };
   
-async function loadHistoricalData() {
+  async function loadHistoricalData() {
     try {
       // 1) Leer y validar fechas/taxi
       const startDate      = domElements.startDate.value;
@@ -837,19 +837,21 @@ async function loadHistoricalData() {
         throw new Error("Debe seleccionar ambas fechas");
       }
   
-      // 2) Loader + ocultar errores + ocultar CONTROLES (slider + info)
+      // 2) Loader + ocultar errores + ocultar CONTROLES
       showLoading(true);
       domElements.historicalError?.style.setProperty('display','none');
       const timelineControls = document.getElementById('timelineControls');
-      timelineControls.style.display = 'none';  // oculto todo al principio
+      timelineControls.style.display = 'none';
   
-      // 3) Detener Tiempo Real y limpiar viejas rutas/marcadores
+      // 3) Parar RT y limpiar viejas rutas/marcadores
       stopRealTimeUpdates();
       Object.values(historicalState.polylines  || {}).forEach(poly => poly.setMap(null));
       Object.values(historicalState.markers    || {}).forEach(m   => m.setMap(null));
-      historicalState.byTaxi    = {};
-      historicalState.polylines = {};
-      historicalState.markers   = {};
+      historicalState.sliderMarker?.setMap(null);
+      historicalState.byTaxi       = {};
+      historicalState.polylines    = {};
+      historicalState.markers      = {};
+      historicalState.sliderMarker = null;
   
       // 4) Fetch de datos
       const url  = `${config.basePath}/historical-data?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
@@ -872,7 +874,7 @@ async function loadHistoricalData() {
         }))
         .filter(p => !isNaN(p.lat) && !isNaN(p.lng));
   
-      // 6) Filtrar por taxi (si no es “0”)
+      // 6) Filtrar por taxi si no es “Todos” ("0")
       if (selectedTaxiId !== "0") {
         allPoints = allPoints.filter(p => p.ID_TAXI.toString() === selectedTaxiId);
         if (allPoints.length === 0) {
@@ -880,10 +882,13 @@ async function loadHistoricalData() {
         }
       }
   
-      // 7) Filtrar por punto+radio (si aplica)
-      if (domElements.enablePointSelection.checked) {
+      // 7) Filtrar por punto+radio SOLO si está activo y es un taxi concreto
+      if (selectedTaxiId !== "0" && domElements.enablePointSelection.checked) {
         const selLat = parseFloat(domElements.selectedLat.value);
         const selLng = parseFloat(domElements.selectedLng.value);
+        if (isNaN(selLat) || isNaN(selLng)) {
+          throw new Error("Debe seleccionar un punto válido primero");
+        }
         const radius = parseInt(domElements.searchRadius.value, 10);
         allPoints = allPoints.filter(pt =>
           calculateDistance(selLat, selLng, pt.lat, pt.lng) <= radius
@@ -893,12 +898,9 @@ async function loadHistoricalData() {
         }
       }
   
-      // 8) Ordenar y agrupar por taxi
+      // 8) Ordenar todos los puntos y agrupar por taxi
       const sortedAll = allPoints
-        .map(pt => ({
-          ...pt,
-          timestamp: new Date(`${pt.date} ${pt.time}`).getTime()
-        }))
+        .map(pt => ({ ...pt, timestamp: new Date(`${pt.date} ${pt.time}`).getTime() }))
         .sort((a, b) => a.timestamp - b.timestamp);
       if (sortedAll.length === 0) {
         throw new Error("Tras ordenar no quedan puntos válidos");
@@ -908,21 +910,18 @@ async function loadHistoricalData() {
         (historicalState.byTaxi[pt.ID_TAXI] ??= []).push(pt);
       });
   
-      // 9) Dibujar todas las polylines y marcadores
+      // 9) Dibujar polilíneas y marcadores iniciales de cada taxi
       Object.entries(historicalState.byTaxi).forEach(([taxiId, pts]) => {
-        const path = pts.map(p => ({ lat: p.lat, lng: p.lng }));
+        const path  = pts.map(p => ({ lat: p.lat, lng: p.lng }));
         const color = taxiId === "1" ? "#FF0000" : "#0000FF";
-        const poly = new google.maps.Polyline({
+        historicalState.polylines[taxiId] = new google.maps.Polyline({
           map:           appState.historical.map,
-          path,
-          geodesic:      true,
+          path, geodesic: true,
           strokeColor:   color,
           strokeOpacity: 0.8,
           strokeWeight:  4
         });
-        historicalState.polylines[taxiId] = poly;
-  
-        const marker = new google.maps.Marker({
+        historicalState.markers[taxiId] = new google.maps.Marker({
           position: path[0],
           map:      appState.historical.map,
           icon: {
@@ -934,103 +933,92 @@ async function loadHistoricalData() {
             strokeWeight: 2
           }
         });
-        historicalState.markers[taxiId] = marker;
       });
   
-      // 10) Ajustar vista al bounds de todos los puntos
+      // 10) Ajustar vista para abarcar todo el recorrido
       const bounds = new google.maps.LatLngBounds();
       sortedAll.forEach(pt => bounds.extend({ lat: pt.lat, lng: pt.lng }));
       appState.historical.map.fitBounds(bounds);
   
-      // 11) Ahora mostramos o no el slider+info según taxi elegido
+      // 11) Mostrar SIEMPRE los controles
+      timelineControls.style.display = 'flex';
+  
+      // 12) Determinar secuencia y marcador para el slider
+      let sequence, sliderMarker;
       if (selectedTaxiId === "0") {
-        // “Todos”: no muestro controles
-        return;
-      }
-
-      // … tras haber dibujado polylíneas y ajustado bounds …
-
-    // 1) Referencias al DOM
-    const slider           = document.getElementById('timelineSlider');
-    const timeEl           = document.getElementById('currentTimeInfo');
-    const rpmEl            = document.getElementById('rpmHist');
-    const distEl           = document.getElementById('distanceInfo');
-
-    // 2) Muestro siempre el bloque de controles
-    timelineControls.style.display = 'flex';
-
-    // 3) Decidir secuencia de puntos y marcador a usar
-    let sequence, sliderMarker;
-    if (selectedTaxiId === "0") {
-    // “Todos”: uso todos los puntos ordenados
-    sequence     = historicalState.sortedPoints;
-    // marcador global (verde), crear si no existe
-    if (!historicalState.sliderMarker) {
-        historicalState.sliderMarker = new google.maps.Marker({
+        // “Todos”: recorre todos los puntos en orden
+        sequence     = sortedAll;
+        // marcador global verde
+        if (!historicalState.sliderMarker) {
+          historicalState.sliderMarker = new google.maps.Marker({
             map: appState.historical.map,
             icon: {
-            path:        google.maps.SymbolPath.CIRCLE,
-            scale:       10,
-            fillColor:   "#00FF00",
-            fillOpacity: 1,
-            strokeColor: "#FFFFFF",
-            strokeWeight: 2
+              path:        google.maps.SymbolPath.CIRCLE,
+              scale:       10,
+              fillColor:   "#00FF00",
+              fillOpacity: 1,
+              strokeColor: "#FFFFFF",
+              strokeWeight: 2
             }
-        });
-    }
-    sliderMarker = historicalState.sliderMarker;
-    } else {
-        // Taxi concreto: sólo sus puntos y su mismo marcador rojo/azul
-        sequence     = historicalState.byTaxi[selectedTaxiId] || [];
+          });
+        }
+        sliderMarker = historicalState.sliderMarker;
+      } else {
+        // Taxi concreto: recorre solo sus puntos
+        sequence     = historicalState.byTaxi[selectedTaxiId];
         sliderMarker = historicalState.markers[selectedTaxiId];
-    }
-
-    // 4) Configuro el slider de 0 a n−1
-    slider.min   = 0;
-    slider.max   = Math.max(0, sequence.length - 1);
-    slider.step  = 1;
-    slider.value = 0;
-    slider.style.backgroundSize = '0% 100%';
-
-    // 5) Cada vez que muevo el slider…
-    slider.oninput = function() {
-    const idx = +this.value;
-    const pct = sequence.length > 1 ? (idx / (sequence.length - 1)) * 100 : 0;
-    this.style.backgroundSize = `${pct}% 100%`;
-
-    // 5.1) Tomo el punto actual y muevo el marcador
-    const pt = sequence[idx];
-    sliderMarker.setPosition({ lat: pt.lat, lng: pt.lng });
-
-        // 5.2) Formateo fecha y hora en un solo string con el taxi
-    const dt      = new Date(pt.timestamp);
-    const dateStr = dt.toLocaleDateString('es-CO', {
-    day: 'numeric', month: 'numeric', year: 'numeric'
-  });
-  const timeStr = dt.toLocaleTimeString('es-CO', {
-    hour: 'numeric', minute: 'numeric', second: 'numeric'
-  }).replace(' a. m.', ' a.m.').replace(' p. m.', ' p.m.');
-
-  timeEl.textContent = `Taxi ${pt.ID_TAXI} | ${dateStr} ${timeStr}`;
-
-  // 5.3) RPM
-  rpmEl.textContent = pt.RPM;
-
-  // 5.4) Distancia al punto seleccionado (si aplica)
-  if (domElements.enablePointSelection.checked) {
-    const selLat = parseFloat(domElements.selectedLat.value);
-    const selLng = parseFloat(domElements.selectedLng.value);
-    distEl.textContent = `Distancia al punto: ${
-      calculateDistance(selLat, selLng, pt.lat, pt.lng).toFixed(2)
-    } m`;
-  } else {
-    distEl.textContent = '';
-  }
-};
-
-// 6) Disparo inicial para que muestre idx=0
-slider.dispatchEvent(new Event('input'));
-
+      }
+  
+      // 13) Conectar slider a la secuencia
+      const slider = document.getElementById('timelineSlider');
+      const timeEl = document.getElementById('currentTimeInfo');
+      const rpmEl  = document.getElementById('rpmHist');
+      const distEl = document.getElementById('distanceInfo');
+  
+      slider.min   = 0;
+      slider.max   = Math.max(0, sequence.length - 1);
+      slider.step  = 1;
+      slider.value = 0;
+      slider.style.backgroundSize = '0% 100%';
+  
+      slider.oninput = function() {
+        const idx = +this.value;
+        const pct = sequence.length > 1
+          ? (idx / (sequence.length - 1)) * 100
+          : 0;
+        this.style.backgroundSize = `${pct}% 100%`;
+  
+        const pt = sequence[idx];
+        // mover el sliderMarker
+        sliderMarker.setPosition({ lat: pt.lat, lng: pt.lng });
+  
+        // fecha, hora y taxi
+        const dt      = new Date(pt.timestamp);
+        const dateStr = dt.toLocaleDateString('es-CO', {
+          day: 'numeric', month: 'numeric', year: 'numeric'
+        });
+        const timeStr = dt.toLocaleTimeString('es-CO', {
+          hour: 'numeric', minute: 'numeric', second: 'numeric'
+        }).replace(' a. m.', ' a.m.').replace(' p. m.', ' p.m.');
+        timeEl.textContent = `Taxi ${pt.ID_TAXI} | ${dateStr} ${timeStr}`;
+  
+        // RPM
+        rpmEl.textContent = pt.RPM;
+  
+        // distancia (si aplica)
+        if (selectedTaxiId !== "0" && domElements.enablePointSelection.checked) {
+          const selLat = parseFloat(domElements.selectedLat.value);
+          const selLng = parseFloat(domElements.selectedLng.value);
+          distEl.textContent = `Distancia al punto: ${
+            calculateDistance(selLat, selLng, pt.lat, pt.lng).toFixed(2)
+          } m`;
+        } else {
+          distEl.textContent = '';
+        }
+      };
+  
+      // Inicializar en idx = 0
+      slider.dispatchEvent(new Event('input'));
   
     } catch (err) {
       console.error('Error cargando datos históricos:', err);
@@ -1038,7 +1026,8 @@ slider.dispatchEvent(new Event('input'));
     } finally {
       showLoading(false);
     }
-}
+  }
+  
   
   
 function initHistoricalTracking() {
