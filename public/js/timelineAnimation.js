@@ -1,4 +1,4 @@
-class TimelineAnimation {
+export default class TimelineAnimation {
     constructor(map) {
         this.map = map;
         this.taxiData = {}; // Objeto para almacenar datos por taxiId
