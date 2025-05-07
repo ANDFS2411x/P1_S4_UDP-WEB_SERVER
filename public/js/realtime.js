@@ -72,6 +72,7 @@ export function startRealTimeUpdates() {
   stopRealTimeUpdates();
   updateRealTimeData();
   appState.realTime.intervalId = setInterval(updateRealTimeData, config.updateInterval);
+  console.log('Actualizaciones en tiempo real iniciadas');
 }
 
 /**
@@ -81,5 +82,6 @@ export function stopRealTimeUpdates() {
   if (appState.realTime.intervalId) {
     clearInterval(appState.realTime.intervalId);
     appState.realTime.intervalId = null;
+    console.log('Actualizaciones en tiempo real detenidas');
   }
 }

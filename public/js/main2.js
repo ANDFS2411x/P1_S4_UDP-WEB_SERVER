@@ -1,7 +1,6 @@
 // public/js/main.js
 import { dom }                   from './dom.js';
 import { appState }              from './state.js';
-import { config }                from './config.js';
 
 import { startRealTimeUpdates, stopRealTimeUpdates } from './realtime.js';
 import { initMap, mapsApiLoaded }                    from './realtimemap.js';
@@ -13,6 +12,10 @@ import { initHistoricalTracking, loadHistoricalData } from './historical.js';
 import { formatDateTimeInput }   from './utils.js';
 import TimelineAnimation from './timeline-animation.js';
 
+const config = {
+    basePath: window.location.pathname.includes("/test") ? "/test" : "",
+    updateInterval: 5000
+};
 
 window.initMapsCallback = mapsApiLoaded;
 
