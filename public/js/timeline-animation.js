@@ -44,6 +44,7 @@ class TimelineAnimation {
         return new Date(`${formattedDate} ${timeStr}`).getTime();
     }
     
+    
     // Método para actualizar la visibilidad según el taxi seleccionado
     updateVisibility() {
         // Si solo se muestra un taxi específico
