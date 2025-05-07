@@ -257,11 +257,11 @@ function initHistoricalMapInstance() {
     // Configurar el spinner de selección de taxi histórico
     domElements.idSpinnerHist.addEventListener('change', function() {
         const selectedTaxiId = this.value;
-        if (selectedTaxiId === "0") {
+      /*  if (selectedTaxiId === "0") {
             domElements.timelineInfo.style.display = 'none';
         } else {
             domElements.timelineInfo.style.display = 'flex';
-        }
+        }*/
         if (appState.historical.timelineAnimation) {
             appState.historical.timelineAnimation.setSelectedTaxiId(selectedTaxiId);
             
@@ -911,6 +911,23 @@ async function loadHistoricalData() {
             }
         }
 
+        // 1.1) Ordenar por timestamp
+        const sortedPoints = relevantPoints
+        .map(pt => ({
+        ...pt,
+        timestamp: new Date(`${pt.date} ${pt.time}`).getTime()
+        }))
+        .sort((a, b) => a.timestamp - b.timestamp);
+
+        // 1.2) Guardarlo en tu estado para usarlo luego
+        appState.historical.sortedPoints = sortedPoints;
+
+        const fullPath = sortedPoints.map(p => ({ lat: p.lat, lng: p.lng }));
+        // si sólo un taxi seleccionado, usa su polyline:
+        const anim = appState.historical.timelineAnimation;
+        Object.values(anim.animationPaths).forEach(poly => poly.setPath(fullPath));
+
+
         // Inicializar o actualizar la animación
         if (!appState.historical.timelineAnimation) {
             appState.historical.timelineAnimation = new TimelineAnimation(appState.historical.map);
@@ -935,6 +952,10 @@ async function loadHistoricalData() {
                 // Resetear slider
                 timelineSlider.value = 0;
                 timelineSlider.style.backgroundSize = `${timelineSlider.value}% 100%`;
+                timelineSlider.min = 0;
+                timelineSlider.max = sortedPoints.length - 1;
+                timelineSlider.step = 1;
+                timelineControls.style.display = 'block';
 
                 // Actualizar la información inicial
                 updateTimelineInfo(0);
@@ -942,7 +963,15 @@ async function loadHistoricalData() {
                 // Actualizar la información cuando se mueve el slider
                 timelineSlider.addEventListener('input', function(e) {
                     const progress = parseInt(e.target.value);
+                    const pct = (idx / (sortedPoints.length - 1)) * 100;
                     this.style.backgroundSize = `${progress}% 100%`;
+
+                    const pt = sortedPoints[idx];
+
+                    const marker = appState.historical.timelineAnimation
+                    .currentMarkers[pt.ID_TAXI];
+                    marker.setPosition({ lat: pt.lat, lng: pt.lng });
+                    marker.setMap(appState.historical.map);
                     
                     // Actualizar visualización con el nuevo progreso
                     updateTimelineInfo(progress);
