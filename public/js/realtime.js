@@ -85,3 +85,40 @@ export function stopRealTimeUpdates() {
     console.log('Actualizaciones en tiempo real detenidas');
   }
 }
+
+
+// public/js/realtimeMap.js
+
+import { fetchData }             from '/js/api.js';
+import { config }                from '/js/config.js';
+import { initRealMapInstance, createTaxiMarkers } from '/js/realtimeInstance.js';
+import { initHistoricalMapInstance }            from '/js/historical.js';
+
+/**
+ * Inserta dinámicamente el <script> de Google Maps,
+ * con callback a window.initMapsCallback (mapsApiLoaded).
+ */
+export async function initMap() {
+  const { apiKey } = await fetchData('/api-key');
+  if (!apiKey) throw new Error('API Key no encontrada');
+
+  await new Promise((resolve, reject) => {
+    window.initMapsCallback = () => resolve();
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initMapsCallback`;
+    script.async = true;
+    script.defer = true;
+    script.onerror = () => reject(new Error('Error cargando Google Maps API'));
+    document.head.appendChild(script);
+  });
+}
+
+/**
+ * Callback invocado por la API de Google Maps.
+ * Inicializa ambos mapas y los marcadores.
+ */
+export function mapsApiLoaded() {
+  initRealMapInstance();      // configura el mapa en tiempo real
+  createTaxiMarkers();        // crea marcadores y polilíneas iniciales
+  initHistoricalMapInstance(); // configura el mapa histórico
+}
