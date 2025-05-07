@@ -86,7 +86,6 @@ export function stopRealTimeUpdates() {
   }
 }
 
-
 // public/js/realtimeMap.js
 
 import { fetchData }             from '/js/api.js';
