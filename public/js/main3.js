@@ -496,27 +496,25 @@ function updateTaxiVisibility(selectedTaxiId) {
   
     // 1) Mostrar panel de info y limpiarlo
     infoPanelEl.style.display = 'grid';
-    clearInfoPanel();
-
+    //clearInfoPanel();
+    infoPanelEl.innerHTML = '';  
     seguirBtnEl.style.display = 'none';
   
     // 3) Mostrar/ocultar marcadores y polilíneas, y calcular bounds
     const bounds = new google.maps.LatLngBounds();
     Object.entries(appState.realTime.markers).forEach(([taxiId, marker]) => {
-      const polyline = appState.realTime.polylines[taxiId];
+      const poly = appState.realTime.polylines[taxiId];
       const show = (selectedTaxiId === "0" || taxiId === selectedTaxiId);
+
+      marker.setMap(show ? appState.realTime.map : null);
+      poly.setMap(show ? appState.realTime.map : null);
   
       if (show) {
-        marker.setMap(appState.realTime.map);
-        polyline.setMap(appState.realTime.map);
         bounds.extend(marker.getPosition());
-      } else {
-        marker.setMap(null);
-        polyline.setMap(null);
       }
     });
   
-    // 4) Ajustar la vista del mapa
+    // Ajustar la vista del mapa
     if (selectedTaxiId === "0") {
       // encuadra todos
       appState.realTime.map.fitBounds(bounds);
@@ -528,18 +526,30 @@ function updateTaxiVisibility(selectedTaxiId) {
         appState.realTime.map.setZoom(14);
       }
     }
-  
-    // 5) Rellenar info: todos o uno
-    if (selectedTaxiId === "0") {
-      // modo “Todos”
-      Object.keys(appState.realTime.markers).forEach(taxiId => {
-        fetchTaxiInfo(taxiId);
-      });
-    } else {
-      // modo individual
-      fetchTaxiInfo(selectedTaxiId);
-    }
-}
+
+    // Rellenar info
+  // Para “Todos”, queremos ambos taxis; si es uno, solo ese.
+    const taxiIds = (selectedTaxiId === "0")
+        ? Object.keys(appState.realTime.markers)
+        : [selectedTaxiId];
+    
+    taxiIds.forEach(id => {
+        fetchTaxiInfo(id).then(info => {
+            const block = document.createElement('div');
+            block.className = 'info-block';
+            block.innerHTML = `
+            <h4>Taxi ${info.ID_TAXI}</h4>
+            <div><strong>Latitud:</strong> ${info.lat}</div>
+            <div><strong>Longitud:</strong> ${info.lng}</div>
+            <div><strong>Fecha:</strong> ${info.date}</div>
+            <div><strong>Hora:</strong> ${info.time}</div>
+            <div><strong>RPM:</strong> ${info.RPM}</div>
+          `;
+          infoPanelEl.appendChild(block);
+        }).catch(err => {
+          console.error(`Error al cargar info del taxi ${id}:`, err);
+        });
+});
   
 
 async function fetchTaxiInfo(taxiId) {
