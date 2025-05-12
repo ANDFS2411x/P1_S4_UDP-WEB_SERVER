@@ -550,6 +550,7 @@ function updateTaxiVisibility(selectedTaxiId) {
           console.error(`Error al cargar info del taxi ${id}:`, err);
         });
 });
+}
   
 
 async function fetchTaxiInfo(taxiId) {
