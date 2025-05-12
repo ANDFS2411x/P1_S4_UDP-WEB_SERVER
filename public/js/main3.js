@@ -492,11 +492,13 @@ function initRealMapInstance() {
 
 function updateTaxiVisibility(selectedTaxiId) {
     const infoPanelEl = document.querySelector('.info-grid');
-    //const seguirBtnEl = document.getElementById('seguirBtn');
+    const seguirBtnEl = document.getElementById('seguirBtn');
   
     // 1) Mostrar panel de info y limpiarlo
     infoPanelEl.style.display = 'grid';
     clearInfoPanel();
+
+    seguirBtnEl.style.display = 'none';
   
     // 3) Mostrar/ocultar marcadores y polilíneas, y calcular bounds
     const bounds = new google.maps.LatLngBounds();
@@ -523,6 +525,7 @@ function updateTaxiVisibility(selectedTaxiId) {
       const marker = appState.realTime.markers[selectedTaxiId];
       if (marker) {
         appState.realTime.map.panTo(marker.getPosition());
+        appState.realTime.map.setZoom(14);
       }
     }
   
