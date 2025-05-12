@@ -9,7 +9,7 @@ const appState = {
         map: null,
         markers: {},         // Objeto para almacenar marcadores por ID de taxi
         polylines: {},       // Objeto para almacenar polilíneas por ID de taxi
-        seguirCentrando: false,
+        seguirCentrando: true,
         recorridos: {},      // Objeto para almacenar recorridos por ID de taxi
         currentTaxiId: "0",  // ID del taxi seleccionado actualmente ("0" para todos)
         intervalId: null,
@@ -83,10 +83,9 @@ function updateInfoPanel(data) {
     domElements.fecha.textContent = rawDate;
 
     domElements.tiempo.textContent = data.TIME || "N/A";
-    domElements.rpmRealTime.textContent = data.RPM || "0";
+    domElements.rpmRealTime.textContent = data.RPM || "N/A";
     domElements.idTaxiReal.textContent = data.ID_TAXI || "N/A";
 }
-
 
 function showError(element, message) {
     element.textContent = message;
@@ -205,7 +204,7 @@ function clearInfoPanel() {
     domElements.longitud.textContent = "N/A";
     domElements.fecha.textContent = "N/A";
     domElements.tiempo.textContent = "N/A";
-    domElements.rpmRealTime.textContent = "0";
+    domElements.rpmRealTime.textContent = "N/A";
     domElements.idTaxiReal.textContent = "N/A";
 }
 

@@ -494,31 +494,32 @@ function updateTaxiVisibility(selectedTaxiId) {
     const infoPanelEl = document.querySelector('.info-grid');
     const seguirBtnEl = document.getElementById('seguirBtn');
   
-    // Siempre ocultamos el botón “Seguir”
-    seguirBtnEl.style.display = 'none';
+    // Siempre mostramos el panel (grid)…
+    infoPanelEl.style.display   = 'grid';
+    // …y ocultamos el botón “Seguir” en el modo “Todos”
+    seguirBtnEl.style.display   = selectedTaxiId === "0" ? 'none' : 'block';
   
-    // Mostramos el panel de info
-    infoPanelEl.style.display = 'grid';
-    clearInfoPanel();
-  
-    // Mostrar/ocultar marcadores y polilíneas
+    // 1) Mostrar/ocultar marcadores y polylíneas
     Object.keys(appState.realTime.markers).forEach(taxiId => {
-      const show = (selectedTaxiId === "0") || (taxiId === selectedTaxiId);
-      const mapOrNull = show ? appState.realTime.map : null;
+      const shouldShow = selectedTaxiId === "0" || taxiId === selectedTaxiId;
+      const mapOrNull  = shouldShow ? appState.realTime.map : null;
       appState.realTime.markers[taxiId].setMap(mapOrNull);
       appState.realTime.polylines[taxiId].setMap(mapOrNull);
     });
   
+    // 2) Rellenar el panel de info
+    clearInfoPanel();  // vaciamos antes
+  
     if (selectedTaxiId === "0") {
-      // Modo “Todos”: cargar info de cada taxi
+      // Modo “Todos”: mostramos info de cada taxi
       Object.keys(appState.realTime.markers).forEach(taxiId => {
         fetchTaxiInfo(taxiId);
       });
     } else {
-      // Modo “Individual”: solo ese taxi
+      // Modo “Uno”: cargamos solo el taxi seleccionado
       fetchTaxiInfo(selectedTaxiId);
     }
-  }
+}
   
 
 async function fetchTaxiInfo(taxiId) {
