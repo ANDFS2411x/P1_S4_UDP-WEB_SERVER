@@ -492,31 +492,52 @@ function initRealMapInstance() {
 
 function updateTaxiVisibility(selectedTaxiId) {
     const infoPanelEl = document.querySelector('.info-grid');
-    const seguirBtnEl = document.getElementById('seguirBtn');
+    //const seguirBtnEl = document.getElementById('seguirBtn');
   
-    // Siempre mostramos el panel (grid)…
-    infoPanelEl.style.display   = 'grid';
-    // …y ocultamos el botón “Seguir” en el modo “Todos”
-    seguirBtnEl.style.display   = selectedTaxiId === "0" ? 'none' : 'block';
+    // 1) Mostrar panel de info y limpiarlo
+    infoPanelEl.style.display = 'grid';
+    clearInfoPanel();
   
-    // 1) Mostrar/ocultar marcadores y polylíneas
-    Object.keys(appState.realTime.markers).forEach(taxiId => {
-      const shouldShow = selectedTaxiId === "0" || taxiId === selectedTaxiId;
-      const mapOrNull  = shouldShow ? appState.realTime.map : null;
-      appState.realTime.markers[taxiId].setMap(mapOrNull);
-      appState.realTime.polylines[taxiId].setMap(mapOrNull);
+    // 3) Mostrar/ocultar marcadores y polilíneas, y calcular bounds
+    const bounds = new google.maps.LatLngBounds();
+    Object.entries(appState.realTime.markers).forEach(([taxiId, marker]) => {
+      const polyline = appState.realTime.polylines[taxiId];
+      const show = (selectedTaxiId === "0" || taxiId === selectedTaxiId);
+  
+      if (show) {
+        marker.setMap(appState.realTime.map);
+        polyline.setMap(appState.realTime.map);
+        bounds.extend(marker.getPosition());
+      } else {
+        marker.setMap(null);
+        polyline.setMap(null);
+      }
     });
-    
+  
+    // 4) Ajustar la vista del mapa
     if (selectedTaxiId === "0") {
-      // Modo “Todos”: mostramos info de cada taxi
+      // encuadra todos
+      appState.realTime.map.fitBounds(bounds);
+    } else {
+      // centra en el taxi seleccionado
+      const marker = appState.realTime.markers[selectedTaxiId];
+      if (marker) {
+        appState.realTime.map.panTo(marker.getPosition());
+      }
+    }
+  
+    // 5) Rellenar info: todos o uno
+    if (selectedTaxiId === "0") {
+      // modo “Todos”
       Object.keys(appState.realTime.markers).forEach(taxiId => {
         fetchTaxiInfo(taxiId);
       });
     } else {
-      // Modo “Uno”: cargamos solo el taxi seleccionado
+      // modo individual
       fetchTaxiInfo(selectedTaxiId);
     }
-} 
+}
+  
 
 async function fetchTaxiInfo(taxiId) {
     try {
