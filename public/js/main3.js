@@ -506,10 +506,7 @@ function updateTaxiVisibility(selectedTaxiId) {
       appState.realTime.markers[taxiId].setMap(mapOrNull);
       appState.realTime.polylines[taxiId].setMap(mapOrNull);
     });
-  
-    // 2) Rellenar el panel de info
-    clearInfoPanel();  // vaciamos antes
-  
+    
     if (selectedTaxiId === "0") {
       // Modo “Todos”: mostramos info de cada taxi
       Object.keys(appState.realTime.markers).forEach(taxiId => {
@@ -519,8 +516,7 @@ function updateTaxiVisibility(selectedTaxiId) {
       // Modo “Uno”: cargamos solo el taxi seleccionado
       fetchTaxiInfo(selectedTaxiId);
     }
-}
-  
+} 
 
 async function fetchTaxiInfo(taxiId) {
     try {
