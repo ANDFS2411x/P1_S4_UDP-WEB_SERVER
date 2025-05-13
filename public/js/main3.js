@@ -526,8 +526,8 @@ function updateTaxiVisibility(selectedTaxiId) {
       ? Object.keys(appState.realTime.markers)
       : [selectedTaxiId];
   
-      taxiIds.forEach(id => {
-        if (id > 0) {
+      taxiIds.forEach((id, idx) => {
+        if (idx > 0) {
             const hr = document.createElement('hr');
             hr.className = 'taxi-divider';
             infoPanelEl.appendChild(hr);
