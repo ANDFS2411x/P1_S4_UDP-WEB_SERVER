@@ -526,25 +526,27 @@ function updateTaxiVisibility(selectedTaxiId) {
       ? Object.keys(appState.realTime.markers)
       : [selectedTaxiId];
   
-    taxiIds.forEach(id => {
-      fetchTaxiInfo(id)
-        .then(info => {
-          const block = document.createElement('div');
-          block.className = 'info-block';
-          block.innerHTML = `
-            <h4>Taxi ${info.ID_TAXI}</h4>
-            <div><strong>Latitud:</strong> ${info.lat}</div>
-            <div><strong>Longitud:</strong> ${info.lng}</div>
-            <div><strong>Fecha:</strong> ${info.date}</div>
-            <div><strong>Hora:</strong> ${info.time}</div>
-            <div><strong>RPM:</strong> ${info.RPM}</div>
-          `;
-          infoPanelEl.appendChild(block);
-        })
-        .catch(err => {
-          console.error(`Error al cargar info del taxi ${id}:`, err);
-        });
-    });
+      taxiIds.forEach(id => {
+        fetchTaxiInfo(id)
+          .then(info => {
+            // Crea seis <p> en orden
+            const entries = [
+              ['Latitud',   info.lat.toFixed(6)],
+              ['Longitud',  info.lng.toFixed(6)],
+              ['Fecha',     info.date],
+              ['Hora',      info.time],
+              ['RPM',       info.RPM],
+              ['Taxi ID',   info.ID_TAXI]
+            ];
+      
+            entries.forEach(([label, value]) => {
+              const p = document.createElement('p');
+              p.innerHTML = `<strong>${label}:</strong> <span>${value}</span>`;
+              infoPanelEl.appendChild(p);
+            });
+          })
+          .catch(err => console.error(`Error al cargar info del taxi ${id}:`, err));
+      });
   }
   
 
