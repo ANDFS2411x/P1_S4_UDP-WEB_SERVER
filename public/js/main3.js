@@ -526,6 +526,12 @@ function updateTaxiVisibility(selectedTaxiId) {
       : [selectedTaxiId];
 
       taxiIds.forEach(id => {
+        if (selectedTaxiId === "0" && idx === 1) {
+            const hr = document.createElement('hr');
+            hr.className = 'taxi-divider';
+            infoPanelEl.appendChild(hr);
+        }
+        
         fetchTaxiInfo(id).then(info => {
             const entries = [
               ['Latitud',   info.lat.toFixed(6)],
