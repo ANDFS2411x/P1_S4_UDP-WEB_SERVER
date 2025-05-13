@@ -527,13 +527,18 @@ function updateTaxiVisibility(selectedTaxiId) {
       : [selectedTaxiId];
   
       taxiIds.forEach(id => {
+        if (idx > 0) {
+            const hr = document.createElement('hr');
+            hr.className = 'taxi-divider';
+            infoPanelEl.appendChild(hr);
+        }
         fetchTaxiInfo(id)
           .then(info => {
             // Crea seis <p> en orden
             const entries = [
               ['Latitud',   info.lat.toFixed(6)],
               ['Longitud',  info.lng.toFixed(6)],
-              ['Fecha',     info.date],
+              ['Fecha',     info.date.includes('T') ? info.date.split('T')[0] : info.date],
               ['Hora',      info.time],
               ['RPM',       info.RPM],
               ['Taxi ID',   info.ID_TAXI]

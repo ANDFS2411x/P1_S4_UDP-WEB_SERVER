@@ -266,7 +266,12 @@ h2.panel-title {
     color: var(--text-accent);
     margin-right: 5px;
 }
-
+.taxi-divider {
+    grid-column: 1 / -1;        /* abarca ambas columnas */
+    border: none;
+    border-top: 1px solid #444; /* color a tu gusto */
+    margin: 0.75rem 0;          /* espacio arriba/abajo */
+}
 /*-------------*/
 /* FORM STYLES */
 /*-------------*/
