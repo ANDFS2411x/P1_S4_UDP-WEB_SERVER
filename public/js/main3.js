@@ -494,23 +494,22 @@ function updateTaxiVisibility(selectedTaxiId) {
     const infoPanelEl = document.querySelector('.info-grid');
     const seguirBtnEl = document.getElementById('seguirBtn');
   
-    // 1) Reset del panel
+    // Reset del panel
     infoPanelEl.innerHTML = '';
     infoPanelEl.style.display = 'grid';
     seguirBtnEl.style.display = 'none';
   
-    // 3) Mostrar marcadores / rutas y calcular bounds
+    // Mostrar marcadores / rutas y calcular bounds
     const bounds = new google.maps.LatLngBounds();
     Object.entries(appState.realTime.markers).forEach(([taxiId, marker]) => {
       const poly = appState.realTime.polylines[taxiId];
       const show = (selectedTaxiId === "0" || taxiId === selectedTaxiId);
-  
       marker.setMap(show ? appState.realTime.map : null);
       poly.setMap(show ? appState.realTime.map : null);
       if (show) bounds.extend(marker.getPosition());
     });
   
-    // 4) Ajustar vista
+    // Ajustar vista
     if (selectedTaxiId === "0") {
       appState.realTime.map.fitBounds(bounds);
     } else {
@@ -521,20 +520,18 @@ function updateTaxiVisibility(selectedTaxiId) {
       }
     }
   
-    // 5) Rellenar info: uno o todos
+    // Rellenar info: uno o todos
     const taxiIds = selectedTaxiId === "0"
       ? Object.keys(appState.realTime.markers)
       : [selectedTaxiId];
   
       taxiIds.forEach((id, idx) => {
-        if (idx > 0) {
+        if (selectedTaxiId === "0" && idx === 1) {
             const hr = document.createElement('hr');
             hr.className = 'taxi-divider';
             infoPanelEl.appendChild(hr);
         }
-        fetchTaxiInfo(id)
-          .then(info => {
-            // Crea seis <p> en orden
+        fetchTaxiInfo(id).then(info => {
             const entries = [
               ['Latitud',   info.lat.toFixed(6)],
               ['Longitud',  info.lng.toFixed(6)],
