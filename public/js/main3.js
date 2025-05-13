@@ -525,12 +525,8 @@ function updateTaxiVisibility(selectedTaxiId) {
       ? Object.keys(appState.realTime.markers)
       : [selectedTaxiId];
 
-      taxiIds.forEach((id,idx) => {
-        if (selectedTaxiId === "0" && idx === 1) {
-            const hr = document.createElement('hr');
-            hr.className = 'taxi-divider';
-            infoPanelEl.appendChild(hr);
-        }
+      taxiIds.forEach(id => {
+
         fetchTaxiInfo(id).then(info => {
             const entries = [
               ['Latitud',   info.lat.toFixed(6)],
