@@ -494,50 +494,44 @@ function updateTaxiVisibility(selectedTaxiId) {
     const infoPanelEl = document.querySelector('.info-grid');
     const seguirBtnEl = document.getElementById('seguirBtn');
   
-    // 1) Mostrar panel de info y limpiarlo
+    // 1) Reset del panel
+    infoPanelEl.innerHTML = '';
     infoPanelEl.style.display = 'grid';
-    //clearInfoPanel();
-    infoPanelEl.innerHTML = '';  
     seguirBtnEl.style.display = 'none';
   
-    // 3) Mostrar/ocultar marcadores y polilíneas, y calcular bounds
+    // 3) Mostrar marcadores / rutas y calcular bounds
     const bounds = new google.maps.LatLngBounds();
     Object.entries(appState.realTime.markers).forEach(([taxiId, marker]) => {
       const poly = appState.realTime.polylines[taxiId];
       const show = (selectedTaxiId === "0" || taxiId === selectedTaxiId);
-
+  
       marker.setMap(show ? appState.realTime.map : null);
       poly.setMap(show ? appState.realTime.map : null);
-  
-      if (show) {
-        bounds.extend(marker.getPosition());
-      }
+      if (show) bounds.extend(marker.getPosition());
     });
   
-    // Ajustar la vista del mapa
+    // 4) Ajustar vista
     if (selectedTaxiId === "0") {
-      // encuadra todos
       appState.realTime.map.fitBounds(bounds);
     } else {
-      // centra en el taxi seleccionado
-      const marker = appState.realTime.markers[selectedTaxiId];
-      if (marker) {
-        appState.realTime.map.panTo(marker.getPosition());
+      const m = appState.realTime.markers[selectedTaxiId];
+      if (m) {
+        appState.realTime.map.panTo(m.getPosition());
         appState.realTime.map.setZoom(14);
       }
     }
-
-    // Rellenar info
-  // Para “Todos”, queremos ambos taxis; si es uno, solo ese.
-    const taxiIds = (selectedTaxiId === "0")
-        ? Object.keys(appState.realTime.markers)
-        : [selectedTaxiId];
-    
+  
+    // 5) Rellenar info: uno o todos
+    const taxiIds = selectedTaxiId === "0"
+      ? Object.keys(appState.realTime.markers)
+      : [selectedTaxiId];
+  
     taxiIds.forEach(id => {
-        fetchTaxiInfo(id).then(info => {
-            const block = document.createElement('div');
-            block.className = 'info-block';
-            block.innerHTML = `
+      fetchTaxiInfo(id)
+        .then(info => {
+          const block = document.createElement('div');
+          block.className = 'info-block';
+          block.innerHTML = `
             <h4>Taxi ${info.ID_TAXI}</h4>
             <div><strong>Latitud:</strong> ${info.lat}</div>
             <div><strong>Longitud:</strong> ${info.lng}</div>
@@ -546,26 +540,59 @@ function updateTaxiVisibility(selectedTaxiId) {
             <div><strong>RPM:</strong> ${info.RPM}</div>
           `;
           infoPanelEl.appendChild(block);
-        }).catch(err => {
+        })
+        .catch(err => {
           console.error(`Error al cargar info del taxi ${id}:`, err);
         });
-});
-}
+    });
+  }
   
 
+/*function fetchTaxiInfo(taxiId) {
+    return fetch(`/api/taxi/${taxiId}`)
+      .then(r => {
+        if (!r.ok) throw new Error(`Taxi ${taxiId} no encontrado`);
+        return r.json();
+      })
+      .then(data => ({
+        ID_TAXI:  data.ID_TAXI,
+        lat:      data.LATITUDE,
+        lng:      data.LONGITUDE,
+        date:     data.DATE,
+        time:     data.TIME,
+        RPM:      data.RPM
+      }));
+  }*/
+  
+
+// Reemplaza tu función actual por esta:
 async function fetchTaxiInfo(taxiId) {
     try {
-        const data = await fetchData('/data');
-        if (!data || !Array.isArray(data)) return;
-        
-        const taxiData = data.find(item => item.ID_TAXI.toString() === taxiId);
-        if (taxiData) {
-            updateInfoPanel(taxiData);
-        }
+      const data = await fetchData('/data');
+      if (!Array.isArray(data)) {
+        throw new Error('Formato de datos incorrecto');
+      }
+  
+      const taxiData = data.find(item => item.ID_TAXI.toString() === taxiId);
+      if (!taxiData) {
+        throw new Error(`Taxi ${taxiId} no encontrado`);
+      }
+  
+      // Devuelvo un objeto con los campos normalizados
+      return {
+        ID_TAXI: taxiData.ID_TAXI,
+        lat:      taxiData.LATITUDE,
+        lng:      taxiData.LONGITUDE,
+        date:     taxiData.DATE,
+        time:     taxiData.TIME,
+        RPM:      taxiData.RPM || '0'
+      };
     } catch (error) {
-        console.error('Error obteniendo información del taxi:', error);
+      console.error('Error obteniendo información del taxi:', error);
+      throw error;  // para que el .catch() de quien llame lo capture
     }
-}
+  }
+  
 
 async function initMap() {
     try {
