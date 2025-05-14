@@ -810,9 +810,8 @@ function initHistoricalTracking() {
             loadHistoricalData();
         });
 
-        domElements.idSpinnerHist.addEventListener('change', () => {
-        // Mostrar/ocultar panel de info según taxi
-            domElements.timelineInfo.style.display = this.value === "0" ? 'flex' : 'flex';
+        domElements.idSpinnerHist.addEventListener('change', function() {
+            domElements.timelineInfo.style.display = 'flex';
             loadHistoricalData();
         });
 
@@ -863,7 +862,9 @@ function initHistoricalTracking() {
         observer.observe(domElements.clearPointBtn, { attributes: true, attributeFilter: ['disabled'] });
         
         // Configurar evento para botón de limpiar punto
-        domElements.clearPointBtn.addEventListener('click', clearSelectedPoint);*/
+        domElements.clearPointBtn.addEventListener('click', clearSelectedPoint);
+        
+        
         
         domElements.enablePointSelection.addEventListener('change', () => {
             const isEnabled = domElements.enablePointSelection.checked;
@@ -872,16 +873,26 @@ function initHistoricalTracking() {
             domElements.searchRadius.disabled   = !isEnabled;
             if (!isEnabled) clearSelectedPoint();
             loadHistoricalData();
+        });*/
+
+        domElements.enablePointSelection.addEventListener('change', () => {
+            const isOn = domElements.enablePointSelection.checked;
+            domElements.selectedLat.disabled  = !isOn;
+            domElements.selectedLng.disabled  = !isOn;
+            domElements.searchRadius.disabled = !isOn;
+            if (!isOn) clearSelectedPoint();
+            loadHistoricalData();
         });
+
         domElements.clearPointBtn.addEventListener('click', () => {
             clearSelectedPoint();
             loadHistoricalData();
         });
         
-        // Inicializar handler para cambio de radio
         initRadiusChangeHandler();
 
-         loadHistoricalData();
+        loadHistoricalData();
+
     } catch (error) {
         console.error('Error inicializando Historical Tracking:', error);
         showError(domElements.historicalError, error.message);
