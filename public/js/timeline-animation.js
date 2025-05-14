@@ -146,7 +146,7 @@ class TimelineAnimation {
         this.updateVisibility();
         
         // Establecer progreso inicial
-        this.setProgress(0);
+        //this.setProgress(0);
     }
 
     updateVisualization() {
