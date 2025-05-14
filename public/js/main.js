@@ -54,6 +54,8 @@ const domElements = {
     selectedLat: document.getElementById('selectedLat'),
     selectedLng: document.getElementById('selectedLng'),
     searchRadius: document.getElementById('searchRadius'),
+    radiusContainer: document.querySelector('.radius-container'),
+    radiusValue: document.getElementById('radiusValue'),
     clearPointBtn: document.getElementById('clearPointBtn'),
     pointSearchResults: document.getElementById('pointSearchResults'),
     resultsSummary: document.getElementById('resultsSummary'),
@@ -816,7 +818,9 @@ function initHistoricalTracking() {
     try {
         domElements.searchRadius.style.display   = 'none';
         domElements.clearPointBtn.style.display  = 'none';
-        
+        domElements.radiusContainer.style.display = 'none';
+        domElements.radiusValue.style.display = 'none';  
+
         // Configurar fechas por defecto (última hora)
         const now = new Date();
         const oneHourAgo = new Date(now.getTime() - (60 * 60 * 1000));
@@ -915,6 +919,8 @@ function initHistoricalTracking() {
             domElements.selectedLat.disabled  = !isOn;
             domElements.selectedLng.disabled  = !isOn;
             domElements.searchRadius.disabled = !isOn;
+            domElements.radiusContainer.style.display = on ? 'block' : 'none';
+            domElements.radiusValue.style.display = on ? 'block' : 'none';
             if (!isOn) clearSelectedPoint();
             loadHistoricalData();
         });
