@@ -731,6 +731,8 @@ function handleMapClick(event) {
     appState.historical.pointSelected = true;
     domElements.searchRadius.style.display   = '';
     domElements.clearPointBtn.style.display  = '';
+
+    loadHistoricalData();
 }
 
 function clearSelectedPoint() {
