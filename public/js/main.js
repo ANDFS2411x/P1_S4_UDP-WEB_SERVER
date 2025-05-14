@@ -771,7 +771,6 @@ function clearSelectedPoint() {
     }
     if (domElements.clearPointBtn) {
         domElements.clearPointBtn.style.display = 'none';
-        domElements.clearPointBtn.disabled = true;
     }
     if (domElements.radiusContainer) {
         domElements.radiusContainer.style.display = 'none';
