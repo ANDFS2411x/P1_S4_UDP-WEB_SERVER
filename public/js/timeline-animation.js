@@ -1,24 +1,16 @@
+/* Clase modificada TimelineAnimation */
 class TimelineAnimation {
     constructor(map) {
         this.map = map;
-        this.taxiData = {}; // Objeto para almacenar datos por taxiId
-        this.mode = 'route'; // 'route' o 'point'
-        this.progress = 0; // Progreso actual (0-100)
-        this.selectedTaxiId = "0"; // "0" para todos
-        
-        // Colores para taxis
-        this.taxiColors = {
-            "1": "#FF0000", // Rojo para taxi 1
-            "2": "#0000FF"  // Azul para taxi 2
-        };
-        
-        // Almacenar las polilíneas y marcadores por taxiId
+        this.taxiData = {};
+        this.mode = 'route';      // 'route' o 'point'
+        this.progress = 0;        // 0-100
+        this.selectedTaxiId = "0";
+        this.taxiColors = { "1": "#FF0000", "2": "#0000FF" };
         this.animationPaths = {};
         this.currentMarkers = {};
-        
-        // Información temporal
-        this.startTimestamp = null;
-        this.endTimestamp = null;
+        this.startTimestamp = Infinity;
+        this.endTimestamp = -Infinity;
     }
 
     setSelectedTaxiId(taxiId) {
@@ -30,156 +22,123 @@ class TimelineAnimation {
         this.mode = mode;
         this.updateVisibility();
     }
-    
-    // Método para convertir fecha y hora en timestamp
+
     getTimestamp(dateStr, timeStr) {
         if (!dateStr || !timeStr) return null;
-        
-        // Procesar la fecha que puede venir en formato ISO o regular
-        let formattedDate = dateStr;
-        if (dateStr.includes("T")) {
-            formattedDate = dateStr.split("T")[0];
-        }
-        
+        let formattedDate = dateStr.includes("T") ? dateStr.split("T")[0] : dateStr;
         return new Date(`${formattedDate} ${timeStr}`).getTime();
     }
-    
-    
-    // Método para actualizar la visibilidad según el taxi seleccionado
+
     updateVisibility() {
-        // Si solo se muestra un taxi específico
         if (this.selectedTaxiId !== "0") {
             Object.keys(this.animationPaths).forEach(taxiId => {
                 const isVisible = taxiId === this.selectedTaxiId;
-                console.log(`Taxi ${taxiId} visible: ${isVisible}`);
-
-                console.log(this.animationPaths[taxiId]);
-                // Actualizar la visibilidad de la polilínea y el marcador
-                if (this.animationPaths[taxiId]) {
-                    this.animationPaths[taxiId].setMap(isVisible ? this.map : null);
-                    this.animationPaths[taxiId].setVisible(isVisible ? this.visible: false);
-
-                }
-                console.log(this.currentMarkers[taxiId]);
-                // Actualizar la visibilidad del marcador
-                if (this.currentMarkers[taxiId]) {
-                    this.currentMarkers[taxiId].setMap(isVisible ? this.map : null);
-                    this.currentMarkers[taxiId].setVisible(isVisible ? this.visible: false);
-                }
+                // Polilínea
+                this.animationPaths[taxiId].setMap(isVisible ? this.map : null);
+                this.animationPaths[taxiId].setVisible(isVisible);
+                // Marcador
+                this.currentMarkers[taxiId].setMap(isVisible ? this.map : null);
+                this.currentMarkers[taxiId].setVisible(isVisible);
             });
         } else {
-            // Mostrar todos los taxis
             Object.keys(this.animationPaths).forEach(taxiId => {
-                if (this.animationPaths[taxiId]) {
-                    this.animationPaths[taxiId].setMap(this.map);
-                    this.animationPaths[taxiId].setVisible(true);
-                }
-                if (this.currentMarkers[taxiId]) {
-                    this.currentMarkers[taxiId].setMap(this.map);
-                    this.currentMarkers[taxiId].setVisible(true);
-                }
+                this.animationPaths[taxiId].setMap(this.map);
+                this.animationPaths[taxiId].setVisible(true);
+                this.currentMarkers[taxiId].setMap(this.map);
+                this.currentMarkers[taxiId].setVisible(true);
             });
         }
     }
 
     setPoints(pointsData, mode = 'route') {
-        // Limpiar datos anteriores
         this.clear();
-        
         this.mode = mode;
-        
-        // Organizar los puntos por taxiId
         this.taxiData = {};
         this.startTimestamp = Infinity;
         this.endTimestamp = -Infinity;
-        
+
+        // Organizar datos
         pointsData.forEach(point => {
             const taxiId = point.ID_TAXI.toString();
-            const timestamp = this.getTimestamp(point.date, point.time);
-            
+            const ts = this.getTimestamp(point.date, point.time);
             if (!this.taxiData[taxiId]) {
                 this.taxiData[taxiId] = [];
-                
-                // Crear la polilínea para este taxi
+                // Crear polilínea
                 this.animationPaths[taxiId] = new google.maps.Polyline({
                     geodesic: true,
-                    strokeColor: this.taxiColors[taxiId] || "#" + ((1 << 24) * Math.random() | 0).toString(16).padStart(6, "0"),
+                    strokeColor: this.taxiColors[taxiId] || '#'+Math.random().toString(16).slice(2,8),
                     strokeOpacity: 1.0,
                     strokeWeight: 4,
                     map: this.map
                 });
-                
-                // Crear el marcador para este taxi
+                // Crear marcador
                 this.currentMarkers[taxiId] = new google.maps.Marker({
                     map: this.map,
                     title: `Taxi ${taxiId}`,
                     icon: {
                         path: google.maps.SymbolPath.CIRCLE,
                         scale: 10,
-                        fillColor: this.taxiColors[taxiId] || "#" + ((1 << 24) * Math.random() | 0).toString(16).padStart(6, "0"),
+                        fillColor: this.taxiColors[taxiId] || '#'+Math.random().toString(16).slice(2,8),
                         fillOpacity: 1.0,
-                        strokeColor: "#FFFFFF",
+                        strokeColor: '#FFFFFF',
                         strokeWeight: 2
                     }
                 });
             }
-            
-            // Añadir punto con su timestamp
-            this.taxiData[taxiId].push({
-                ...point, 
-                timestamp: timestamp
-            });
-            
-            // Actualizar timestamps mínimo y máximo
-            if (timestamp) {
-                this.startTimestamp = Math.min(this.startTimestamp, timestamp);
-                this.endTimestamp = Math.max(this.endTimestamp, timestamp);
+            this.taxiData[taxiId].push({ ...point, timestamp: ts });
+            if (ts) {
+                this.startTimestamp = Math.min(this.startTimestamp, ts);
+                this.endTimestamp = Math.max(this.endTimestamp, ts);
             }
         });
-        
-        // Ordenar cada array de taxiData por timestamp
+
+        // Ordenar
+        Object.keys(this.taxiData).forEach(taxiId =>
+            this.taxiData[taxiId].sort((a, b) => a.timestamp - b.timestamp)
+        );
+
+        // Dibujar ruta completa
         Object.keys(this.taxiData).forEach(taxiId => {
-            this.taxiData[taxiId].sort((a, b) => a.timestamp - b.timestamp);
+            const coords = this.taxiData[taxiId].map(p => ({ lat: p.lat, lng: p.lng }));
+            this.animationPaths[taxiId].setPath(coords);
         });
-        
-        // Actualizar visibilidad inicial
+
+        // Visibilidad y punto inicial
         this.updateVisibility();
-        
-        // Establecer progreso inicial
         this.setProgress(0);
     }
 
     updateVisualization() {
+        // Si modo 'route', sólo mover marcadores
+        if (this.mode === 'route') {
+            Object.keys(this.taxiData).forEach(taxiId => {
+                const pts = this.taxiData[taxiId];
+                if (!pts.length) return;
+                const idx = Math.floor(pts.length * (this.progress / 100));
+                const p = pts[Math.min(idx, pts.length - 1)];
+                this.currentMarkers[taxiId].setPosition({ lat: p.lat, lng: p.lng });
+                this.currentMarkers[taxiId].setMap(this.map);
+            });
+            return;
+        }
+
+        // Modo 'point': ruta se actualiza según tiempo
         if (this.startTimestamp === Infinity || this.endTimestamp === -Infinity) return;
-        
-        // Calcular el timestamp actual basado en el progreso
-        const totalTimeSpan = this.endTimestamp - this.startTimestamp;
-        const currentTimestamp = this.startTimestamp + (totalTimeSpan * (this.progress / 100));
-        
-        // Para cada taxi, actualizar su visualización basada en el tiempo actual
+        const span = this.endTimestamp - this.startTimestamp;
+        const currentTs = this.startTimestamp + span * (this.progress / 100);
+
         Object.keys(this.taxiData).forEach(taxiId => {
-            const taxiPoints = this.taxiData[taxiId];
-            if (!taxiPoints || taxiPoints.length === 0) return;
-            
-            // Encontrar todos los puntos hasta el timestamp actual
-            const visiblePoints = taxiPoints.filter(p => p.timestamp <= currentTimestamp);
-            
-            if (visiblePoints.length === 0) {
-                // No hay puntos visibles aún para este taxi
+            const arr = this.taxiData[taxiId];
+            const visible = arr.filter(p => p.timestamp <= currentTs);
+            if (!visible.length) {
                 this.animationPaths[taxiId].setPath([]);
                 this.currentMarkers[taxiId].setMap(null);
                 return;
             }
-            
-            // Obtener el punto más reciente para el marcador
-            const lastPoint = visiblePoints[visiblePoints.length - 1];
-            
-            // Actualizar la polilínea con todos los puntos visibles
-            const pathCoords = visiblePoints.map(p => ({ lat: p.lat, lng: p.lng }));
+            const last = visible[visible.length - 1];
+            const pathCoords = visible.map(p => ({ lat: p.lat, lng: p.lng }));
             this.animationPaths[taxiId].setPath(pathCoords);
-            
-            // Actualizar posición del marcador
-            this.currentMarkers[taxiId].setPosition({ lat: lastPoint.lat, lng: lastPoint.lng });
+            this.currentMarkers[taxiId].setPosition({ lat: last.lat, lng: last.lng });
             this.currentMarkers[taxiId].setMap(this.map);
         });
     }
@@ -187,55 +146,60 @@ class TimelineAnimation {
     setProgress(progressPercent) {
         this.progress = progressPercent;
         this.updateVisualization();
-        
-        // Devolver información del punto actual en el tiempo
         return this.getCurrentTimeInfo();
     }
-    
+
     getCurrentTimeInfo() {
         if (this.startTimestamp === Infinity || this.endTimestamp === -Infinity) {
             return { timestamp: null };
         }
-        
-        // Calcular el timestamp actual
-        const totalTimeSpan = this.endTimestamp - this.startTimestamp;
-        const currentTimestamp = this.startTimestamp + (totalTimeSpan * (this.progress / 100));
-        
-        // Para el taxi seleccionado (o el primero si es "todos")
-        const taxiId = this.selectedTaxiId !== "0" ? this.selectedTaxiId : Object.keys(this.taxiData)[0];
-        const taxiPoints = this.taxiData[taxiId];
-        
-        if (!taxiPoints || taxiPoints.length === 0) {
-            return { timestamp: currentTimestamp };
+        const span = this.endTimestamp - this.startTimestamp;
+        const currentTs = this.startTimestamp + span * (this.progress / 100);
+        const taxiId = this.selectedTaxiId !== '0' ? this.selectedTaxiId : Object.keys(this.taxiData)[0];
+        const arr = this.taxiData[taxiId] || [];
+        if (!arr.length) return { timestamp: currentTs };
+        let closest = arr[0];
+        let diff = Math.abs(currentTs - closest.timestamp);
+        for (let p of arr) {
+            const d = Math.abs(currentTs - p.timestamp);
+            if (d < diff) { diff = d; closest = p; }
         }
-        
-        // Encontrar el punto más cercano al timestamp actual
-        let closestPoint = taxiPoints[0];
-        let minTimeDiff = Math.abs(currentTimestamp - closestPoint.timestamp);
-        
-        for (let i = 1; i < taxiPoints.length; i++) {
-            const timeDiff = Math.abs(currentTimestamp - taxiPoints[i].timestamp);
-            if (timeDiff < minTimeDiff) {
-                minTimeDiff = timeDiff;
-                closestPoint = taxiPoints[i];
-            }
-        }
-        
-        return {
-            ...closestPoint,
-            timestamp: currentTimestamp
-        };
+        return { ...closest, timestamp: currentTs };
     }
 
     clear() {
-        // Limpiar todas las polilíneas y marcadores
         Object.values(this.animationPaths).forEach(path => path.setPath([]));
         Object.values(this.currentMarkers).forEach(marker => marker.setMap(null));
-        
         this.animationPaths = {};
         this.currentMarkers = {};
         this.taxiData = {};
         this.startTimestamp = Infinity;
         this.endTimestamp = -Infinity;
     }
+}
+
+/* Configuración del slider tras la búsqueda */
+function configureSlider(pointsData, timelineAnimation) {
+    const slider = document.getElementById('timelineSlider');
+    const total = pointsData.length;
+    slider.min = 0;
+    slider.max = total - 1;
+    slider.step = 1;
+    slider.value = 0;
+    slider.style.backgroundSize = '0% 100%';
+    slider.oninput = e => {
+        const idx = parseInt(e.target.value);
+        const pct = Math.floor(100 * (idx / (total - 1)));
+        slider.style.backgroundSize = `${pct}% 100%`;
+        timelineAnimation.setProgress(pct);
+    };
+}
+
+/* Ejemplo de uso en el handler de búsqueda */
+function onFechaSearch(result) {
+    const puntos = result.data; // array con {ID_TAXI, date, time, lat, lng}
+    // Dibuja ruta completa y prepara animación
+    timelineAnimation.setPoints(puntos, 'route');
+    // Configura slider
+    configureSlider(puntos, timelineAnimation);
 }
