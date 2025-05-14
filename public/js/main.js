@@ -785,17 +785,12 @@ function initHistoricalTracking() {
         // Configurar fechas por defecto (última hora)
         const now = new Date();
         const oneHourAgo = new Date(now.getTime() - (60 * 60 * 1000));
-
-        // Obtener la fecha actual en formato compatible con input datetime-local
         const maxDateTime = formatDateTimeInput(now);
         
         domElements.startDate.value = formatDateTimeInput(oneHourAgo);
         domElements.endDate.value = formatDateTimeInput(now);
         domElements.startDate.max = maxDateTime;
         domElements.endDate.max = maxDateTime;
-
-       
-        // Restringir fecha de fin mínima a la fecha de inicio
         domElements.endDate.min = domElements.startDate.value;
 
         // Eventos para evitar selecciones inválidas
@@ -804,6 +799,7 @@ function initHistoricalTracking() {
                 domElements.endDate.value = domElements.startDate.value; // Ajusta automáticamente
             }
             domElements.endDate.min = domElements.startDate.value; // Restringe la fecha mínima de fin
+            loadHistoricalData();
         });
 
         domElements.endDate.addEventListener("change", function () {
@@ -811,13 +807,22 @@ function initHistoricalTracking() {
                 domElements.startDate.value = domElements.endDate.value; // Ajusta automáticamente
             }
             domElements.startDate.max = domElements.endDate.value; // Restringe la fecha máxima de inicio
+            loadHistoricalData();
         });
 
+        domElements.idSpinnerHist.addEventListener('change', () => {
+        // Mostrar/ocultar panel de info según taxi
+            domElements.timelineInfo.style.display = this.value === "0" ? 'flex' : 'flex';
+            loadHistoricalData();
+        });
+
+        domElements.loadHistory.style.display = 'none';
+
         // Configurar evento del botón de cargar historia
-        domElements.loadHistory.addEventListener('click', loadHistoricalData);
+        //domElements.loadHistory.addEventListener('click', loadHistoricalData);
 
         // Configurar eventos para selección de punto
-        domElements.enablePointSelection.addEventListener('change', function() {
+        /*domElements.enablePointSelection.addEventListener('change', function() {
             console.log(!domElements.clearPointBtn.disabled);
             console.log(domElements.enablePointSelection.checked);
             if (!domElements.clearPointBtn.disabled && domElements.enablePointSelection.checked){
@@ -858,10 +863,25 @@ function initHistoricalTracking() {
         observer.observe(domElements.clearPointBtn, { attributes: true, attributeFilter: ['disabled'] });
         
         // Configurar evento para botón de limpiar punto
-        domElements.clearPointBtn.addEventListener('click', clearSelectedPoint);
+        domElements.clearPointBtn.addEventListener('click', clearSelectedPoint);*/
+        
+        domElements.enablePointSelection.addEventListener('change', () => {
+            const isEnabled = domElements.enablePointSelection.checked;
+            domElements.selectedLat.disabled    = !isEnabled;
+            domElements.selectedLng.disabled    = !isEnabled;
+            domElements.searchRadius.disabled   = !isEnabled;
+            if (!isEnabled) clearSelectedPoint();
+            loadHistoricalData();
+        });
+        domElements.clearPointBtn.addEventListener('click', () => {
+            clearSelectedPoint();
+            loadHistoricalData();
+        });
         
         // Inicializar handler para cambio de radio
         initRadiusChangeHandler();
+
+         loadHistoricalData();
     } catch (error) {
         console.error('Error inicializando Historical Tracking:', error);
         showError(domElements.historicalError, error.message);
