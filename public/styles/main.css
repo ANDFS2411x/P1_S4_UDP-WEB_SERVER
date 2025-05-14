@@ -243,27 +243,35 @@ h2.panel-title {
 
 .info-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 15px;
     margin-bottom: 20px;
+    column-gap: 1rem;
+    row-gap: 0.5rem;
 }
 
 .info-grid.disabled {
     opacity: 0.6;
     pointer-events: none;
 }
-
-
-.info-panel p {
+.info-grid p {
     margin: 0;
     line-height: 1.4;
+}
+.info-grid strong {
+    font-weight: 600;
 }
 
 .info-panel strong {
     color: var(--text-accent);
     margin-right: 5px;
 }
-
+.taxi-divider {
+    grid-column: 1 / -1;        /* abarca ambas columnas */
+    border: none;
+    border-top: 1px solid #444; /* color a tu gusto */
+    margin: 0.75rem 0;          /* espacio arriba/abajo */
+}
 /*-------------*/
 /* FORM STYLES */
 /*-------------*/
