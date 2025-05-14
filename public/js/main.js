@@ -772,7 +772,6 @@ function clearSelectedPoint() {
     if (domElements.clearPointBtn) {
         domElements.clearPointBtn.style.display = 'none';
         domElements.clearPointBtn.disabled = true;
-
     }
     if (domElements.radiusContainer) {
         domElements.radiusContainer.style.display = 'none';
@@ -824,7 +823,6 @@ function initHistoricalTracking() {
         domElements.searchRadius.style.display   = 'none';
         domElements.clearPointBtn.style.display  = 'none';
         domElements.radiusContainer.style.display = 'none';
-        domElements.clearPointBtn.disabled       = true;
 
         // Configurar fechas por defecto (última hora)
         const now = new Date();
@@ -925,9 +923,6 @@ function initHistoricalTracking() {
             domElements.selectedLng.disabled  = !isOn;
             domElements.searchRadius.disabled = !isOn;
             domElements.radiusContainer.style.display = isOn ? 'block' : 'none';
-            domElements.clearPointBtn.style.display = isOn ? 'inline-block' : 'none';
-            domElements.clearPointBtn.disabled      = !isOn; 
-            
             if (!isOn) clearSelectedPoint();
             loadHistoricalData();
         });
