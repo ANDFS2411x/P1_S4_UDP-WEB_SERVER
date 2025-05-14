@@ -921,7 +921,7 @@ function initHistoricalTracking() {
             domElements.selectedLat.disabled  = !isOn;
             domElements.selectedLng.disabled  = !isOn;
             domElements.searchRadius.disabled = !isOn;
-            domElements.radiusContainer.style.display = isOn ? 'block' : 'none';s
+            domElements.radiusContainer.style.display = isOn ? 'block' : 'none';
             if (!isOn) clearSelectedPoint();
             loadHistoricalData();
         });
