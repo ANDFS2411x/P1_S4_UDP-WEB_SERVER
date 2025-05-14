@@ -731,7 +731,7 @@ function handleMapClick(event) {
     domElements.clearPointBtn.style.display  = '';
 }
 
-function clearSelectedPoint() {
+/*function clearSelectedPoint() {
     if (appState.historical.pointMarker) {
         appState.historical.pointMarker.setMap(null);
     }
@@ -747,6 +747,37 @@ function clearSelectedPoint() {
     
     // Ocultar resultados de búsqueda por punto
     domElements.pointSearchResults.style.display = 'none';
+}*/
+function clearSelectedPoint() {
+    // 1) Quitar marcador y círculo
+    if (appState.historical.pointMarker) {
+        appState.historical.pointMarker.setMap(null);
+        appState.historical.pointMarker = null;
+    }
+    if (appState.historical.pointCircle) {
+        appState.historical.pointCircle.setMap(null);
+        appState.historical.pointCircle = null;
+    }
+
+    // 2) Limpiar campos de lat/lng
+    if (domElements.selectedLat)  domElements.selectedLat.value = '';
+    if (domElements.selectedLng)  domElements.selectedLng.value = '';
+
+  // 3) Ocultar botón y control de radio
+    if (domElements.searchRadius) {
+        domElements.searchRadius.style.display = 'none';
+    }
+    if (domElements.clearPointBtn) {
+        domElements.clearPointBtn.style.display = 'none';
+    }
+
+  // 4) Ocultar resultados de búsqueda por punto
+    if (domElements.pointSearchResults) {
+        domElements.pointSearchResults.style.display = 'none';
+    }
+
+  // 5) Reset estado
+    appState.historical.pointSelected = false;
 }
 
 // Función para resaltar un punto en el mapa
