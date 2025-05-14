@@ -182,7 +182,7 @@ async function updateRealTimeData() {
 
             // Si este es el taxi seleccionado, actualizar panel de información
             if (appState.realTime.currentTaxiId === taxiId || appState.realTime.currentTaxiId === "0") {
-                // Si un taxi específico está seleccionado, mostrar sus datos
+                updateInfoPanel(appState.realTime.currentTaxiId);
                 if (appState.realTime.currentTaxiId !== "0") {
                     updateInfoPanel(taxiData);
                 }
@@ -195,13 +195,16 @@ async function updateRealTimeData() {
         });
 
         // Si están todos los taxis seleccionados, no mostrar información específica
-        if (appState.realTime.currentTaxiId === "0") {
+        /*if (appState.realTime.currentTaxiId === "0") {
             clearInfoPanel();
-        }
+        }*/
 
     } catch (error) {
         console.error('Error actualizando datos en tiempo real:', error);
     }
+
+    updateRealTimeData();  // llamada inmediata
+    setInterval(updateRealTimeData, config.updateInterval);
 }
 
 async function fetchData(endpoint) {
