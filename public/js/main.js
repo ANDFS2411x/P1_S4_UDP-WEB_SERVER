@@ -177,38 +177,7 @@ async function updateRealTimeData() {
             }
             appState.realTime.recorridos[taxiId].push(nuevaPosicion);
 
-
             // Actualizar polilínea
-            
-            // Si aún no existe la polyline ni el marcador “bola”, créalos y lánzala
-                if (!appState.realTime.polylines[taxiId]) {
-                // 1) crea la ruta
-                appState.realTime.polylines[taxiId] = new google.maps.Polyline({
-                    path: appState.realTime.recorridos[taxiId],
-                    geodesic: true,
-                    strokeColor: '#FF0000',
-                    strokeOpacity: 1.0,
-                    strokeWeight: 4,
-                    map: appState.realTime.map
-                });
-                // 2) crea la bolita
-                appState.realTime.markersDot = appState.realTime.markersDot || {};
-                appState.realTime.markersDot[taxiId] = new google.maps.Marker({
-                    position: appState.realTime.recorridos[taxiId][0],
-                    map: appState.realTime.map,
-                    icon: {
-                    path: google.maps.SymbolPath.CIRCLE,
-                    scale: 6,
-                    fillColor: '#0000FF',
-                    fillOpacity: 1,
-                    strokeColor: '#FFFFFF',
-                    strokeWeight: 2
-                    }
-                });
-                // 3) dispara la animación
-                animateRoute(appState.realTime.recorridos[taxiId], appState.realTime.markersDot[taxiId]);
-                }
-
             if (appState.realTime.polylines[taxiId]) {
                 appState.realTime.polylines[taxiId].setPath(appState.realTime.recorridos[taxiId]);
             }
@@ -1179,14 +1148,5 @@ function initApp() {
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
     setTimeout(initApp, 1);
 } else {
-    function animateRoute(recorrido, bola) {
-  let paso = 0;
-  (function animar() {
-    paso = (paso + 1) % recorrido.length;
-    bola.setPosition(recorrido[paso]);
-    setTimeout(animar, 200);
-  })();
-}
-
     document.addEventListener('DOMContentLoaded', initApp);
 }
