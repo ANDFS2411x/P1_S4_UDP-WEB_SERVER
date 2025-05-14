@@ -772,6 +772,9 @@ function clearSelectedPoint() {
     if (domElements.clearPointBtn) {
         domElements.clearPointBtn.style.display = 'none';
     }
+    if (domElements.radiusContainer) {
+        domElements.radiusContainer.style.display = 'none';
+    }
 
   // 4) Ocultar resultados de búsqueda por punto
     if (domElements.pointSearchResults) {
@@ -818,6 +821,7 @@ function initHistoricalTracking() {
     try {
         domElements.searchRadius.style.display   = 'none';
         domElements.clearPointBtn.style.display  = 'none';
+        domElements.radiusContainer.style.display = 'none';
 
         // Configurar fechas por defecto (última hora)
         const now = new Date();
@@ -917,6 +921,7 @@ function initHistoricalTracking() {
             domElements.selectedLat.disabled  = !isOn;
             domElements.selectedLng.disabled  = !isOn;
             domElements.searchRadius.disabled = !isOn;
+            domElements.radiusContainer.style.display = isOn ? 'block' : 'none';s
             if (!isOn) clearSelectedPoint();
             loadHistoricalData();
         });
