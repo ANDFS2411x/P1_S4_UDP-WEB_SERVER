@@ -54,6 +54,8 @@ const domElements = {
     selectedLat: document.getElementById('selectedLat'),
     selectedLng: document.getElementById('selectedLng'),
     searchRadius: document.getElementById('searchRadius'),
+    radiusContainer: document.querySelector('.radius-container'),
+    radiusValue: document.getElementById('radiusValue'),
     clearPointBtn: document.getElementById('clearPointBtn'),
     pointSearchResults: document.getElementById('pointSearchResults'),
     resultsSummary: document.getElementById('resultsSummary'),
@@ -182,7 +184,7 @@ async function updateRealTimeData() {
 
             // Si este es el taxi seleccionado, actualizar panel de información
             if (appState.realTime.currentTaxiId === taxiId || appState.realTime.currentTaxiId === "0") {
-                // Si un taxi específico está seleccionado, mostrar sus datos
+                updateInfoPanel(appState.realTime.currentTaxiId);
                 if (appState.realTime.currentTaxiId !== "0") {
                     updateInfoPanel(taxiData);
                 }
@@ -195,9 +197,9 @@ async function updateRealTimeData() {
         });
 
         // Si están todos los taxis seleccionados, no mostrar información específica
-        if (appState.realTime.currentTaxiId === "0") {
+        /*if (appState.realTime.currentTaxiId === "0") {
             clearInfoPanel();
-        }
+        }*/
 
     } catch (error) {
         console.error('Error actualizando datos en tiempo real:', error);
@@ -727,25 +729,46 @@ function handleMapClick(event) {
     
     // Actualizar estado y botones
     appState.historical.pointSelected = true;
-    domElements.clearPointBtn.disabled = false;
+    domElements.searchRadius.style.display   = '';
+    domElements.clearPointBtn.style.display  = '';
+
+    loadHistoricalData();
 }
 
 function clearSelectedPoint() {
+    // Quitar marcador y círculo
     if (appState.historical.pointMarker) {
         appState.historical.pointMarker.setMap(null);
+        appState.historical.pointMarker = null;
     }
-    
     if (appState.historical.pointCircle) {
         appState.historical.pointCircle.setMap(null);
+        appState.historical.pointCircle = null;
     }
-    
-    domElements.selectedLat.value = '';
-    domElements.selectedLng.value = '';
-    domElements.clearPointBtn.disabled = true;
+
+    // Limpiar campos de lat/lng
+    if (domElements.selectedLat)  domElements.selectedLat.value = '';
+    if (domElements.selectedLng)  domElements.selectedLng.value = '';
+
+  // Ocultar botón y control de radio
+    if (domElements.searchRadius) {
+        domElements.searchRadius.style.display = 'none';
+    }
+    if (domElements.clearPointBtn) {
+        domElements.clearPointBtn.style.display = 'none';
+
+    }
+    if (domElements.radiusContainer) {
+        domElements.radiusContainer.style.display = 'none';
+    }
+
+  // Ocultar resultados de búsqueda por punto
+    if (domElements.pointSearchResults) {
+        domElements.pointSearchResults.style.display = 'none';
+    }
+
+  //  Reset estado
     appState.historical.pointSelected = false;
-    
-    // Ocultar resultados de búsqueda por punto
-    domElements.pointSearchResults.style.display = 'none';
 }
 
 // Función para resaltar un punto en el mapa
@@ -782,20 +805,19 @@ function highlightPointOnMap(point) {
 
 function initHistoricalTracking() {
     try {
+        domElements.searchRadius.style.display   = 'none';
+        domElements.clearPointBtn.style.display  = 'none';
+        domElements.radiusContainer.style.display = 'none';
+
         // Configurar fechas por defecto (última hora)
         const now = new Date();
         const oneHourAgo = new Date(now.getTime() - (60 * 60 * 1000));
-
-        // Obtener la fecha actual en formato compatible con input datetime-local
         const maxDateTime = formatDateTimeInput(now);
         
         domElements.startDate.value = formatDateTimeInput(oneHourAgo);
         domElements.endDate.value = formatDateTimeInput(now);
         domElements.startDate.max = maxDateTime;
         domElements.endDate.max = maxDateTime;
-
-       
-        // Restringir fecha de fin mínima a la fecha de inicio
         domElements.endDate.min = domElements.startDate.value;
 
         // Eventos para evitar selecciones inválidas
@@ -804,6 +826,7 @@ function initHistoricalTracking() {
                 domElements.endDate.value = domElements.startDate.value; // Ajusta automáticamente
             }
             domElements.endDate.min = domElements.startDate.value; // Restringe la fecha mínima de fin
+            loadHistoricalData();
         });
 
         domElements.endDate.addEventListener("change", function () {
@@ -811,13 +834,21 @@ function initHistoricalTracking() {
                 domElements.startDate.value = domElements.endDate.value; // Ajusta automáticamente
             }
             domElements.startDate.max = domElements.endDate.value; // Restringe la fecha máxima de inicio
+            loadHistoricalData();
         });
 
+        domElements.idSpinnerHist.addEventListener('change', function() {
+            domElements.timelineInfo.style.display = 'flex';
+            loadHistoricalData();
+        });
+
+        domElements.loadHistory.style.display = 'none';
+
         // Configurar evento del botón de cargar historia
-        domElements.loadHistory.addEventListener('click', loadHistoricalData);
+        //domElements.loadHistory.addEventListener('click', loadHistoricalData);
 
         // Configurar eventos para selección de punto
-        domElements.enablePointSelection.addEventListener('change', function() {
+        /*domElements.enablePointSelection.addEventListener('change', function() {
             console.log(!domElements.clearPointBtn.disabled);
             console.log(domElements.enablePointSelection.checked);
             if (!domElements.clearPointBtn.disabled && domElements.enablePointSelection.checked){
@@ -860,8 +891,36 @@ function initHistoricalTracking() {
         // Configurar evento para botón de limpiar punto
         domElements.clearPointBtn.addEventListener('click', clearSelectedPoint);
         
-        // Inicializar handler para cambio de radio
+        
+        
+        domElements.enablePointSelection.addEventListener('change', () => {
+            const isEnabled = domElements.enablePointSelection.checked;
+            domElements.selectedLat.disabled    = !isEnabled;
+            domElements.selectedLng.disabled    = !isEnabled;
+            domElements.searchRadius.disabled   = !isEnabled;
+            if (!isEnabled) clearSelectedPoint();
+            loadHistoricalData();
+        });*/
+
+        domElements.enablePointSelection.addEventListener('change', () => {
+            const isOn = domElements.enablePointSelection.checked;
+            domElements.selectedLat.disabled  = !isOn;
+            domElements.selectedLng.disabled  = !isOn;
+            domElements.searchRadius.disabled = !isOn;
+            domElements.radiusContainer.style.display = isOn ? 'block' : 'none';
+            if (!isOn) clearSelectedPoint();
+            loadHistoricalData();
+        });
+
+        domElements.clearPointBtn.addEventListener('click', () => {
+            clearSelectedPoint();
+            loadHistoricalData();
+        });
+        
         initRadiusChangeHandler();
+
+        loadHistoricalData();
+
     } catch (error) {
         console.error('Error inicializando Historical Tracking:', error);
         showError(domElements.historicalError, error.message);
@@ -875,6 +934,7 @@ function initRadiusChangeHandler() {
             const radius = parseInt(this.value);
             appState.historical.pointCircle.setRadius(radius);
         }
+        loadHistoricalData();
     });
 }
 
