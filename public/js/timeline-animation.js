@@ -3,7 +3,7 @@ class TimelineAnimation {
         this.map = map;
         this.taxiData = {}; // Objeto para almacenar datos por taxiId
         this.mode = 'route'; // 'route' o 'point'
-        //this.progress = 0; // Progreso actual (0-100)
+        this.progress = 0; // Progreso actual (0-100)
         this.selectedTaxiId = "0"; // "0" para todos
         
         // Colores para taxis
@@ -146,7 +146,7 @@ class TimelineAnimation {
         this.updateVisibility();
         
         // Establecer progreso inicial
-        //this.setProgress(0);
+        this.setProgress(0);
     }
 
     updateVisualization() {
@@ -199,7 +199,7 @@ class TimelineAnimation {
         
         // Calcular el timestamp actual
         const totalTimeSpan = this.endTimestamp - this.startTimestamp;
-        const currentTimestamp = this.startTimestamp + (totalTimeSpan);
+        const currentTimestamp = this.startTimestamp + (totalTimeSpan * (this.progress));
         
         // Para el taxi seleccionado (o el primero si es "todos")
         const taxiId = this.selectedTaxiId !== "0" ? this.selectedTaxiId : Object.keys(this.taxiData)[0];
