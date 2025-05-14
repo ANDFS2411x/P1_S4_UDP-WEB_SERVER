@@ -444,7 +444,7 @@ function initHistoricalMapInstance() {
     domElements.idSpinnerHist.addEventListener('change', function() {
         const selectedTaxiId = this.value;
         if (selectedTaxiId === "0") {
-            domElements.timelineInfo.style.display = 'flex';
+            domElements.timelineInfo.style.display = 'none';
         } else {
             domElements.timelineInfo.style.display = 'flex';
         }
