@@ -202,8 +202,6 @@ async function updateRealTimeData() {
     } catch (error) {
         console.error('Error actualizando datos en tiempo real:', error);
     }
-    
-    setInterval(updateRealTimeData, config.updateInterval);
 }
 
 async function fetchData(endpoint) {
