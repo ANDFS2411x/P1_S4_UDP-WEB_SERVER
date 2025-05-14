@@ -184,13 +184,13 @@ class TimelineAnimation {
         });
     }
 
-    /*setProgress(progressPercent) {
+    setProgress(progressPercent) {
         this.progress = progressPercent;
         this.updateVisualization();
         
         // Devolver información del punto actual en el tiempo
         return this.getCurrentTimeInfo();
-    }*/
+    }
     
     getCurrentTimeInfo() {
         if (this.startTimestamp === Infinity || this.endTimestamp === -Infinity) {
