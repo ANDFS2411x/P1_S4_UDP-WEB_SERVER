@@ -728,6 +728,7 @@ function handleMapClick(event) {
     // Actualizar estado y botones
     appState.historical.pointSelected = true;
     domElements.clearPointBtn.disabled = false;
+    domElements.searchRadius.disabled = false;
 }
 
 function clearSelectedPoint() {
@@ -782,6 +783,9 @@ function highlightPointOnMap(point) {
 
 function initHistoricalTracking() {
     try {
+        domElements.searchRadius.disabled   = true;
+        domElements.clearPointBtn.disabled  = true;
+        
         // Configurar fechas por defecto (última hora)
         const now = new Date();
         const oneHourAgo = new Date(now.getTime() - (60 * 60 * 1000));
