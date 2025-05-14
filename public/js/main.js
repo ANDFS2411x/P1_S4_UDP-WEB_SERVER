@@ -502,17 +502,8 @@ function updateTimelineInfo(progress) {
             
             distanceInfo.textContent = `Distancia al punto: ${Math.round(distance)} m`;
             distanceInfo.style.display = 'block';
-
-            const nearbyPoints = findPointsNearby(
-                selectedPoint,
-                appState.historical.allPoints || [],
-            );
-
-            buildResultsTable(nearbyPoints);
-            domElements.pointSearchResults.style.display = 'block';
         } else {
             distanceInfo.style.display = 'none';
-            domElements.pointSearchResults.style.display = 'none';
         }
         
         // Centrar el mapa en la posición actual si hay coordenadas
@@ -588,8 +579,6 @@ async function loadHistoricalData() {
             RPM: item.RPM || '0',
             ID_TAXI: item.ID_TAXI || 'N/A'
         })).filter(coord => !isNaN(coord.lat) && !isNaN(coord.lng));
-
-        appState.historical.allPoints = allPoints;
 
         if (allPoints.length === 0) {
             throw new Error("No hay coordenadas válidas en los datos recibidos");
