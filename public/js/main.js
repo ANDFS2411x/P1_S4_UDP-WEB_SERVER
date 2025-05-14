@@ -516,7 +516,7 @@ function updateTimelineInfo(progress) {
     }
 }
 
-async function loadHistoricalData() {
+/*async function loadHistoricalData() {
     try {
         const startDate = domElements.startDate.value;
         const endDate = domElements.endDate.value;
@@ -663,6 +663,125 @@ async function loadHistoricalData() {
     } finally {
         showLoading(false);
     }
+}*/
+
+async function loadHistoricalData() {
+  try {
+    const startDate     = domElements.startDate.value;
+    const endDate       = domElements.endDate.value;
+
+    if (!startDate || !endDate) {
+      throw new Error("Debe seleccionar ambas fechas");
+    }
+
+    showLoading(true);
+    domElements.historicalError?.style.setProperty('display','none');
+
+    // Ocultar controles mientras cargamos
+    const timelineControls = document.getElementById('timelineControls');
+    if (timelineControls) timelineControls.style.display = 'none';
+
+    // Detener cualquier update real-time
+    stopRealTimeUpdates();
+
+    // Limpiar animación previa
+    if (appState.historical.timelineAnimation) {
+      appState.historical.timelineAnimation.clear();
+    }
+
+    // 1) Fetch de datos históricos
+    const url  = `${config.basePath}/historical-data?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`Error del servidor: ${resp.status}`);
+    const result = await resp.json();
+
+    if (!result?.success || !Array.isArray(result.data) || result.data.length === 0) {
+      throw new Error("No hay datos para el rango seleccionado");
+    }
+
+    // 2) Procesar coordenadas: todos los puntos RAW
+    const allPoints = result.data
+      .map(item => ({
+        lat: parseFloat(item.LATITUDE),
+        lng: parseFloat(item.LONGITUDE),
+        time: item.TIME,
+        date: item.DATE,
+        RPM: item.RPM || '0',
+        ID_TAXI: item.ID_TAXI || 'N/A'
+      }))
+      .filter(p => !isNaN(p.lat) && !isNaN(p.lng));
+
+    if (allPoints.length === 0) {
+      throw new Error("No hay coordenadas válidas en los datos recibidos");
+    }
+
+    // Guardamos en el estado para posibles usos posteriores
+    appState.historical.allPoints = allPoints;
+
+    // 3) Creamos/actualizamos la animación en modo “route”
+    if (!appState.historical.timelineAnimation) {
+      appState.historical.timelineAnimation = new TimelineAnimation(appState.historical.map);
+    }
+    const anim = appState.historical.timelineAnimation;
+    anim.setSelectedTaxiId("0");              // ignoramos selección de taxi
+    anim.setPoints(allPoints, 'route');       // ruta completa
+    anim.setMode('route');
+
+    // 4) Preparamos el slider para recorrer cada punto
+    if (timelineControls) {
+      const slider          = document.getElementById('timelineSlider');
+      const currentTimeInfo = document.getElementById('currentTimeInfo');
+      const rpmHist         = document.getElementById('rpmHist');
+      const distanceInfo    = document.getElementById('distanceInfo');
+
+      // Slider de 0 .. n-1
+      slider.min   = 0;
+      slider.max   = allPoints.length - 1;
+      slider.step  = 1;
+      slider.value = 0;
+      slider.style.backgroundSize = '0% 100%';
+
+      // Al mover el slider, sólo movemos el marcador y actualizamos info
+      slider.addEventListener('input', function() {
+        const idx = parseInt(this.value, 10);
+        const pct = allPoints.length > 1
+          ? (idx / (allPoints.length - 1)) * 100
+          : 0;
+        this.style.backgroundSize = `${pct}% 100%`;
+
+        // 4.1) Posición actual
+        const pt = allPoints[idx];
+        const marker = anim.currentMarkers["0"] || anim.currentMarkers[pt.ID_TAXI];
+        marker.setPosition({ lat: pt.lat, lng: pt.lng });
+        marker.setMap(appState.historical.map);
+
+        // 4.2) Info textual
+        const dt = new Date(`${pt.date} ${pt.time}`);
+        currentTimeInfo.textContent = `${dt.toLocaleDateString()} ${dt.toLocaleTimeString()}`;
+        rpmHist.textContent         = pt.RPM;
+
+        // No hay distancia porque no filtramos por punto
+        distanceInfo.style.display = 'none';
+      });
+
+      // Disparar posición inicial
+      slider.dispatchEvent(new Event('input'));
+
+      // Mostrar controles
+      timelineControls.style.display = 'block';
+    }
+
+    // 5) Ajustar vista para que se vea toda la ruta
+    const bounds = new google.maps.LatLngBounds();
+    allPoints.forEach(p => bounds.extend({ lat: p.lat, lng: p.lng }));
+    appState.historical.map.fitBounds(bounds);
+
+  } catch (err) {
+    console.error('Error cargando datos históricos:', err);
+    domElements.historicalError && showError(domElements.historicalError, err.message);
+  } finally {
+    showLoading(false);
+  }
 }
 
 function handleMapClick(event) {
