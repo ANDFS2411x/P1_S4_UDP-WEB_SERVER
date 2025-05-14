@@ -512,7 +512,7 @@ function updateTimelineInfo(progress) {
             domElements.pointSearchResults.style.display = 'block';
         } else {
             distanceInfo.style.display = 'none';
-             domElements.pointSearchResults.style.display = 'none';
+            domElements.pointSearchResults.style.display = 'none';
         }
         
         // Centrar el mapa en la posición actual si hay coordenadas
