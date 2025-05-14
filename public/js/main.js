@@ -818,8 +818,8 @@ function initHistoricalTracking() {
     try {
         domElements.searchRadius.style.display   = 'none';
         domElements.clearPointBtn.style.display  = 'none';
-        domElements.radiusContainer.style.display = 'none';
-        domElements.radiusValue.style.display = 'none';  
+        domElements.radiusContainer.style.display = 'none';  
+        domElements.radiusValue.style.display = 'none';
 
         // Configurar fechas por defecto (última hora)
         const now = new Date();
@@ -919,8 +919,8 @@ function initHistoricalTracking() {
             domElements.selectedLat.disabled  = !isOn;
             domElements.selectedLng.disabled  = !isOn;
             domElements.searchRadius.disabled = !isOn;
-            domElements.radiusContainer.style.display = on ? 'block' : 'none';
-            domElements.radiusValue.style.display = on ? 'block' : 'none';
+            domElements.radiusContainer.style.display = !isOn;
+            domElements.radiusValue.style.display = !isOn;
             if (!isOn) clearSelectedPoint();
             loadHistoricalData();
         });
