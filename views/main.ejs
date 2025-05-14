@@ -4,102 +4,166 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="titulo">Proyecto 2 <%= title %></title>
+    <title id="titulo">SnapMap ~ <%= title %></title>
     <link rel="stylesheet" id="themeStyles">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" id="icono"/>
+    <!-- Precargar el script de Google Maps -->
+    <link rel="preconnect" href="https://maps.googleapis.com">
+    <link rel="preconnect" href="https://maps.gstatic.com">
 </head>
 
 <body>
-    <!-- 🔹 Navbar -->
-    <div class="navbar">
-        <a href="#" id="realTimeBtn" class="active">Real Time</a>
-        <a href="#" id="historicalBtn">Historical</a>
-    </div>
-
-    <!-- 🔹 Sección "Real Time" -->
-    <div id="realTime" class="section active">        
-        <!-- Map is now first for visual priority -->
-        <div id="realTimeMapContainer" class="mapContainer">
-            <div id="realTimeMap" class="map">Cargando mapa...</div>
-            <div id="realTimeLoadingMessage" class="loadingMessage" style="display: none;">Cargando datos...</div>
+    <!-- Encabezado con logo y título del proyecto -->
+    <header class="main-header">
+        <div id="brand">
+            <a id="btn-logo">
+                <img alt="Project logo" class="logo" id="logo">
+            </a>
+            <h1 class="project-title">SnapMap</h1>
         </div>
-        
-        <!-- Panel de información -->
-        <div class="info-panel">
-            <p><strong>Latitud:</strong> <span id="latitud">N/A</span></p>
-            <p><strong>Longitud:</strong> <span id="longitud">N/A</span></p>
-            <p><strong>Fecha:</strong> <span id="fecha">N/A</span></p>
-            <p><strong>Hora:</strong> <span id="tiempo">N/A</span></p>
+        <nav id="navbar">
+            <a href="#" id="realTimeBtn" class="nav-link active">Tiempo Real</a>
+            <a href="#" id="historicalBtn" class="nav-link">Historicos</a>
+        </nav>
+        <div id="about-div">
+            <a id="about" class="about-link">Sobre Nosotros</a>
         </div>
+    </header>
 
-        <button id="seguirBtn" class="action-button">Seguir Taxi</button>
-        <div id="realTimeError" class="error-message"></div>
-    </div>
-
-    <!-- 🔹 Sección "Historical" -->
-    <div id="historical" class="section">        
-        <!-- Map first for visual priority -->
-        <div id="historicalMapContainer" class="mapContainer">
-            <div id="historicalMap" class="map">Seleccione un rango de fechas y haga clic en "Cargar Trayectoria"</div>
-            <div id="historicalLoadingMessage" class="loadingMessage" style="display: none;">Cargando datos históricos...</div>
-        </div>
-
-        <div class="filter-form">
-            <div class="form-group">
-                <label for="startDate">Fecha y hora inicial:</label>
-                <input type="datetime-local" id="startDate">
-            </div>
-
-            <div class="form-group">
-                <label for="endDate">Fecha y hora final:</label>
-                <input type="datetime-local" id="endDate">
-                <script>
-                    document.getElementById("fecha").max = new Date().toISOString().split("T")[0];
-                </script>
-            </div>
-
-            <div id="pointSelectionContainer" class="point-selection-container">
-                <div class="checkbox-container">
-                    <input type="checkbox" id="enablePointSelection">
-                    <label for="enablePointSelection">Seleccionar punto en el mapa</label>
-                    <span class="helper-text">(Haz clic en el mapa para seleccionar un punto)</span>
-                </div>
-                
-                <div class="coordinates-container">
-                    <div class="coord-group">
-                        <label for="selectedLat">Latitud:</label>
-                        <input type="text" id="selectedLat" disabled>
-                    </div>
-                    <div class="coord-group">
-                        <label for="selectedLng">Longitud:</label>
-                        <input type="text" id="selectedLng" disabled>
+    <main class="content-container">
+        <!-- 🔹 Sección "Real Time" -->
+        <div id="realTime" class="section active">        
+            <div class="dashboard-layout">
+                <!-- Map container with improved layout -->
+                <div id="realTimeMapContainer" class="mapContainer">
+                    <div id="realTimeMap" class="map">Cargando mapa...</div>
+                    <div id="realTimeLoadingMessage" class="loadingMessage" style="display: none;">
+                        <span>Cargando datos...</span>
                     </div>
                 </div>
                 
-                <div class="radius-container">
-                    <label for="searchRadius">Radio de búsqueda (metros):</label>
-                    <input type="number" id="searchRadius" min="10" max="1000" value="50">
+                <!-- Side panel for information -->
+                <div class="side-panel">
+                    <div class="info-panel">
+                        <h2 class="panel-title">Información en tiempo real</h2>
+                        <div id="idSpinnerRealDiv">
+                            <label for="idSpinnerReal">Seleccionar taxi:</label>
+                            <select id="idSpinnerReal" name="idReal" class="select-dropdown">
+                                <option value="0" selected>Todos</option>
+                                <option value="1">Taxi 1</option>
+                                <option value="2">Taxi 2</option>
+                              </select>
+                        </div>
+                        <div class="info-grid">
+                            <p><strong>Latitud:</strong> <span id="latitud">N/A</span></p>
+                            <p><strong>Longitud:</strong> <span id="longitud">N/A</span></p>
+                            <p><strong>Fecha:</strong> <span id="fecha">N/A</span></p>
+                            <p><strong>Hora:</strong> <span id="tiempo">N/A</span></p>
+                            <p><strong>RPM:</strong> <span id="rpm"></span></p>
+                            <p><strong>Taxi ID:</strong> <span id="idTaxi">N/A</span></p>
+                        </div>
+                        <hr class="taxi-divider">
+                        <button id="seguirBtn" class="action-button">Seguir Taxi</button>
+                    </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- 🔹 Sección "Historical" -->
+        <div id="historical" class="section">
+            <div class="dashboard-layout">
+                <!-- Column 1: Map container & Timeline below it -->
+                <div class="map-timeline-container">
+                    <div id="historicalMapContainer" class="mapContainer">
+                        <div id="historicalMap" class="map">Seleccione un rango de fechas y haga clic en "Cargar Trayectoria"</div>
+                        <div id="historicalLoadingMessage" class="loadingMessage" style="display: none;">
+                            <span>Cargando datos históricos...</span>
+                        </div>
+                    </div>
+
+                    <div id="historicalError" class="error-message"></div>
+                    
+                    <!-- Timeline controls directly below map -->
+                    <div id="timelineControls" class="timeline-controls" style="display: none;">
+                        <div class="timeline-header">
+                            <h3>Línea de tiempo</h3>
+                        </div>
+                        <input type="range" id="timelineSlider" min="0" max="100" value="0" class="timeline-slider">
+                        <div id="timeline-info" class="timeline-info">
+                            <span id="currentTimeInfo">--:--:--</span>
+                            <span id="rpmHist">-</span>
+                            <span id="distanceInfo">Distancia al punto: -- m</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="historicalError" class="error-message"></div>
                 
-                <button id="clearPointBtn" class="secondary-button" disabled>Borrar punto</button>
-            </div>
+                <!-- Column 2: Side panel for filters and controls -->
+                <div class="side-panel">
+                    <div class="filter-form">
+                        <h2 class="panel-title">Filtros de búsqueda</h2>
+                        
+                        <div class="form-group">
+                            <label for="startDate">Fecha y hora inicial:</label>
+                            <input type="datetime-local" id="startDate">
+                        </div>
 
-            <button id="loadHistory" class="action-button">Cargar Trayectoria</button>
-        </div>
+                        <div class="form-group">
+                            <label for="endDate">Fecha y hora final:</label>
+                            <input type="datetime-local" id="endDate">
+                        </div>
 
-        <div id="historicalError" class="error-message"></div>
-        
-        <!-- Contenedor para resultados de búsqueda por punto -->
-        <div id="pointSearchResults" class="results-container">
-            <h3>Resultados de búsqueda por punto</h3>
-            <div class="results-summary">
-                <p id="resultsSummary">Selecciona un punto en el mapa y carga la trayectoria para ver cuándo el taxi pasó por esa ubicación.</p>
-            </div>
-            <div id="resultsTable" class="results-table">
-                <!-- Aquí se cargarán dinámicamente los resultados -->
+                        <div class="form-group">
+                            <label for="idSpinnerHist">Seleccionar taxi:</label>
+                            <select id="idSpinnerHist" name="idHist" class="select-dropdown">
+                                <option value="0" selected>Todos</option>
+                                <option value="1">Taxi 1</option>
+                                <option value="2">Taxi 2</option>
+                            </select>
+                        </div>
+
+                        <div id="pointSelectionContainer" class="point-selection-container">
+                            <div class="checkbox-container">
+                                <input type="checkbox" id="enablePointSelection">
+                                <label class="white" for="enablePointSelection">Seleccionar punto en el mapa</label>
+                                <span class="helper-text">(Haz clic en el mapa para seleccionar un punto)</span>
+                            </div>
+                            
+                            <div class="coordinates-container">
+                                <div class="coord-group">
+                                    <label for="selectedLat">Latitud:</label>
+                                    <input type="text" id="selectedLat" disabled>
+                                </div>
+                                <div class="coord-group">
+                                    <label for="selectedLng">Longitud:</label>
+                                    <input type="text" id="selectedLng" disabled>
+                                </div>
+                            </div>
+
+                            <div class="radius-container">
+                                <label for="searchRadius">Radio de búsqueda (metros): <span id="radius-value"></span></label>
+                                <input type="range" id="searchRadius" min="100" max="2000" value="50" step="10">
+                            </div>
+                            
+                            <script>
+                                const slider = document.getElementById('searchRadius');
+                                const radiusDisplay = document.getElementById('radius-value');
+                            
+                                slider.addEventListener('input', () => {
+                                    radiusDisplay.textContent = slider.value;
+                                });
+                            </script>
+
+                            <div class="button-group">
+                                <button id="clearPointBtn" class="secondary-button" disabled>Borrar punto</button>
+                                <button id="loadHistory" class="action-button">Cargar Trayectoria</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
+    </main>
     
     <!-- Scripts loading -->
     <script>
@@ -107,10 +171,28 @@
         document.getElementById('themeStyles').href = isTesting
             ? '/test/styles/main.css'
             : '/styles/main.css';
-        // Create a new script element
-        const script = document.createElement('script');
-        script.src = isTesting ? '/test/js/main.js' : '/js/main.js';
-        document.body.appendChild(script);
+
+        document.getElementById('btn-logo').href = isTesting
+            ? '/test/'
+            : '/';
+        const logo = document.getElementById('logo');
+        logo.src = isTesting
+            ? '/test/images/logo.png'
+            : '/images/logo.png';
+
+        const icono = document.getElementById('icono');
+        icono.href = isTesting
+            ? '/test/images/favicon.ico'
+            : '/images/favicon.ico';        
+
+        document.getElementById('about').href = isTesting
+            ? '/test/aboutUs'
+            : '/aboutUs';
     </script>
+    
+    <script src="js/timeline-animation.js"></script>
+    <script defer src="js/main.js"></script> 
+
+    <!--<script type="module" src="js/main2.js"></script> -->
 </body>
 </html>

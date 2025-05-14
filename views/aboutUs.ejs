@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="titulo">SnapMap ~ <%= title %></title>
+    <link rel="stylesheet" id="themeStyles">
+    <link rel="icon" type="image/x-icon" id="icono"/>
+    <style>
+
+        /* Contenedor principal */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto; /* esto centra el contenido */
+            padding: 0 30px; /* espaciado lateral */
+            border-radius: 15px;
+            background-color: #1e1e2e;
+        }
+
+        /* Sección About Us */
+        .about-us {
+            margin-bottom: 20px;
+        }
+
+        .about-us h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+            font-size: 2.5rem;
+        }
+
+        .about-us-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            background-color: #1e1e2e;
+
+        }
+
+        .about-us-content {
+            background-color: #2a2a40;
+            color: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            text-align: justify;
+        }        
+
+        .about-us-content h2 {
+            margin-top: 0;
+            color: #89a4ff;
+        }
+
+        /* Sección Team Members */
+        .team {
+            margin-top: 20px;
+            padding-top: 30px;
+        }
+
+        .team h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+            font-size: 2.5rem;
+        }
+
+        .team-members {
+            display: grid;
+            grid-template-rows: auto auto auto;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 25px;
+            background-color: #1e1e2e;
+            border-radius: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .member {
+            background-color: #2a2a40;
+            padding: 20px;
+            text-align: center;
+            border-radius: 12px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .member:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .member h3 {
+            margin-top: 0;
+            font-size: 1.25rem;
+            color: #6878e1;
+        }
+
+        .member p {
+            margin-bottom: 0;
+            opacity: 0.9;
+            color: white;
+        }
+
+        .bio {
+            font-size: 0.95rem;
+            color: #cfcfd6;
+            margin-top: 10px;
+            line-height: 1.4;
+        }
+        .member-photo {
+            width: 100%;
+            height: auto;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        } 
+
+        /* El quinto miembro centrado en la tercera fila */
+        .center {
+            grid-column: 1 / span 2; /* Ocupa las dos columnas */
+            justify-self: center;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        /* Media query para dispositivos móviles */
+        @media screen and (max-width: 768px) {
+            .about-us-container {
+                grid-template-columns: 1fr; /* Una columna en pantallas pequeñas */
+            }
+            
+            .team-members {
+                grid-template-columns: 1fr; /* Una columna en pantallas pequeñas */
+            }
+            
+            .center {
+                grid-column: 1; /* Ajusta para ocupar una sola columna en móvil */
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="main-header">
+        <div id="brand">
+            <a id="btn-logo">
+                <img alt="Project logo" class="logo" id="logo">
+            </a>
+            <h1 class="project-title">SnapMap</h1>
+        </div>
+
+        <div id="home-div">
+            <a href="/ " id="home" class="nav-link">Inicio</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Contenedor principal con border-radius -->
+        
+        <!-- Sección About Us -->
+        <div class="about-us">
+            <h1>Sobre Nosotros</h1>
+            <div class="about-us-container">
+                <!-- Contenedor para las 3 columnas -->
+                <div class="about-us-content">
+                    <h2>Qué es SnapMap</h2>
+                    <p>SnapMap es una innovadora aplicación de seguimiento de taxis en tiempo real, 
+                        diseñada para mejorar la experiencia de los usuarios al proporcionar información precisa 
+                        y actualizada sobre la ubicación de los vehículos. Con un enfoque en la usabilidad y 
+                        la eficiencia, SnapMap permite a los usuarios rastrear taxis en su área, 
+                        asegurando un servicio más rápido y confiable.</p>
+                </div>
+
+                <div class="about-us-content">
+                    <h2>Nuestra Misión</h2>
+                    <p>Nuestra misión es transformar la forma en que las personas interactúan con el transporte público, 
+                        ofreciendo una solución tecnológica que optimiza el tiempo de espera y mejora la seguridad de los pasajeros.
+                        Con un equipo apasionado y comprometido, SnapMap está dedicado a brindar un servicio excepcional 
+                        y a contribuir al desarrollo de ciudades más inteligentes y conectadas.</p>
+                </div>
+
+                <div class="about-us-content">
+                    <h2>Nuestra Visión</h2>
+                    <p>En SnapMap, visualizamos un futuro donde la movilidad urbana sea más eficiente y accesible para todos. 
+                        Creemos que la tecnología puede ser un catalizador para mejorar la calidad de vida en las ciudades, 
+                        facilitando el acceso al transporte público y reduciendo la congestión del tráfico. 
+                        Nuestro objetivo es ser líderes en soluciones de movilidad inteligente, 
+                        impulsando la innovación y la sostenibilidad en cada paso del camino.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección "Equipo" -->
+        <div id="members" class="team">
+            <h1>Conoce al Equipo</h1>
+            <div class="team-members">
+                <div class="member">
+                    <img src="/images/luciana.jpeg" alt="Luciana De La Rosa" class="member-photo">
+                    <h3>Luciana De La Rosa</h3>
+                    <p>Diseñadora</p>
+                    <p class="bio">Experta en UI/UX y animaciones web avanzadas con CSS y JavaScript.</p>
+                </div>
+                <div class="member">
+                    <img src="/images/gabriela.jpeg" alt="Gabriela Becerra" class="member-photo">
+                    <h3>Gabriela Becerra</h3>
+                    <p>Desarrolladora Frontend</p>
+                    <p class="bio">Especialista en React con experiencia en diseño de interfaces interactivas.</p>
+                </div>
+                <div class="member">
+                    <img src="/images/andrew.jpeg" alt="Andrés Narvaez" class="member-photo">
+                    <h3>Andrés Narvaez</h3>
+                    <p>Desarrollladore Backend</p>
+                    <p class="bio">Desarrollador enfocado en optimización y rendimiento de aplicaciones web.</p>
+                </div>
+                <div class="member">
+                    <img src="/images/andy.png" alt="Andrés Fabregas" class="member-photo">
+                    <h3>Andrés Fabregas</h3>
+                    <p>Desarrollador de Operaciones</p>
+                    <p class="bio">Especialista en integraciones con APIs y manejo de datos en tiempo real.</p>
+                </div>
+                <div class="member center">
+                    <img src="/images/ali.jpeg" alt="Ali Rada" class="member-photo">
+                    <h3>Ali Rada</h3>
+                    <p>Master en SCRUM</p>
+                    <p class="bio">Desarrollador con experiencia en visualización de datos y mapas interactivos.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts loading -->
+    <script>
+        const isTesting = window.location.pathname.startsWith('/test');
+        document.getElementById('themeStyles').href = isTesting
+            ? '/test/styles/main.css'
+            : '/styles/main.css';
+
+        document.getElementById('btn-logo').href = isTesting
+            ? '/test/'
+            : '/';
+        const logo = document.getElementById('logo');
+        logo.src = isTesting
+            ? '/test/images/logo.png'
+            : '/images/logo.png';  
+            
+        const icono = document.getElementById('icono');
+        icono.href = isTesting
+            ? '/test/images/favicon.ico'
+            : '/images/favicon.ico'; 
+
+        document.getElementById('about').href = isTesting
+            ? '/test/aboutUs'
+            : '/aboutUs';
+    </script>
+</body>
+</html>

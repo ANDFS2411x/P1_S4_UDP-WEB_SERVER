@@ -28,6 +28,7 @@ console.log(`path: ${basePath}`);
 app.use(cors());
 
 app.set('view engine', 'ejs');
+console.log(__dirname)
 app.set('views', path.join(__dirname, 'views'));
 
 /* ------------------- 🔴 CONFIGURAMOS LA CONEXIÓN A LA BASE DE DATOS ------------------- */
@@ -64,29 +65,43 @@ app.get("/api-key", (req, res) => {
 /* ------------------- 🔧 RUTA PARA OBTENER LOS DATOS DE LA TABLA REGISTROS ------------------- */
 // Cuando alguien visite /data, le damos el último registro guardado en la base de datos
 app.get("/data", (req, res) => {
-    // Consulta SQL para traer el último registro de la tabla "registros"
-    const query = "SELECT * FROM registros ORDER BY DATE DESC, TIME DESC LIMIT 1";
-    // Hacemos la consulta a la base de datos
-    db.query(query, (err, result) => {
-        if (err) {
-            // ❌ Si hay un error en la consulta, lo mostramos
-            console.error("❌ Error en la consulta:", err);
-            return res.status(500).json({ error: "Error en la consulta" });
-        }
-        // Si no hay resultados, mandamos un mensaje
-        if (result.length === 0) {
-            return res.status(404).json({ error: "No hay registros disponibles" });
-        }
-        // ✅ Si todo sale bien, enviamos el primer (y único) registro encontrado
-        res.json(result[0]);
+    const query = `
+      SELECT r1.ID_TAXI,
+             r1.LATITUDE,
+             r1.LONGITUDE,
+             r1.DATE,
+             r1.TIME,
+             r1.RPM
+      FROM registros r1
+      JOIN (
+        SELECT
+          ID_TAXI,
+          MAX(CONCAT(DATE, ' ', TIME)) AS max_dt
+        FROM registros
+        GROUP BY ID_TAXI
+      ) grp
+        ON r1.ID_TAXI = grp.ID_TAXI
+       AND CONCAT(r1.DATE, ' ', r1.TIME) = grp.max_dt;
+    `;
+    db.query(query, (err, results) => {
+      if (err) {
+        console.error("❌ Error en la consulta:", err);
+        return res.status(500).json({ error: "Error en la consulta" });
+      }
+      if (results.length === 0) {
+        return res.status(404).json({ error: "No hay registros disponibles" });
+      }
+      // Devuelve directamente un array de objetos
+      res.json(results);
     });
-});
+  });
 
 /* ------------------- 🔧 RUTA PARA DATOS HISTÓRICOS ------------------- */
 app.get("/historical-data", (req, res) => {
-    const { startDate, endDate } = req.query;
+    const { startDate, endDate, taxiId } = req.query;
     console.log("StartDate recibido:", startDate);
     console.log("EndDate recibido:", endDate);
+    console.log("TaxiId recibido:", taxiId);
 
     if (!startDate || !endDate) {
         return res.status(400).json({ 
@@ -96,16 +111,18 @@ app.get("/historical-data", (req, res) => {
         });
     }
 
-    const query = `
+    let query = `
         SELECT * FROM registros 
-        WHERE CONCAT(DATE, ' ', TIME) BETWEEN ? AND ?
-        ORDER BY DATE ASC, TIME ASC
-    `;
-
+        WHERE CONCAT(DATE, ' ', TIME) BETWEEN ? AND ?`;
     const params = [
         startDate.replace('T', ' ') + ':00',  // Formato: 'YYYY-MM-DD HH:MM:00'
         endDate.replace('T', ' ') + ':00'
     ];
+    if (taxiId && taxiId !== "0") {
+        query += " AND ID_TAXI = ?";
+        params.push(taxiId);
+    }
+    query += " ORDER BY DATE ASC, TIME ASC";
 
     console.log("Query ejecutado:", query.replace(/\?/g, (_, i) => params[i]));
 
@@ -140,9 +157,14 @@ app.get("/historical-data", (req, res) => {
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+
 app.get('/', (req, res) => {
     res.render('main', { title: process.env.PAGE_TITLE, path: basePath });
 });
+
+app.get('/aboutUs', (req, res) => {
+    res.render('aboutUs', { title: process.env.PAGE_TITLE, path: basePath });
+  });
 
 /* ------------------- 🚀 INICIAMOS EL SERVIDOR ------------------- */
 // Arrancamos el servidor en el puerto definido y en cualquier IP ('0.0.0.0')
