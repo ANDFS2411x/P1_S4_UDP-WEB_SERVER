@@ -727,8 +727,8 @@ function handleMapClick(event) {
     
     // Actualizar estado y botones
     appState.historical.pointSelected = true;
-    domElements.clearPointBtn.disabled = false;
-    domElements.searchRadius.disabled = false;
+    domElements.searchRadius.style.display   = '';
+    domElements.clearPointBtn.style.display  = '';
 }
 
 function clearSelectedPoint() {
@@ -783,8 +783,8 @@ function highlightPointOnMap(point) {
 
 function initHistoricalTracking() {
     try {
-        domElements.searchRadius.disabled   = true;
-        domElements.clearPointBtn.disabled  = true;
+        domElements.searchRadius.style.display   = 'none';
+        domElements.clearPointBtn.style.display  = 'none';
         
         // Configurar fechas por defecto (última hora)
         const now = new Date();
