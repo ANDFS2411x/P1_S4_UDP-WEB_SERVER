@@ -466,7 +466,7 @@ function initHistoricalMapInstance() {
     console.log('Mapa histórico inicializado');
 }
 
-function updateTimelineInfo(progress) {
+/*function updateTimelineInfo(progress) {
     const currentTimeInfo = document.getElementById('currentTimeInfo');
     const distanceInfo = document.getElementById('distanceInfo');
     const rpmHist = document.getElementById('rpmHist');
@@ -515,7 +515,65 @@ function updateTimelineInfo(progress) {
             });
         }
     }
+}*/
+
+function updateTimelineInfo(progress) {
+    const currentTimeInfo = document.getElementById('currentTimeInfo');
+    const distanceInfo    = document.getElementById('distanceInfo');
+    const rpmHist         = document.getElementById('rpmHist');
+
+    if (!appState.historical.timelineAnimation) return;
+    const pointInfo = appState.historical.timelineAnimation.setProgress(progress);
+    if (!pointInfo) return;
+
+    // Si estamos filtrando por punto, miramos la distancia
+    if (domElements.enablePointSelection.checked && appState.historical.pointSelected) {
+        const sel = {
+            lat: parseFloat(domElements.selectedLat.value),
+            lng: parseFloat(domElements.selectedLng.value)
+        };
+        const r   = parseInt(domElements.searchRadius.value, 10);
+        const d   = calculateDistance(sel.lat, sel.lng, pointInfo.lat, pointInfo.lng);
+
+        if (d > r) {
+            // Fuera de radio → N/A en todo
+            currentTimeInfo.textContent = 'N/A';
+            rpmHist.textContent         = 'N/A';
+            distanceInfo.textContent    = 'Distancia al punto: N/A';
+            return;
+        }
+    }
+
+    // Si llegamos aquí, o no hay radio, mostramos valores reales
+    // Fecha y hora
+    const dt      = new Date(pointInfo.timestamp);
+    currentTimeInfo.textContent = 
+      `${dt.toLocaleDateString()} ${dt.toLocaleTimeString()}`;
+    // RPM
+    rpmHist.textContent = pointInfo.RPM || '0';
+
+    // Distancia (si aplica)
+    if (domElements.enablePointSelection.checked && appState.historical.pointSelected) {
+        const sel = {
+            lat: parseFloat(domElements.selectedLat.value),
+            lng: parseFloat(domElements.selectedLng.value)
+        };
+        const d   = calculateDistance(sel.lat, sel.lng, pointInfo.lat, pointInfo.lng);
+        distanceInfo.textContent    = `Distancia al punto: ${Math.round(d)} m`;
+        distanceInfo.style.display  = 'block';
+    } else {
+        distanceInfo.style.display = 'none';
+    }
+
+    // Centrar mapa
+    if (pointInfo.lat != null && pointInfo.lng != null) {
+        appState.historical.map.panTo({
+            lat: pointInfo.lat,
+            lng: pointInfo.lng
+        });
+    }
 }
+
 
 async function loadHistoricalData() {
     try {
@@ -686,6 +744,30 @@ async function loadHistoricalData() {
             slider.dispatchEvent(new Event('input'));
             timelineControls.style.display = 'block';
         }
+
+        const pts = relevantPoints;
+        let animIdx = 0;
+        const animMax = pts.length - 1;
+        // Velocidad en ms entre punto y punto (ajusta a tu gusto)
+        const animSpeed = 200;
+
+        const animInterval = setInterval(() => {
+            if (animIdx > animMax) {
+                clearInterval(animInterval);
+                return;
+            }
+            // Mover slider
+            slider.value = animIdx;
+            slider.style.backgroundSize = 
+                animMax > 0 
+                    ? `${(animIdx / animMax) * 100}% 100%` 
+                    : '0% 100%';
+
+            // Disparamos el mismo input para actualizar marcador e info
+            slider.dispatchEvent(new Event('input'));
+
+            animIdx++;
+        }, animSpeed);
 
         // Ajustar vista del mapa para que todos los puntos sean visibles
         const bounds = new google.maps.LatLngBounds();
