@@ -560,7 +560,7 @@ async function loadHistoricalData() {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
 
-        const { success, data } = await resp.json();
+        const { success, data } = await response.json();
         if (!success || !Array.isArray(data) || data.length === 0) {
             throw new Error("No hay datos para el rango seleccionado");
         }
