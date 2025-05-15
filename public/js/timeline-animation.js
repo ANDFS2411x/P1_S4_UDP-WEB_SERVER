@@ -2,7 +2,7 @@ class TimelineAnimation {
     constructor(map) {
         this.map = map;
         this.taxiData = {}; // Objeto para almacenar datos por taxiId
-        this.mode = 'point'; // 'route' o 'point'
+        this.mode = 'route'; // 'route' o 'point'
         this.progress = 0; // Progreso actual (0-100)
         this.selectedTaxiId = "0"; // "0" para todos
         
@@ -210,7 +210,7 @@ class TimelineAnimation {
         }
         
         // Encontrar el punto más cercano al timestamp actual
-        /*let closestPoint = taxiPoints[0];
+        let closestPoint = taxiPoints[0];
         let minTimeDiff = Math.abs(currentTimestamp - closestPoint.timestamp);
         
         for (let i = 1; i < taxiPoints.length; i++) {
@@ -224,7 +224,7 @@ class TimelineAnimation {
         return {
             ...closestPoint,
             timestamp: currentTimestamp
-        };*/
+        };
     }
 
     clear() {
