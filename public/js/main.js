@@ -443,11 +443,12 @@ function initHistoricalMapInstance() {
     // Configurar el spinner de selección de taxi histórico
     domElements.idSpinnerHist.addEventListener('change', function() {
         const selectedTaxiId = this.value;
-        if (selectedTaxiId === "0") {
+        domElements.timelineInfo.style.display = 'flex';
+        /*if (selectedTaxiId === "0") {
             domElements.timelineInfo.style.display = 'none';
         } else {
             domElements.timelineInfo.style.display = 'flex';
-        }
+        }*/
         if (appState.historical.timelineAnimation) {
             appState.historical.timelineAnimation.setSelectedTaxiId(selectedTaxiId);
             
@@ -507,7 +508,7 @@ function updateTimelineInfo(progress) {
         }
         
         // Centrar el mapa en la posición actual si hay coordenadas
-        if (pointInfo.lat && pointInfo.lng) {
+        if (pointInfo.lat !=null && pointInfo.lng !=null) {
             appState.historical.map.panTo({
                 lat: pointInfo.lat,
                 lng: pointInfo.lng
@@ -530,37 +531,41 @@ async function loadHistoricalData() {
         if (domElements.enablePointSelection.checked) {
             const selectedLat = parseFloat(domElements.selectedLat.value);
             const selectedLng = parseFloat(domElements.selectedLng.value);
-            
             if (isNaN(selectedLat) || isNaN(selectedLng)) {
                 throw new Error("Debe seleccionar un punto en el mapa primero");
             }
         }
 
         showLoading(true);
+        domElements.historicalError?.style.setProperty('display','none');
         
-        if (domElements.historicalError) {
+        /*if (domElements.historicalError) {
             domElements.historicalError.style.display = "none";
-        }
+        }*/
 
         const timelineControls = document.getElementById('timelineControls');
-        if (timelineControls) {
-            timelineControls.style.display = 'none';
-        }
+        if (timelineControls) timelineControls.style.display = 'none';
 
         // Detener actualizaciones en tiempo real si están activas
         stopRealTimeUpdates();
+        appState.historical.timelineAnimation?.clear();
 
         // Limpiar visualizaciones anteriores
-        if (appState.historical.timelineAnimation) {
+        /*if (appState.historical.timelineAnimation) {
             appState.historical.timelineAnimation.clear();
-        }
+        }*/
 
         // Obtener datos históricos
         const url = `${config.basePath}/historical-data?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
 
-        const result = await response.json();
+        const { success, data } = await resp.json();
+        if (!success || !Array.isArray(data) || data.length === 0) {
+            throw new Error("No hay datos para el rango seleccionado");
+        }
+
+        /*const result = await response.json();
         
         if (!result?.success || !Array.isArray(result.data)) {
             throw new Error("Formato de datos incorrecto");
@@ -568,10 +573,12 @@ async function loadHistoricalData() {
         
         if (result.data.length === 0) {
             throw new Error("No hay datos para el rango seleccionado");
-        }
+        }*/
 
         // Procesar coordenadas
-        const allPoints = result.data.map(item => ({
+        //const allPoints = result.data.map(item => ({
+        const allPoints = data
+            .map(item => ({
             lat: parseFloat(item.LATITUDE),
             lng: parseFloat(item.LONGITUDE),
             time: item.TIME,
@@ -612,9 +619,13 @@ async function loadHistoricalData() {
         if (!appState.historical.timelineAnimation) {
             appState.historical.timelineAnimation = new TimelineAnimation(appState.historical.map);
         }
+        const anim = appState.historical.timelineAnimation;
+        anim.setSelectedTaxiId(selectedTaxiId);
+        anim.setPoints(relevantPoints, 'route');
+        anim.setMode('route');
 
         // Establecer el ID del taxi seleccionado
-        appState.historical.timelineAnimation.setSelectedTaxiId(selectedTaxiId);
+        /*appState.historical.timelineAnimation.setSelectedTaxiId(selectedTaxiId);
 
         // En modo de selección de punto, mostrar solo los puntos relevantes
         if (domElements.enablePointSelection.checked) {
@@ -648,6 +659,32 @@ async function loadHistoricalData() {
                 // Mostrar controles
                 timelineControls.style.display = 'block';
             }
+        }*/
+
+        if (timelineControls) {
+            const slider          = document.getElementById('timelineSlider');
+            const pts             = relevantPoints;
+            const n               = pts.length;
+
+            // rango 0 … n-1
+            slider.min   = 0;
+            slider.max   = Math.max(0, n - 1);
+            slider.step  = 1;
+            slider.value = 0;
+            slider.style.backgroundSize = '0% 100%';
+
+            slider.addEventListener('input', function() {
+                const idx = parseInt(this.value, 10);
+                const pct = n > 1 ? (idx / (n - 1)) * 100 : 0;
+                this.style.backgroundSize = `${pct}% 100%`;
+
+                // actualiza la animación y la info
+                updateTimelineInfo(pct);
+            });
+
+            // disparo inicial para idx=0
+            slider.dispatchEvent(new Event('input'));
+            timelineControls.style.display = 'block';
         }
 
         // Ajustar vista del mapa para que todos los puntos sean visibles
@@ -907,6 +944,7 @@ function initHistoricalTracking() {
             domElements.selectedLat.disabled  = !isOn;
             domElements.selectedLng.disabled  = !isOn;
             domElements.searchRadius.disabled = !isOn;
+            domElements.clearPointBtn.disabled = !isOn;
             domElements.radiusContainer.style.display = isOn ? 'block' : 'none';
             if (!isOn) clearSelectedPoint();
             loadHistoricalData();
