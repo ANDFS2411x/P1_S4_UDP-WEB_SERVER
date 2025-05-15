@@ -674,7 +674,7 @@ async function loadHistoricalData() {
             slider.style.backgroundSize = '0% 100%';
 
             slider.addEventListener('input', function() {
-                const idx = parseInt(this.value, 10);
+                const idx = Number(this.value);
                 const pct = n > 1 ? (idx / (n - 1)) * 100 : 0;
                 this.style.backgroundSize = `${pct}% 100%`;
 
