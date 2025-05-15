@@ -2,7 +2,7 @@ class TimelineAnimation {
     constructor(map) {
         this.map = map;
         this.taxiData = {}; // Objeto para almacenar datos por taxiId
-        this.mode = 'route'; // 'route' o 'point'
+        this.mode = 'point'; // 'route' o 'point'
         this.progress = 0; // Progreso actual (0-100)
         this.selectedTaxiId = "0"; // "0" para todos
         
@@ -82,7 +82,7 @@ class TimelineAnimation {
         }
     }
 
-    setPoints(pointsData, mode = 'route') {
+    setPoints(pointsData, mode = 'point') {
         // Limpiar datos anteriores
         this.clear();
         
@@ -154,7 +154,7 @@ class TimelineAnimation {
         
         // Calcular el timestamp actual basado en el progreso
         const totalTimeSpan = this.endTimestamp - this.startTimestamp;
-        const currentTimestamp = this.startTimestamp + (totalTimeSpan);
+        const currentTimestamp = this.startTimestamp + (totalTimeSpan * (this.progress / 100));
         
         // Para cada taxi, actualizar su visualización basada en el tiempo actual
         Object.keys(this.taxiData).forEach(taxiId => {
@@ -199,7 +199,7 @@ class TimelineAnimation {
         
         // Calcular el timestamp actual
         const totalTimeSpan = this.endTimestamp - this.startTimestamp;
-        const currentTimestamp = this.startTimestamp + (totalTimeSpan * (this.progress));
+        const currentTimestamp = this.startTimestamp + (totalTimeSpan * (this.progress / 100));
         
         // Para el taxi seleccionado (o el primero si es "todos")
         const taxiId = this.selectedTaxiId !== "0" ? this.selectedTaxiId : Object.keys(this.taxiData)[0];
@@ -210,7 +210,7 @@ class TimelineAnimation {
         }
         
         // Encontrar el punto más cercano al timestamp actual
-        let closestPoint = taxiPoints[0];
+        /*let closestPoint = taxiPoints[0];
         let minTimeDiff = Math.abs(currentTimestamp - closestPoint.timestamp);
         
         for (let i = 1; i < taxiPoints.length; i++) {
@@ -224,7 +224,7 @@ class TimelineAnimation {
         return {
             ...closestPoint,
             timestamp: currentTimestamp
-        };
+        };*/
     }
 
     clear() {
