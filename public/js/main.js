@@ -599,9 +599,6 @@ async function loadHistoricalData() {
 
         if (timelineControls) {
             const slider          = document.getElementById('timelineSlider');
-            const currentTimeInfo = document.getElementById('currentTimeInfo');
-            const rpmHist         = document.getElementById('rpmHist');
-            const distanceInfo    = document.getElementById('distanceInfo');
             const pts             = relevantPoints;
             const n               = pts.length;
 
@@ -612,38 +609,10 @@ async function loadHistoricalData() {
             slider.value = 0;
             slider.style.backgroundSize = '0% 100%';
 
-            const marker = anim.currentMarkers[selectedTaxiId] 
-                || anim.currentMarkers[Object.keys(anim.currentMarkers)[0]];
-
             slider.addEventListener('input', function() {
                 const idx = Number(this.value);
                 const pct = n > 1 ? (idx / (n - 1)) * 100 : 0;
                 this.style.backgroundSize = `${pct}% 100%`;
-
-                // 5.1) Mueve el marcador al punto idx
-                const p = pts[idx];
-                marker.setPosition({ lat: p.lat, lng: p.lng });
-                marker.setMap(appState.historical.map);
-
-                // 5.2) Fecha y hora
-                const dt = new Date(`${p.date} ${p.time}`);
-                currentTimeInfo.textContent = `${dt.toLocaleDateString()} ${dt.toLocaleTimeString()}`;
-
-                // 5.3) RPM
-                rpmHist.textContent = p.RPM;
-
-                // 5.4) Distancia si aplica
-                if (domElements.enablePointSelection.checked) {
-                    const sel = {
-                    lat: parseFloat(domElements.selectedLat.value),
-                    lng: parseFloat(domElements.selectedLng.value)
-                };
-                const d = calculateDistance(sel.lat, sel.lng, p.lat, p.lng);
-                distanceInfo.textContent   = `Distancia al punto: ${Math.round(d)} m`;
-                distanceInfo.style.display = 'block';
-            } else {
-                distanceInfo.style.display = 'none';
-            }
 
                 // actualiza la animación y la info
                 updateTimelineInfo(pct);
@@ -661,10 +630,9 @@ async function loadHistoricalData() {
 
     } catch (error) {
         console.error('Error cargando datos históricos:', error);
-        domElements.historicalError && showError(domElements.historicalError, error.message);
-        //if (domElements.historicalError) {
-          //  showError(domElements.historicalError, error.message);
-        //}
+        if (domElements.historicalError) {
+            showError(domElements.historicalError, error.message);
+        }
     } finally {
         showLoading(false);
     }
