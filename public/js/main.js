@@ -459,7 +459,7 @@ function initHistoricalMapInstance() {
     console.log('Mapa histórico inicializado');
 }
 
-function updateTimelineInfo(progress) {
+/*function updateTimelineInfo(progress) {
   const anim = appState.historical.timelineAnimation;
   if (!anim) return;
 
@@ -470,7 +470,7 @@ function updateTimelineInfo(progress) {
   const timeEl     = document.getElementById('currentTimeInfo');
   const rpmEl      = document.getElementById('rpmHist');
   const distanceEl = document.getElementById('distanceInfo');
-  const 
+  const taxiEl     = document.getElementById('taxiInfo');      // NUEVO
 
   // Si estamos en “Todos”, mostramos ambos taxis
   if (anim.selectedTaxiId === "0") {
@@ -522,7 +522,7 @@ function updateTimelineInfo(progress) {
   } else {
     distanceEl.style.display = 'none';
   }
-}
+}*/
 
 function updateTimelineInfo(progress) {
   const anim = appState.historical.timelineAnimation;
