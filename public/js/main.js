@@ -543,7 +543,7 @@ function updateTimelineInfo(progress) {
     const taxiIds = Object.keys(anim.taxiData); // e.g. ["1","2"]
 
     // Inyectamos una línea por taxi
-    taxiEl.innerHTML = ids.map(id => `Taxi ${id}`).join('<br>');
+    taxiEl.innerHTML = taxiIds.map(id => `Taxi ${id}`).join('<br>');
 
     taxiIds.forEach(taxiId => {
       // Forzamos temporalmente el taxi seleccionado para leer su info
