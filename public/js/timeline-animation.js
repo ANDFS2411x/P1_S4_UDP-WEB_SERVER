@@ -158,7 +158,7 @@ class TimelineAnimation {
             if (!pts || pts.length === 0) return;
 
             // Coordenadas completas del taxi
-            const fullPathCoords = pts.map(p => ({ lat: p.lat, lng: p.lng }));
+            const fullPathCoords = pts.map(point => ({ lat: point.lat, lng: point.lng }));
 
             if (this.mode === 'route') {
                 // 1) Siempre dejamos la polilínea completa
@@ -176,13 +176,13 @@ class TimelineAnimation {
                 // Modo “point” / “trail”: lógica original que va creciendo la ruta
                 // (puedes dejar aquí tu código existente si lo usas)
                 const currentTimestamp = this.startTimestamp + (this.endTimestamp - this.startTimestamp) * (this.progress / 100);
-                const visiblePoints = pts.filter(p => p.timestamp <= currentTimestamp);
+                const visiblePoints = pts.filter(point => point.timestamp <= currentTimestamp);
                 if (visiblePoints.length === 0) {
                     this.animationPaths[taxiId].setPath([]);
                     this.currentMarkers[taxiId].setMap(null);
                     return;
                 }
-                this.animationPaths[taxiId].setPath(visiblePoints.map(p => ({ lat: p.lat, lng: p.lng })));
+                this.animationPaths[taxiId].setPath(visiblePoints.map(point => ({ lat: point.lat, lng: point.lng })));
                 const last = visiblePoints[visiblePoints.length - 1];
                 this.currentMarkers[taxiId].setPosition({ lat: last.lat, lng: last.lng });
                 this.currentMarkers[taxiId].setMap(this.map);
