@@ -463,55 +463,67 @@ function updateTimelineInfo(progress) {
   const anim = appState.historical.timelineAnimation;
   if (!anim) return;
 
-  // Actualiza internamente la animación (coloca marcadores)
   anim.setProgress(progress);
 
-  // Referencias a los spans
   const timeEl     = document.getElementById('currentTimeInfo');
+  const taxiEl     = document.getElementById('taxiInfo');
   const rpmEl      = document.getElementById('rpmHist');
   const distanceEl = document.getElementById('distanceInfo');
 
-  // Si estamos en “Todos”, mostramos ambos taxis
+  // Modo “Todos”
   if (anim.selectedTaxiId === "0") {
-    const taxiIds = Object.keys(anim.taxiData); // p.ej. ["1","2"]
-    const linesTime = [];
-    const linesRpm  = [];
+    const ids = Object.keys(anim.taxiData); // ["1","2",...]
 
-    taxiIds.forEach(taxiId => {
-      // Forzamos temporalmente el taxi seleccionado para leer su info
-      anim.setSelectedTaxiId(taxiId);
-      const info = anim.getCurrentTimeInfo();
+    // Taxi ID
+    taxiEl.innerHTML = ids.map(id => `Taxi ${id}`).join('<br>');
 
-      // Formatear fecha y hora
-      const dt = new Date(info.timestamp);
-      const dateStr = dt.toLocaleDateString();
-      const timeStr = dt.toLocaleTimeString();
+    // Hora para cada taxi
+    const t0 = anim.startTimestamp, t1 = anim.endTimestamp;
+    const ts = t0 + (t1 - t0) * (progress/100);
+    timeEl.innerHTML = ids.map(id => {
+      const pts = anim.taxiData[id] || [];
+      if (!pts.length) return `Taxi ${id}: --:--`;
+      // Buscar punto más cercano a ts
+      let best = pts[0], bd = Math.abs(pts[0].timestamp - ts);
+      for (let p of pts) {
+        const d = Math.abs(p.timestamp - ts);
+        if (d < bd) { bd = d; best = p; }
+      }
+      const dt = new Date(best.timestamp);
+      return `Taxi ${id}: ${dt.toLocaleTimeString()}`;
+    }).join('<br>');
 
-      linesTime.push(`Taxi ${taxiId}: ${dateStr} ${timeStr}`);
-      linesRpm.push(`Taxi ${taxiId}: ${info.RPM || '0'}`);
-    });
+    // RPM para cada taxi
+    rpmEl.innerHTML = ids.map(id => {
+      const pts = anim.taxiData[id] || [];
+      if (!pts.length) return `Taxi ${id}: 0`;
+      let best = pts[0], bd = Math.abs(pts[0].timestamp - ts);
+      for (let p of pts) {
+        const d = Math.abs(p.timestamp - ts);
+        if (d < bd) { bd = d; best = p; }
+      }
+      return `Taxi ${id}: ${best.RPM || '0'}`;
+    }).join('<br>');
 
-    // Restauramos “Todos”
-    anim.setSelectedTaxiId("0");
-
-    // Inyectamos dos líneas separadas por <br>
-    timeEl.innerHTML = linesTime.join("<br>");
-    rpmEl.innerHTML  = linesRpm.join("<br>");
-    distanceEl.style.display = 'none';  // ocultamos distancia
+    distanceEl.style.display = 'none';
     return;
   }
 
-  // Si es un taxi en concreto, dejamos el comportamiento original:
+  // Modo individual...
   const info = anim.getCurrentTimeInfo();
   if (!info) return;
 
-  // Fecha y hora
+  // Hora
   const dt = new Date(info.timestamp);
-  timeEl.textContent = `${dt.toLocaleDateString()} ${dt.toLocaleTimeString()}`;
+  timeEl.textContent = dt.toLocaleTimeString();
+
+  // Taxi ID
+  taxiEl.textContent = `Taxi ${info.ID_TAXI}`;
+
   // RPM
   rpmEl.textContent = `RPM: ${info.RPM || '0'}`;
 
-  // Distancia si aplica
+  // Distancia…
   if (domElements.enablePointSelection.checked && appState.historical.pointSelected) {
     const sel = {
       lat: parseFloat(domElements.selectedLat.value),
