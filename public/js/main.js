@@ -522,7 +522,7 @@ function initHistoricalMapInstance() {
   } else {
     distanceEl.style.display = 'none';
   }
-}*/
+}*
 
 function updateTimelineInfo(progress) {
   const anim = appState.historical.timelineAnimation;
@@ -590,10 +590,10 @@ function updateTimelineInfo(progress) {
   } else {
     distanceEl.style.display = 'none';
   }
-}
+}*/
 
 
-/*function updateTimelineInfo(progress) {
+function updateTimelineInfo(progress) {
     const currentTimeInfo = document.getElementById('currentTimeInfo');
     const distanceInfo = document.getElementById('distanceInfo');
     const rpmHist = document.getElementById('rpmHist');
@@ -643,7 +643,7 @@ function updateTimelineInfo(progress) {
             });
         }
     }
-}*/
+}
 
 async function loadHistoricalData() {
     try {
