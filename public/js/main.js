@@ -74,7 +74,6 @@ function updateInfoPanel(data) {
         rawDate = rawDate.split("T")[0];
     }
     domElements.fecha.textContent = rawDate;
-
     domElements.tiempo.textContent = data.TIME || "N/A";
     domElements.rpmRealTime.textContent = data.RPM || "N/A";
     domElements.idTaxiReal.textContent = data.ID_TAXI || "N/A";
@@ -185,7 +184,7 @@ async function updateRealTimeData() {
             // Si este es el taxi seleccionado, actualizar panel de información
             if (appState.realTime.currentTaxiId === taxiId || appState.realTime.currentTaxiId === "0") {
                 updateInfoPanel(appState.realTime.currentTaxiId);
-                if (appState.realTime.currentTaxiId !== "0") {
+                if (appState.realTime.currentTaxiId === "0") {
                     updateInfoPanel(taxiData);
                 }
 
@@ -195,12 +194,6 @@ async function updateRealTimeData() {
                 }
             }
         });
-
-        // Si están todos los taxis seleccionados, no mostrar información específica
-        /*if (appState.realTime.currentTaxiId === "0") {
-            clearInfoPanel();
-        }*/
-
     } catch (error) {
         console.error('Error actualizando datos en tiempo real:', error);
     }
@@ -538,10 +531,6 @@ async function loadHistoricalData() {
 
         showLoading(true);
         domElements.historicalError?.style.setProperty('display','none');
-        
-        /*if (domElements.historicalError) {
-            domElements.historicalError.style.display = "none";
-        }*/
 
         const timelineControls = document.getElementById('timelineControls');
         if (timelineControls) timelineControls.style.display = 'none';
@@ -549,11 +538,6 @@ async function loadHistoricalData() {
         // Detener actualizaciones en tiempo real si están activas
         stopRealTimeUpdates();
         appState.historical.timelineAnimation?.clear();
-
-        // Limpiar visualizaciones anteriores
-        /*if (appState.historical.timelineAnimation) {
-            appState.historical.timelineAnimation.clear();
-        }*/
 
         // Obtener datos históricos
         const url = `${config.basePath}/historical-data?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
@@ -565,18 +549,7 @@ async function loadHistoricalData() {
             throw new Error("No hay datos para el rango seleccionado");
         }
 
-        /*const result = await response.json();
-        
-        if (!result?.success || !Array.isArray(result.data)) {
-            throw new Error("Formato de datos incorrecto");
-        }
-        
-        if (result.data.length === 0) {
-            throw new Error("No hay datos para el rango seleccionado");
-        }*/
-
         // Procesar coordenadas
-        //const allPoints = result.data.map(item => ({
         const allPoints = data
             .map(item => ({
             lat: parseFloat(item.LATITUDE),
@@ -624,45 +597,11 @@ async function loadHistoricalData() {
         anim.setPoints(relevantPoints, 'route');
         anim.setMode('route');
 
-        // Establecer el ID del taxi seleccionado
-        /*appState.historical.timelineAnimation.setSelectedTaxiId(selectedTaxiId);
-
-        // En modo de selección de punto, mostrar solo los puntos relevantes
-        if (domElements.enablePointSelection.checked) {
-            appState.historical.timelineAnimation.setPoints(relevantPoints, 'point');
-        } else {
-            appState.historical.timelineAnimation.setPoints(relevantPoints, 'route');
-        }
-
-        // Configurar y mostrar controles de línea de tiempo
-        if (timelineControls) {
-            const timelineSlider = document.getElementById('timelineSlider');
-            const currentTimeInfo = document.getElementById('currentTimeInfo');
-            
-            if (timelineSlider && currentTimeInfo) {
-                // Resetear slider
-                timelineSlider.value = 0;
-                timelineSlider.style.backgroundSize = `${timelineSlider.value}% 100%`;
-
-                // Actualizar la información inicial
-                updateTimelineInfo(0);
-
-                // Actualizar la información cuando se mueve el slider
-                timelineSlider.addEventListener('input', function(e) {
-                    const progress = parseInt(e.target.value);
-                    this.style.backgroundSize = `${progress}% 100%`;
-                    
-                    // Actualizar visualización con el nuevo progreso
-                    updateTimelineInfo(progress);
-                });
-
-                // Mostrar controles
-                timelineControls.style.display = 'block';
-            }
-        }*/
-
         if (timelineControls) {
             const slider          = document.getElementById('timelineSlider');
+            const currentTimeInfo = document.getElementById('currentTimeInfo');
+            const rpmHist         = document.getElementById('rpmHist');
+            const distanceInfo    = document.getElementById('distanceInfo');
             const pts             = relevantPoints;
             const n               = pts.length;
 
@@ -673,10 +612,38 @@ async function loadHistoricalData() {
             slider.value = 0;
             slider.style.backgroundSize = '0% 100%';
 
+            const marker = anim.currentMarkers[selectedTaxiId] 
+                || anim.currentMarkers[Object.keys(anim.currentMarkers)[0]];
+
             slider.addEventListener('input', function() {
                 const idx = Number(this.value);
                 const pct = n > 1 ? (idx / (n - 1)) * 100 : 0;
                 this.style.backgroundSize = `${pct}% 100%`;
+
+                // 5.1) Mueve el marcador al punto idx
+                const p = pts[idx];
+                marker.setPosition({ lat: p.lat, lng: p.lng });
+                marker.setMap(appState.historical.map);
+
+                // 5.2) Fecha y hora
+                const dt = new Date(`${p.date} ${p.time}`);
+                currentTimeInfo.textContent = `${dt.toLocaleDateString()} ${dt.toLocaleTimeString()}`;
+
+                // 5.3) RPM
+                rpmHist.textContent = p.RPM;
+
+                // 5.4) Distancia si aplica
+                if (domElements.enablePointSelection.checked) {
+                    const sel = {
+                    lat: parseFloat(domElements.selectedLat.value),
+                    lng: parseFloat(domElements.selectedLng.value)
+                };
+                const d = calculateDistance(sel.lat, sel.lng, p.lat, p.lng);
+                distanceInfo.textContent   = `Distancia al punto: ${Math.round(d)} m`;
+                distanceInfo.style.display = 'block';
+            } else {
+                distanceInfo.style.display = 'none';
+            }
 
                 // actualiza la animación y la info
                 updateTimelineInfo(pct);
@@ -694,9 +661,10 @@ async function loadHistoricalData() {
 
     } catch (error) {
         console.error('Error cargando datos históricos:', error);
-        if (domElements.historicalError) {
-            showError(domElements.historicalError, error.message);
-        }
+        domElements.historicalError && showError(domElements.historicalError, error.message);
+        //if (domElements.historicalError) {
+          //  showError(domElements.historicalError, error.message);
+        //}
     } finally {
         showLoading(false);
     }
@@ -880,64 +848,6 @@ function initHistoricalTracking() {
         });
 
         domElements.loadHistory.style.display = 'none';
-
-        // Configurar evento del botón de cargar historia
-        //domElements.loadHistory.addEventListener('click', loadHistoricalData);
-
-        // Configurar eventos para selección de punto
-        /*domElements.enablePointSelection.addEventListener('change', function() {
-            console.log(!domElements.clearPointBtn.disabled);
-            console.log(domElements.enablePointSelection.checked);
-            if (!domElements.clearPointBtn.disabled && domElements.enablePointSelection.checked){
-                domElements.loadHistory.textContent = "Consultar registros";
-                domElements.loadHistory.style.backgroundColor = "#b103fc";
-                console.log("entra");
-            } else {
-                domElements.loadHistory.textContent = "Cargar trayectoria";
-                domElements.loadHistory.style.backgroundColor = "#5667d8";
-                console.log("else");
-            }
-
-            const isEnabled = this.checked;
-            
-            // Habilitar/deshabilitar campos relacionados
-            domElements.selectedLat.disabled = !isEnabled;
-            domElements.selectedLng.disabled = !isEnabled;
-            domElements.searchRadius.disabled = !isEnabled;
-            
-            if (!isEnabled) {
-                // Si se deshabilita, limpiar el punto
-                clearSelectedPoint();
-            }
-        });
-
-        const observer = new MutationObserver(() => {
-            if (!domElements.clearPointBtn.disabled && domElements.enablePointSelection.checked) {
-                domElements.loadHistory.textContent = "Consultar registros";
-                domElements.loadHistory.style.backgroundColor = "#b103fc";
-                console.log("entra");
-            } else {
-                domElements.loadHistory.textContent = "Cargar trayectoria";
-                domElements.loadHistory.style.backgroundColor = "#5667d8";
-                console.log("else");
-            }
-        });
-        
-        observer.observe(domElements.clearPointBtn, { attributes: true, attributeFilter: ['disabled'] });
-        
-        // Configurar evento para botón de limpiar punto
-        domElements.clearPointBtn.addEventListener('click', clearSelectedPoint);
-        
-        
-        
-        domElements.enablePointSelection.addEventListener('change', () => {
-            const isEnabled = domElements.enablePointSelection.checked;
-            domElements.selectedLat.disabled    = !isEnabled;
-            domElements.selectedLng.disabled    = !isEnabled;
-            domElements.searchRadius.disabled   = !isEnabled;
-            if (!isEnabled) clearSelectedPoint();
-            loadHistoricalData();
-        });*/
 
         domElements.enablePointSelection.addEventListener('change', () => {
             const isOn = domElements.enablePointSelection.checked;
