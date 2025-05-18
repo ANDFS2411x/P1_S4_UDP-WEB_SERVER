@@ -532,7 +532,7 @@ async function loadHistoricalData() {
             const selectedLat = parseFloat(domElements.selectedLat.value);
             const selectedLng = parseFloat(domElements.selectedLng.value);
             if (isNaN(selectedLat) || isNaN(selectedLng)) {
-                throw new MessageEvent("Haz clic en el mapa para seleccionar un punto");
+                throw new Error("Haz clic en el mapa para seleccionar un punto");
             }
         }
 
