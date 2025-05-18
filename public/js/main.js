@@ -460,6 +460,72 @@ function initHistoricalMapInstance() {
 }
 
 function updateTimelineInfo(progress) {
+  const anim = appState.historical.timelineAnimation;
+  if (!anim) return;
+
+  // Actualiza internamente la animación (coloca marcadores)
+  anim.setProgress(progress);
+
+  // Referencias a los spans
+  const timeEl     = document.getElementById('currentTimeInfo');
+  const rpmEl      = document.getElementById('rpmHist');
+  const distanceEl = document.getElementById('distanceInfo');
+
+  // Si estamos en “Todos”, mostramos ambos taxis
+  if (anim.selectedTaxiId === "0") {
+    const taxiIds = Object.keys(anim.taxiData); // p.ej. ["1","2"]
+    const linesTime = [];
+    const linesRpm  = [];
+
+    taxiIds.forEach(taxiId => {
+      // Forzamos temporalmente el taxi seleccionado para leer su info
+      anim.setSelectedTaxiId(taxiId);
+      const info = anim.getCurrentTimeInfo();
+
+      // Formatear fecha y hora
+      const dt = new Date(info.timestamp);
+      const dateStr = dt.toLocaleDateString();
+      const timeStr = dt.toLocaleTimeString();
+
+      linesTime.push(`Taxi ${taxiId}: ${dateStr} ${timeStr}`);
+      linesRpm.push(`Taxi ${taxiId}: ${info.RPM || '0'}`);
+    });
+
+    // Restauramos “Todos”
+    anim.setSelectedTaxiId("0");
+
+    // Inyectamos dos líneas separadas por <br>
+    timeEl.innerHTML = linesTime.join("<br>");
+    rpmEl.innerHTML  = linesRpm.join("<br>");
+    distanceEl.style.display = 'none';  // ocultamos distancia
+    return;
+  }
+
+  // Si es un taxi en concreto, dejamos el comportamiento original:
+  const info = anim.getCurrentTimeInfo();
+  if (!info) return;
+
+  // Fecha y hora
+  const dt = new Date(info.timestamp);
+  timeEl.textContent = `${dt.toLocaleDateString()} ${dt.toLocaleTimeString()}`;
+  // RPM
+  rpmEl.textContent = `RPM: ${info.RPM || '0'}`;
+
+  // Distancia si aplica
+  if (domElements.enablePointSelection.checked && appState.historical.pointSelected) {
+    const sel = {
+      lat: parseFloat(domElements.selectedLat.value),
+      lng: parseFloat(domElements.selectedLng.value)
+    };
+    const d = calculateDistance(sel.lat, sel.lng, info.lat, info.lng);
+    distanceEl.textContent   = `Distancia al punto: ${Math.round(d)} m`;
+    distanceEl.style.display = 'block';
+  } else {
+    distanceEl.style.display = 'none';
+  }
+}
+
+/*function updateTimelineInfo(progress) {
     const currentTimeInfo = document.getElementById('currentTimeInfo');
     const distanceInfo = document.getElementById('distanceInfo');
     const rpmHist = document.getElementById('rpmHist');
@@ -508,7 +574,7 @@ function updateTimelineInfo(progress) {
             });
         }
     }
-}
+}*/
 
 async function loadHistoricalData() {
     try {
@@ -611,7 +677,7 @@ async function loadHistoricalData() {
 
             slider.addEventListener('input', function() {
                 const idx = Number(this.value);
-                const pct = n > 1 ? (idx / (n - 1)) * 100 : 0;
+                const pct = n > 0.1 ? (idx / (n - 1)) * 100 : 0;
                 this.style.backgroundSize = `${pct}% 100%`;
 
                 // actualiza la animación y la info
