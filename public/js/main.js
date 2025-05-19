@@ -611,6 +611,8 @@ function updateTimelineInfo(progress) {
         
         // Actualizar información de tiempo
         currentTimeInfo.textContent = `${dateStr} ${timeStr}`;
+
+        taxiInfo.textContent = `Taxi: ${pointInfo.ID_TAXI}`;
         
         // Actualizar RPM si está disponible
         rpmHist.textContent = `RPM: ${pointInfo.RPM || '0'}`;
@@ -682,6 +684,7 @@ async function loadHistoricalData() {
         const { success, data } = await response.json();
         if (!success || !Array.isArray(data) || data.length === 0) {
             throw new Error("No hay datos para el rango seleccionado");
+        
         }
 
         // Procesar coordenadas
@@ -696,6 +699,8 @@ async function loadHistoricalData() {
         })).filter(coord => !isNaN(coord.lat) && !isNaN(coord.lng));
 
         if (allPoints.length === 0) {
+            appState.historical.timelineAnimation.clear();
+            timelineControls.style.display = 'none';
             throw new Error("No hay coordenadas válidas en los datos recibidos");
         }
 
@@ -772,6 +777,65 @@ async function loadHistoricalData() {
         showLoading(false);
     }
 }
+
+/*async function loadHistoricalData() {
+  try {
+    const startDate      = domElements.startDate.value;
+    const endDate        = domElements.endDate.value;
+    const selectedTaxiId = domElements.idSpinnerHist.value;
+    if (!startDate || !endDate) throw new Error("Debe seleccionar ambas fechas");
+
+    showLoading(true);
+    domElements.historicalError?.style.setProperty('display','none');
+    const timelineControls = document.getElementById('timelineControls');
+    timelineControls.style.display = 'none';
+
+    stopRealTimeUpdates();
+    appState.historical.timelineAnimation?.clear();
+
+    // 1) fetch
+    const url  = `${config.basePath}/historical-data?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`Error del servidor: ${resp.status}`);
+    const { success, data } = await resp.json();
+    if (!success || !Array.isArray(data)) throw new Error("Formato de datos incorrecto");
+
+    // 2) mapeo inicial
+    let allPoints = data
+      .map(item => ({
+        lat: parseFloat(item.LATITUDE),
+        lng: parseFloat(item.LONGITUDE),
+        time: item.TIME,
+        date: item.DATE,
+        RPM: item.RPM || '0',
+        ID_TAXI: item.ID_TAXI?.toString() || 'N/A'
+      }))
+      .filter(p => !isNaN(p.lat) && !isNaN(p.lng));
+
+    // 3) **NUEVO**: filtrado por rango temporal
+    const startTs = new Date(startDate).getTime();
+    const endTs   = new Date(endDate).getTime();
+    allPoints = allPoints.filter(p => {
+      const ts = new Date(`${p.date} ${p.time}`).getTime();
+      return ts >= startTs && ts <= endTs;
+    });
+    if (allPoints.length === 0) {
+      appState.historical.timelineAnimation.clear();
+      timelineControls.style.display = 'none';
+      throw new Error("No hay datos para el rango seleccionado");
+    }
+
+    // 4) punto-radio, animación y slider (tu código actual) …
+    //    anim.setPoints(allPoints, 'route') … etc.
+
+  } catch (error) {
+    console.error('Error cargando datos históricos:', error);
+    domElements.historicalError && showError(domElements.historicalError, error.message);
+  } finally {
+    showLoading(false);
+  }
+}*/
+
 
 function handleMapClick(event) {
     // Verificar si la selección de punto está habilitada
