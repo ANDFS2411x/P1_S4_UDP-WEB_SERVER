@@ -683,6 +683,8 @@ async function loadHistoricalData() {
 
         const { success, data } = await response.json();
         if (!success || !Array.isArray(data) || data.length === 0) {
+            appState.historical.timelineAnimation.clear();
+            timelineControls.style.display = 'none';
             throw new Error("No hay datos para el rango seleccionado");
         
         }
