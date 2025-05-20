@@ -344,7 +344,7 @@ function updateTaxiVisibility(selectedTaxiId) {
   const block1 = document.querySelector('.taxi-block[data-id="1"]');
   const block2 = document.querySelector('.taxi-block[data-id="2"]');
   const seguirBtn = document.getElementById('seguirBtn');
-  const taxiDivider = document.getElementById('taxi-divider');
+  const taxiDivider = document.getElementById('taxiDivider');
 
   if (selectedTaxiId === "0") {
     block1.style.display = 'block';
@@ -353,8 +353,8 @@ function updateTaxiVisibility(selectedTaxiId) {
   } else {
     block1.style.display = selectedTaxiId === "1" ? 'block' : 'none';
     block2.style.display = selectedTaxiId === "2" ? 'block' : 'none';
-    taxiDivider.style.display = 'none';
     seguirBtn.style.display = 'none';
+    taxiDivider.style.display = 'none';
   }
 
    // Mostrar marcadores / rutas y calcular bounds
