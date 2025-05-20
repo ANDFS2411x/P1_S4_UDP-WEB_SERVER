@@ -79,6 +79,16 @@ function updateInfoPanel(data) {
     domElements.idTaxiReal.textContent = data.ID_TAXI || "N/A";
 }
 
+function updateInfoPanelFields(taxiData) {
+  const id = taxiData.ID_TAXI.toString();
+  document.getElementById(`lat${id}`).textContent   = parseFloat(taxiData.LATITUDE).toFixed(6);
+  document.getElementById(`lng${id}`).textContent   = parseFloat(taxiData.LONGITUDE).toFixed(6);
+  document.getElementById(`date${id}`).textContent  = taxiData.DATE.split('T')[0];
+  document.getElementById(`time${id}`).textContent  = taxiData.TIME;
+  document.getElementById(`rpm${id}`).textContent   = taxiData.RPM || '0';
+  // idTaxi siempre es fijo
+}
+
 function showLoading(show) {
     try {
         const isHistorical = domElements.historicalSection?.classList.contains("active");
@@ -129,7 +139,7 @@ function stopRealTimeUpdates() {
     }
 }
 
-async function updateRealTimeData() {
+/*async function updateRealTimeData() {
     try {
         const data = await fetchData('/data');
         if (!data || !Array.isArray(data)) {
@@ -194,13 +204,40 @@ async function updateRealTimeData() {
                 if (appState.realTime.seguirCentrando && appState.realTime.currentTaxiId === taxiId) {
                     centerOnTaxi(taxiId);
                 }
-            }*/
+            }
         });
         updateTaxiVisibility(appState.realTime.currentTaxiId);
-        
+
     } catch (error) {
         console.error('Error actualizando datos en tiempo real:', error);
     }
+}*/
+
+async function updateRealTimeData() {
+  try {
+    const data = await fetchData('/data');
+    data.forEach(taxiData => {
+      const id = taxiData.ID_TAXI.toString();
+      const pos = {
+        lat: parseFloat(taxiData.LATITUDE),
+        lng: parseFloat(taxiData.LONGITUDE)
+      };
+      // 1) actualizar marcador y polilínea...
+      if (appState.realTime.markers[id]) {
+        appState.realTime.markers[id].setPosition(pos);
+        appState.realTime.polylines[id].setPath(appState.realTime.recorridos[id]);
+      }
+      // 2) si corresponde a la selección (o "0" para todos), actualiza valores
+      if (appState.realTime.currentTaxiId === "0"
+       || appState.realTime.currentTaxiId === id) {
+        updateInfoPanelFields(taxiData);
+      }
+    });
+    // 3) y finalmente ajusta visibilidad 
+    updateTaxiVisibility(appState.realTime.currentTaxiId);
+  } catch(e) {
+    console.error(e);
+  }
 }
 
 async function fetchData(endpoint) {
@@ -245,7 +282,7 @@ function initRealMapInstance() {
     console.log('Mapa en tiempo real inicializado');
 }
 
-function updateTaxiVisibility(selectedTaxiId) {
+/*function updateTaxiVisibility(selectedTaxiId) {
     const infoPanelEl = document.querySelector('.info-grid');
     const seguirBtnEl = document.getElementById('seguirBtn');
   
@@ -300,6 +337,45 @@ function updateTaxiVisibility(selectedTaxiId) {
           })
           .catch(err => console.error(`Error al cargar info del taxi ${id}:`, err));
       });
+}*/
+
+function updateTaxiVisibility(selectedTaxiId) {
+  // bloques
+  const block1 = document.querySelector('.taxi-block[data-id="1"]');
+  const block2 = document.querySelector('.taxi-block[data-id="2"]');
+  const seguirBtn = document.getElementById('seguirBtn');
+
+  if (selectedTaxiId === "0") {
+    block1.style.display = 'block';
+    block2.style.display = 'block';
+    seguirBtn.style.display = 'none';
+  } else {
+    block1.style.display = selectedTaxiId === "1" ? 'block' : 'none';
+    block2.style.display = selectedTaxiId === "2" ? 'block' : 'none';
+    seguirBtn.style.display = 'block';
+  }
+
+   // Mostrar marcadores / rutas y calcular bounds
+    const bounds = new google.maps.LatLngBounds();
+    Object.entries(appState.realTime.markers).forEach(([taxiId, marker]) => {
+      const poly = appState.realTime.polylines[taxiId];
+      const show = (selectedTaxiId === "0" || taxiId === selectedTaxiId);
+      marker.setMap(show ? appState.realTime.map : null);
+      poly.setMap(show ? appState.realTime.map : null);
+      if (show) bounds.extend(marker.getPosition());
+    });
+
+       // Ajustar vista
+    if (selectedTaxiId === "0") {
+      appState.realTime.map.fitBounds(bounds);
+    } else {
+      const m = appState.realTime.markers[selectedTaxiId];
+      if (m) {
+        appState.realTime.map.panTo(m.getPosition());
+        appState.realTime.map.setZoom(14);
+      }
+    }
+  // recenter/fitBounds...
 }
 
 async function fetchTaxiInfo(taxiId) {
