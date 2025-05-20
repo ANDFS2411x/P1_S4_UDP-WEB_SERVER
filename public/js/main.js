@@ -79,6 +79,16 @@ function updateInfoPanel(data) {
     domElements.idTaxiReal.textContent = data.ID_TAXI || "N/A";
 }
 
+function updateInfoPanelFields(taxiData) {
+  const id = taxiData.ID_TAXI.toString();
+  document.getElementById(`lat${id}`).textContent   = parseFloat(taxiData.LATITUDE).toFixed(6);
+  document.getElementById(`lng${id}`).textContent   = parseFloat(taxiData.LONGITUDE).toFixed(6);
+  document.getElementById(`date${id}`).textContent  = taxiData.DATE.split('T')[0];
+  document.getElementById(`time${id}`).textContent  = taxiData.TIME;
+  document.getElementById(`rpm${id}`).textContent   = taxiData.RPM || '0';
+  // idTaxi siempre es fijo
+}
+
 function showLoading(show) {
     try {
         const isHistorical = domElements.historicalSection?.classList.contains("active");
@@ -129,7 +139,7 @@ function stopRealTimeUpdates() {
     }
 }
 
-async function updateRealTimeData() {
+/*async function updateRealTimeData() {
     try {
         const data = await fetchData('/data');
         if (!data || !Array.isArray(data)) {
@@ -182,10 +192,12 @@ async function updateRealTimeData() {
             }
 
             // Si este es el taxi seleccionado, actualizar panel de información
-            if (appState.realTime.currentTaxiId === taxiId || appState.realTime.currentTaxiId === "0") {
-                updateInfoPanel(appState.realTime.currentTaxiId);
+            /*if (appState.realTime.currentTaxiId === taxiId || appState.realTime.currentTaxiId === "0") {
+                //updateInfoPanel(appState.realTime.currentTaxiId);
+                updateTaxiVisibility(appState.realTime.currentTaxiId);
                 if (appState.realTime.currentTaxiId === "0") {
-                    updateInfoPanel(taxiData);
+                    //updateInfoPanel(taxiData);
+                    updateTaxiVisibility(taxiId);
                 }
 
                 // Si está habilitado el seguimiento, centrar en el taxi seleccionado
@@ -194,9 +206,38 @@ async function updateRealTimeData() {
                 }
             }
         });
+        updateTaxiVisibility(appState.realTime.currentTaxiId);
+
     } catch (error) {
         console.error('Error actualizando datos en tiempo real:', error);
     }
+}*/
+
+async function updateRealTimeData() {
+  try {
+    const data = await fetchData('/data');
+    data.forEach(taxiData => {
+      const id = taxiData.ID_TAXI.toString();
+      const pos = {
+        lat: parseFloat(taxiData.LATITUDE),
+        lng: parseFloat(taxiData.LONGITUDE)
+      };
+      // 1) actualizar marcador y polilínea...
+      if (appState.realTime.markers[id]) {
+        appState.realTime.markers[id].setPosition(pos);
+        appState.realTime.polylines[id].setPath(appState.realTime.recorridos[id]);
+      }
+      // 2) si corresponde a la selección (o "0" para todos), actualiza valores
+      if (appState.realTime.currentTaxiId === "0"
+       || appState.realTime.currentTaxiId === id) {
+        updateInfoPanelFields(taxiData);
+      }
+    });
+    // 3) y finalmente ajusta visibilidad 
+    updateTaxiVisibility(appState.realTime.currentTaxiId);
+  } catch(e) {
+    console.error(e);
+  }
 }
 
 async function fetchData(endpoint) {
@@ -241,7 +282,7 @@ function initRealMapInstance() {
     console.log('Mapa en tiempo real inicializado');
 }
 
-function updateTaxiVisibility(selectedTaxiId) {
+/*function updateTaxiVisibility(selectedTaxiId) {
     const infoPanelEl = document.querySelector('.info-grid');
     const seguirBtnEl = document.getElementById('seguirBtn');
   
@@ -296,6 +337,47 @@ function updateTaxiVisibility(selectedTaxiId) {
           })
           .catch(err => console.error(`Error al cargar info del taxi ${id}:`, err));
       });
+}*/
+
+function updateTaxiVisibility(selectedTaxiId) {
+  // bloques
+  const block1 = document.querySelector('.taxi-block[data-id="1"]');
+  const block2 = document.querySelector('.taxi-block[data-id="2"]');
+  const seguirBtn = document.getElementById('seguirBtn');
+  const taxiDivider = document.getElementById('taxiDivider');
+
+  if (selectedTaxiId === "0") {
+    block1.style.display = 'block';
+    block2.style.display = 'block';
+    seguirBtn.style.display = 'none';
+  } else {
+    block1.style.display = selectedTaxiId === "1" ? 'block' : 'none';
+    block2.style.display = selectedTaxiId === "2" ? 'block' : 'none';
+    seguirBtn.style.display = 'none';
+    taxiDivider.style.display = 'none';
+  }
+
+   // Mostrar marcadores / rutas y calcular bounds
+    const bounds = new google.maps.LatLngBounds();
+    Object.entries(appState.realTime.markers).forEach(([taxiId, marker]) => {
+      const poly = appState.realTime.polylines[taxiId];
+      const show = (selectedTaxiId === "0" || taxiId === selectedTaxiId);
+      marker.setMap(show ? appState.realTime.map : null);
+      poly.setMap(show ? appState.realTime.map : null);
+      if (show) bounds.extend(marker.getPosition());
+    });
+
+       // Ajustar vista
+    if (selectedTaxiId === "0") {
+      appState.realTime.map.fitBounds(bounds);
+    } else {
+      const m = appState.realTime.markers[selectedTaxiId];
+      if (m) {
+        appState.realTime.map.panTo(m.getPosition());
+        appState.realTime.map.setZoom(14);
+      }
+    }
+  // recenter/fitBounds...
 }
 
 async function fetchTaxiInfo(taxiId) {
@@ -459,140 +541,6 @@ function initHistoricalMapInstance() {
     console.log('Mapa histórico inicializado');
 }
 
-/*function updateTimelineInfo(progress) {
-  const anim = appState.historical.timelineAnimation;
-  if (!anim) return;
-
-  // Actualiza internamente la animación (coloca marcadores)
-  anim.setProgress(progress);
-
-  // Referencias a los spans
-  const timeEl     = document.getElementById('currentTimeInfo');
-  const rpmEl      = document.getElementById('rpmHist');
-  const distanceEl = document.getElementById('distanceInfo');
-  const taxiEl     = document.getElementById('taxiInfo');      // NUEVO
-
-  // Si estamos en “Todos”, mostramos ambos taxis
-  if (anim.selectedTaxiId === "0") {
-    const taxiIds = Object.keys(anim.taxiData); // p.ej. ["1","2"]
-    const linesTaxi = [];
-
-    taxiIds.forEach(taxiId => {
-      // Forzamos temporalmente el taxi seleccionado para leer su info
-      anim.setSelectedTaxiId(taxiId);
-      const info = anim.getCurrentTimeInfo();
-
-      // Formatear fecha y hora
-      const dt = new Date(info.timestamp);
-      const dateStr = dt.toLocaleDateString();
-      const timeStr = dt.toLocaleTimeString();
-
-      linesTaxi.push(`Taxi: ${taxiId}`);
-    });
-
-    // Restauramos “Todos”
-    anim.setSelectedTaxiId("0");
-
-    // Inyectamos dos líneas separadas por <br>
-    timeEl.innerHTML = linesTime.join("<br>");
-    rpmEl.innerHTML  = linesRpm.join("<br>");
-    distanceEl.style.display = 'none';  // ocultamos distancia
-    return;
-  }
-
-  // Si es un taxi en concreto, dejamos el comportamiento original:
-  const info = anim.getCurrentTimeInfo();
-  if (!info) return;
-
-  // Fecha y hora
-  const dt = new Date(info.timestamp);
-  timeEl.textContent = `${dt.toLocaleDateString()} ${dt.toLocaleTimeString()}`;
-  // RPM
-  rpmEl.textContent = `RPM: ${info.RPM || '0'}`;
-
-  // Distancia si aplica
-  if (domElements.enablePointSelection.checked && appState.historical.pointSelected) {
-    const sel = {
-      lat: parseFloat(domElements.selectedLat.value),
-      lng: parseFloat(domElements.selectedLng.value)
-    };
-    const d = calculateDistance(sel.lat, sel.lng, info.lat, info.lng);
-    distanceEl.textContent   = `Distancia al punto: ${Math.round(d)} m`;
-    distanceEl.style.display = 'block';
-  } else {
-    distanceEl.style.display = 'none';
-  }
-}*
-
-function updateTimelineInfo(progress) {
-  const anim = appState.historical.timelineAnimation;
-  if (!anim) return;
-
-  // 1) Avanza la animación para posicionar marcadores
-  anim.setProgress(progress);
-
-  // 2) References a los spans
-  const timeEl     = document.getElementById('currentTimeInfo');
-  const taxiEl     = document.getElementById('taxiInfo');      // NUEVO
-  const rpmEl      = document.getElementById('rpmHist');
-  const distanceEl = document.getElementById('distanceInfo');
-
-  // 3) Modo “Todos”
-  if (anim.selectedTaxiId === "0") {
-    // Listamos todos los IDs disponibles
-    const taxiIds = Object.keys(anim.taxiData); // e.g. ["1","2"]
-
-    // Inyectamos una línea por taxi
-    taxiEl.innerHTML = taxiIds.map(id => `Taxi ${id}`).join('<br>');
-
-    taxiIds.forEach(taxiId => {
-      // Forzamos temporalmente el taxi seleccionado para leer su info
-      anim.setSelectedTaxiId(taxiId);
-      const info = anim.getCurrentTimeInfo();
-
-      // Formatear fecha y hora
-      const dt = new Date(info.timestamp);
-      const dateStr = dt.toLocaleDateString();
-      const timeStr = dt.toLocaleTimeString();
-
-      linesTime.push(`Taxi ${taxiId}: ${dateStr} ${timeStr}`);
-      linesRpm.push(`Taxi ${taxiId}: ${info.RPM || '0'}`);
-    });
-
-    anim.setSelectedTaxiId("0");
-    distanceEl.style.display = 'none';
-    return;
-  }
-
-  // 4) Modo individual: comportamiento original + Taxi ID
-  const info = anim.getCurrentTimeInfo();
-  if (!info) return;
-
-  // Fecha y hora (tu lógica actual)
-  const dt = new Date(info.timestamp);
-  timeEl.textContent = `${dt.toLocaleDateString()} ${dt.toLocaleTimeString()}`;
-
-  // Taxi ID
-  taxiEl.textContent = `Taxi ${info.ID_TAXI}`;
-
-  // RPM
-  rpmEl.textContent = `RPM: ${info.RPM || '0'}`;
-
-  // Distancia si aplica
-  if (domElements.enablePointSelection.checked && appState.historical.pointSelected) {
-    const sel = {
-      lat: parseFloat(domElements.selectedLat.value),
-      lng: parseFloat(domElements.selectedLng.value)
-    };
-    const d = calculateDistance(sel.lat, sel.lng, info.lat, info.lng);
-    distanceEl.textContent   = `Distancia al punto: ${Math.round(d)} m`;
-    distanceEl.style.display = 'block';
-  } else {
-    distanceEl.style.display = 'none';
-  }
-}*/
-
-
 function updateTimelineInfo(progress) {
     const currentTimeInfo = document.getElementById('currentTimeInfo');
     const distanceInfo = document.getElementById('distanceInfo');
@@ -611,6 +559,8 @@ function updateTimelineInfo(progress) {
         
         // Actualizar información de tiempo
         currentTimeInfo.textContent = `${dateStr} ${timeStr}`;
+
+        taxiInfo.textContent = `Taxi: ${pointInfo.ID_TAXI}`;
         
         // Actualizar RPM si está disponible
         rpmHist.textContent = `RPM: ${pointInfo.RPM || '0'}`;
@@ -681,6 +631,7 @@ async function loadHistoricalData() {
 
         const { success, data } = await response.json();
         if (!success || !Array.isArray(data) || data.length === 0) {
+            timelineControls.style.display = 'none';
             throw new Error("No hay datos para el rango seleccionado");
         }
 
@@ -696,6 +647,8 @@ async function loadHistoricalData() {
         })).filter(coord => !isNaN(coord.lat) && !isNaN(coord.lng));
 
         if (allPoints.length === 0) {
+            appState.historical.timelineAnimation.clear();
+            timelineControls.style.display = 'none';
             throw new Error("No hay coordenadas válidas en los datos recibidos");
         }
 
@@ -965,6 +918,21 @@ function initHistoricalTracking() {
 
         domElements.clearPointBtn.addEventListener('click', () => {
             clearSelectedPoint();
+            loadHistoricalData();
+        });
+
+        domElements.searchRadius.addEventListener('input', () => {
+            // actualizo la etiqueta del valor
+            const disp = document.getElementById('radius-value');
+            if (disp) disp.textContent = domElements.searchRadius.value;
+
+            // si ya hay marcador/círculo, actualizo su radio visual
+            if (appState.historical.pointCircle) {
+                appState.historical.pointCircle.setRadius(
+                    parseInt(domElements.searchRadius.value)
+                );
+            }
+            // recargo la ruta filtrada
             loadHistoricalData();
         });
         
