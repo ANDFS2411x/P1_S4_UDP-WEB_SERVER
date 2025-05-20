@@ -182,7 +182,7 @@ async function updateRealTimeData() {
             }
 
             // Si este es el taxi seleccionado, actualizar panel de información
-            if (appState.realTime.currentTaxiId === taxiId || appState.realTime.currentTaxiId === "0") {
+            /*if (appState.realTime.currentTaxiId === taxiId || appState.realTime.currentTaxiId === "0") {
                 //updateInfoPanel(appState.realTime.currentTaxiId);
                 updateTaxiVisibility(appState.realTime.currentTaxiId);
                 if (appState.realTime.currentTaxiId === "0") {
@@ -194,8 +194,10 @@ async function updateRealTimeData() {
                 if (appState.realTime.seguirCentrando && appState.realTime.currentTaxiId === taxiId) {
                     centerOnTaxi(taxiId);
                 }
-            }
+            }*/
         });
+        updateTaxiVisibility(appState.realTime.currentTaxiId);
+        
     } catch (error) {
         console.error('Error actualizando datos en tiempo real:', error);
     }
