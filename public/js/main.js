@@ -183,9 +183,11 @@ async function updateRealTimeData() {
 
             // Si este es el taxi seleccionado, actualizar panel de información
             if (appState.realTime.currentTaxiId === taxiId || appState.realTime.currentTaxiId === "0") {
-                updateInfoPanel(appState.realTime.currentTaxiId);
+                //updateInfoPanel(appState.realTime.currentTaxiId);
+                updateTaxiVisibility(appState.realTime.currentTaxiId);
                 if (appState.realTime.currentTaxiId === "0") {
-                    updateInfoPanel(taxiData);
+                    //updateInfoPanel(taxiData);
+                    updateTaxiVisibility(taxiId);
                 }
 
                 // Si está habilitado el seguimiento, centrar en el taxi seleccionado
@@ -970,6 +972,21 @@ function initHistoricalTracking() {
 
         domElements.clearPointBtn.addEventListener('click', () => {
             clearSelectedPoint();
+            loadHistoricalData();
+        });
+
+        domElements.searchRadius.addEventListener('input', () => {
+            // actualizo la etiqueta del valor
+            const disp = document.getElementById('radius-value');
+            if (disp) disp.textContent = domElements.searchRadius.value;
+
+            // si ya hay marcador/círculo, actualizo su radio visual
+            if (appState.historical.pointCircle) {
+                appState.historical.pointCircle.setRadius(
+                    parseInt(domElements.searchRadius.value)
+                );
+            }
+            // recargo la ruta filtrada
             loadHistoricalData();
         });
         
