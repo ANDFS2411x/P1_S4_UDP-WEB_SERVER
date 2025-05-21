@@ -74,19 +74,10 @@ function updateInfoPanel(data) {
         rawDate = rawDate.split("T")[0];
     }
     domElements.fecha.textContent = rawDate;
+
     domElements.tiempo.textContent = data.TIME || "N/A";
     domElements.rpmRealTime.textContent = data.RPM || "N/A";
     domElements.idTaxiReal.textContent = data.ID_TAXI || "N/A";
-}
-
-function updateInfoPanelFields(taxiData) {
-  const id = taxiData.ID_TAXI.toString();
-  document.getElementById(`lat${id}`).textContent   = parseFloat(taxiData.LATITUDE).toFixed(6);
-  document.getElementById(`lng${id}`).textContent   = parseFloat(taxiData.LONGITUDE).toFixed(6);
-  document.getElementById(`date${id}`).textContent  = taxiData.DATE.split('T')[0];
-  document.getElementById(`time${id}`).textContent  = taxiData.TIME;
-  document.getElementById(`rpm${id}`).textContent   = taxiData.RPM || '0';
-  // idTaxi siempre es fijo
 }
 
 function showLoading(show) {
@@ -139,7 +130,7 @@ function stopRealTimeUpdates() {
     }
 }
 
-/*async function updateRealTimeData() {
+async function updateRealTimeData() {
     try {
         const data = await fetchData('/data');
         if (!data || !Array.isArray(data)) {
@@ -192,12 +183,10 @@ function stopRealTimeUpdates() {
             }
 
             // Si este es el taxi seleccionado, actualizar panel de información
-            /*if (appState.realTime.currentTaxiId === taxiId || appState.realTime.currentTaxiId === "0") {
-                //updateInfoPanel(appState.realTime.currentTaxiId);
-                updateTaxiVisibility(appState.realTime.currentTaxiId);
-                if (appState.realTime.currentTaxiId === "0") {
-                    //updateInfoPanel(taxiData);
-                    updateTaxiVisibility(taxiId);
+            if (appState.realTime.currentTaxiId === taxiId || appState.realTime.currentTaxiId === "0") {
+                updateInfoPanel(appState.realTime.currentTaxiId);
+                if (appState.realTime.currentTaxiId !== "0") {
+                    updateInfoPanel(taxiData);
                 }
 
                 // Si está habilitado el seguimiento, centrar en el taxi seleccionado
@@ -206,38 +195,15 @@ function stopRealTimeUpdates() {
                 }
             }
         });
-        updateTaxiVisibility(appState.realTime.currentTaxiId);
+
+        // Si están todos los taxis seleccionados, no mostrar información específica
+        /*if (appState.realTime.currentTaxiId === "0") {
+            clearInfoPanel();
+        }*/
 
     } catch (error) {
         console.error('Error actualizando datos en tiempo real:', error);
     }
-}*/
-
-async function updateRealTimeData() {
-  try {
-    const data = await fetchData('/data');
-    data.forEach(taxiData => {
-      const id = taxiData.ID_TAXI.toString();
-      const pos = {
-        lat: parseFloat(taxiData.LATITUDE),
-        lng: parseFloat(taxiData.LONGITUDE)
-      };
-      // 1) actualizar marcador y polilínea...
-      if (appState.realTime.markers[id]) {
-        appState.realTime.markers[id].setPosition(pos);
-        appState.realTime.polylines[id].setPath(appState.realTime.recorridos[id]);
-      }
-      // 2) si corresponde a la selección (o "0" para todos), actualiza valores
-      if (appState.realTime.currentTaxiId === "0"
-       || appState.realTime.currentTaxiId === id) {
-        updateInfoPanelFields(taxiData);
-      }
-    });
-    // 3) y finalmente ajusta visibilidad 
-    updateTaxiVisibility(appState.realTime.currentTaxiId);
-  } catch(e) {
-    console.error(e);
-  }
 }
 
 async function fetchData(endpoint) {
@@ -282,7 +248,7 @@ function initRealMapInstance() {
     console.log('Mapa en tiempo real inicializado');
 }
 
-/*function updateTaxiVisibility(selectedTaxiId) {
+function updateTaxiVisibility(selectedTaxiId) {
     const infoPanelEl = document.querySelector('.info-grid');
     const seguirBtnEl = document.getElementById('seguirBtn');
   
@@ -337,47 +303,6 @@ function initRealMapInstance() {
           })
           .catch(err => console.error(`Error al cargar info del taxi ${id}:`, err));
       });
-}*/
-
-function updateTaxiVisibility(selectedTaxiId) {
-  // bloques
-  const block1 = document.querySelector('.taxi-block[data-id="1"]');
-  const block2 = document.querySelector('.taxi-block[data-id="2"]');
-  const seguirBtn = document.getElementById('seguirBtn');
-  const taxiDivider = document.getElementById('taxiDivider');
-
-  if (selectedTaxiId === "0") {
-    block1.style.display = 'block';
-    block2.style.display = 'block';
-    seguirBtn.style.display = 'none';
-  } else {
-    block1.style.display = selectedTaxiId === "1" ? 'block' : 'none';
-    block2.style.display = selectedTaxiId === "2" ? 'block' : 'none';
-    seguirBtn.style.display = 'none';
-    taxiDivider.style.display = 'none';
-  }
-
-   // Mostrar marcadores / rutas y calcular bounds
-    const bounds = new google.maps.LatLngBounds();
-    Object.entries(appState.realTime.markers).forEach(([taxiId, marker]) => {
-      const poly = appState.realTime.polylines[taxiId];
-      const show = (selectedTaxiId === "0" || taxiId === selectedTaxiId);
-      marker.setMap(show ? appState.realTime.map : null);
-      poly.setMap(show ? appState.realTime.map : null);
-      if (show) bounds.extend(marker.getPosition());
-    });
-
-       // Ajustar vista
-    if (selectedTaxiId === "0") {
-      appState.realTime.map.fitBounds(bounds);
-    } else {
-      const m = appState.realTime.markers[selectedTaxiId];
-      if (m) {
-        appState.realTime.map.panTo(m.getPosition());
-        appState.realTime.map.setZoom(14);
-      }
-    }
-  // recenter/fitBounds...
 }
 
 async function fetchTaxiInfo(taxiId) {
@@ -518,12 +443,11 @@ function initHistoricalMapInstance() {
     // Configurar el spinner de selección de taxi histórico
     domElements.idSpinnerHist.addEventListener('change', function() {
         const selectedTaxiId = this.value;
-        domElements.timelineInfo.style.display = 'flex';
-        /*if (selectedTaxiId === "0") {
+        if (selectedTaxiId === "0") {
             domElements.timelineInfo.style.display = 'none';
         } else {
             domElements.timelineInfo.style.display = 'flex';
-        }*/
+        }
         if (appState.historical.timelineAnimation) {
             appState.historical.timelineAnimation.setSelectedTaxiId(selectedTaxiId);
             
@@ -545,7 +469,6 @@ function updateTimelineInfo(progress) {
     const currentTimeInfo = document.getElementById('currentTimeInfo');
     const distanceInfo = document.getElementById('distanceInfo');
     const rpmHist = document.getElementById('rpmHist');
-    const taxiInfo = document.getElementById('taxiInfo');
     
     if (!appState.historical.timelineAnimation) return;
     
@@ -559,8 +482,6 @@ function updateTimelineInfo(progress) {
         
         // Actualizar información de tiempo
         currentTimeInfo.textContent = `${dateStr} ${timeStr}`;
-
-        taxiInfo.textContent = `Taxi: ${pointInfo.ID_TAXI}`;
         
         // Actualizar RPM si está disponible
         rpmHist.textContent = `RPM: ${pointInfo.RPM || '0'}`;
@@ -586,7 +507,7 @@ function updateTimelineInfo(progress) {
         }
         
         // Centrar el mapa en la posición actual si hay coordenadas
-        if (pointInfo.lat !=null && pointInfo.lng !=null) {
+        if (pointInfo.lat && pointInfo.lng) {
             appState.historical.map.panTo({
                 lat: pointInfo.lat,
                 lng: pointInfo.lng
@@ -609,35 +530,48 @@ async function loadHistoricalData() {
         if (domElements.enablePointSelection.checked) {
             const selectedLat = parseFloat(domElements.selectedLat.value);
             const selectedLng = parseFloat(domElements.selectedLng.value);
+            
             if (isNaN(selectedLat) || isNaN(selectedLng)) {
-                throw new Error("Haz clic en el mapa para seleccionar un punto");
+                throw new Error("Debe seleccionar un punto en el mapa primero");
             }
         }
 
         showLoading(true);
-        domElements.historicalError?.style.setProperty('display','none');
+        
+        if (domElements.historicalError) {
+            domElements.historicalError.style.display = "none";
+        }
 
         const timelineControls = document.getElementById('timelineControls');
-        if (timelineControls) timelineControls.style.display = 'none';
+        if (timelineControls) {
+            timelineControls.style.display = 'none';
+        }
 
         // Detener actualizaciones en tiempo real si están activas
         stopRealTimeUpdates();
-        appState.historical.timelineAnimation?.clear();
+
+        // Limpiar visualizaciones anteriores
+        if (appState.historical.timelineAnimation) {
+            appState.historical.timelineAnimation.clear();
+        }
 
         // Obtener datos históricos
         const url = `${config.basePath}/historical-data?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
 
-        const { success, data } = await response.json();
-        if (!success || !Array.isArray(data) || data.length === 0) {
-            timelineControls.style.display = 'none';
+        const result = await response.json();
+        
+        if (!result?.success || !Array.isArray(result.data)) {
+            throw new Error("Formato de datos incorrecto");
+        }
+        
+        if (result.data.length === 0) {
             throw new Error("No hay datos para el rango seleccionado");
         }
 
         // Procesar coordenadas
-        const allPoints = data
-            .map(item => ({
+        const allPoints = result.data.map(item => ({
             lat: parseFloat(item.LATITUDE),
             lng: parseFloat(item.LONGITUDE),
             time: item.TIME,
@@ -647,8 +581,6 @@ async function loadHistoricalData() {
         })).filter(coord => !isNaN(coord.lat) && !isNaN(coord.lng));
 
         if (allPoints.length === 0) {
-            appState.historical.timelineAnimation.clear();
-            timelineControls.style.display = 'none';
             throw new Error("No hay coordenadas válidas en los datos recibidos");
         }
 
@@ -680,35 +612,42 @@ async function loadHistoricalData() {
         if (!appState.historical.timelineAnimation) {
             appState.historical.timelineAnimation = new TimelineAnimation(appState.historical.map);
         }
-        const anim = appState.historical.timelineAnimation;
-        anim.setSelectedTaxiId(selectedTaxiId);
-        anim.setPoints(relevantPoints, 'route');
-        anim.setMode('route');
 
+        // Establecer el ID del taxi seleccionado
+        appState.historical.timelineAnimation.setSelectedTaxiId(selectedTaxiId);
+
+        // En modo de selección de punto, mostrar solo los puntos relevantes
+        if (domElements.enablePointSelection.checked) {
+            appState.historical.timelineAnimation.setPoints(relevantPoints, 'point');
+        } else {
+            appState.historical.timelineAnimation.setPoints(relevantPoints, 'route');
+        }
+
+        // Configurar y mostrar controles de línea de tiempo
         if (timelineControls) {
-            const slider          = document.getElementById('timelineSlider');
-            const pts             = relevantPoints;
-            const n               = pts.length;
+            const timelineSlider = document.getElementById('timelineSlider');
+            const currentTimeInfo = document.getElementById('currentTimeInfo');
+            
+            if (timelineSlider && currentTimeInfo) {
+                // Resetear slider
+                timelineSlider.value = 0;
+                timelineSlider.style.backgroundSize = `${timelineSlider.value}% 100%`;
 
-            // rango 0 … n-1
-            slider.min   = 0;
-            slider.max   = Math.max(0, n - 1);
-            slider.step  = 1;
-            slider.value = 0;
-            slider.style.backgroundSize = '0% 100%';
+                // Actualizar la información inicial
+                updateTimelineInfo(0);
 
-            slider.addEventListener('input', function() {
-                const idx = Number(this.value);
-                const pct = n > 0.1 ? (idx / (n - 1)) * 100 : 0;
-                this.style.backgroundSize = `${pct}% 100%`;
+                // Actualizar la información cuando se mueve el slider
+                timelineSlider.addEventListener('input', function(e) {
+                    const progress = parseInt(e.target.value);
+                    this.style.backgroundSize = `${progress}% 100%`;
+                    
+                    // Actualizar visualización con el nuevo progreso
+                    updateTimelineInfo(progress);
+                });
 
-                // actualiza la animación y la info
-                updateTimelineInfo(pct);
-            });
-
-            // disparo inicial para idx=0
-            slider.dispatchEvent(new Event('input'));
-            timelineControls.style.display = 'block';
+                // Mostrar controles
+                timelineControls.style.display = 'block';
+            }
         }
 
         // Ajustar vista del mapa para que todos los puntos sean visibles
@@ -905,12 +844,69 @@ function initHistoricalTracking() {
 
         domElements.loadHistory.style.display = 'none';
 
+        // Configurar evento del botón de cargar historia
+        //domElements.loadHistory.addEventListener('click', loadHistoricalData);
+
+        // Configurar eventos para selección de punto
+        /*domElements.enablePointSelection.addEventListener('change', function() {
+            console.log(!domElements.clearPointBtn.disabled);
+            console.log(domElements.enablePointSelection.checked);
+            if (!domElements.clearPointBtn.disabled && domElements.enablePointSelection.checked){
+                domElements.loadHistory.textContent = "Consultar registros";
+                domElements.loadHistory.style.backgroundColor = "#b103fc";
+                console.log("entra");
+            } else {
+                domElements.loadHistory.textContent = "Cargar trayectoria";
+                domElements.loadHistory.style.backgroundColor = "#5667d8";
+                console.log("else");
+            }
+
+            const isEnabled = this.checked;
+            
+            // Habilitar/deshabilitar campos relacionados
+            domElements.selectedLat.disabled = !isEnabled;
+            domElements.selectedLng.disabled = !isEnabled;
+            domElements.searchRadius.disabled = !isEnabled;
+            
+            if (!isEnabled) {
+                // Si se deshabilita, limpiar el punto
+                clearSelectedPoint();
+            }
+        });
+
+        const observer = new MutationObserver(() => {
+            if (!domElements.clearPointBtn.disabled && domElements.enablePointSelection.checked) {
+                domElements.loadHistory.textContent = "Consultar registros";
+                domElements.loadHistory.style.backgroundColor = "#b103fc";
+                console.log("entra");
+            } else {
+                domElements.loadHistory.textContent = "Cargar trayectoria";
+                domElements.loadHistory.style.backgroundColor = "#5667d8";
+                console.log("else");
+            }
+        });
+        
+        observer.observe(domElements.clearPointBtn, { attributes: true, attributeFilter: ['disabled'] });
+        
+        // Configurar evento para botón de limpiar punto
+        domElements.clearPointBtn.addEventListener('click', clearSelectedPoint);
+        
+        
+        
+        domElements.enablePointSelection.addEventListener('change', () => {
+            const isEnabled = domElements.enablePointSelection.checked;
+            domElements.selectedLat.disabled    = !isEnabled;
+            domElements.selectedLng.disabled    = !isEnabled;
+            domElements.searchRadius.disabled   = !isEnabled;
+            if (!isEnabled) clearSelectedPoint();
+            loadHistoricalData();
+        });*/
+
         domElements.enablePointSelection.addEventListener('change', () => {
             const isOn = domElements.enablePointSelection.checked;
             domElements.selectedLat.disabled  = !isOn;
             domElements.selectedLng.disabled  = !isOn;
             domElements.searchRadius.disabled = !isOn;
-            domElements.clearPointBtn.disabled = !isOn;
             domElements.radiusContainer.style.display = isOn ? 'block' : 'none';
             if (!isOn) clearSelectedPoint();
             loadHistoricalData();
@@ -918,21 +914,6 @@ function initHistoricalTracking() {
 
         domElements.clearPointBtn.addEventListener('click', () => {
             clearSelectedPoint();
-            loadHistoricalData();
-        });
-
-        domElements.searchRadius.addEventListener('input', () => {
-            // actualizo la etiqueta del valor
-            const disp = document.getElementById('radius-value');
-            if (disp) disp.textContent = domElements.searchRadius.value;
-
-            // si ya hay marcador/círculo, actualizo su radio visual
-            if (appState.historical.pointCircle) {
-                appState.historical.pointCircle.setRadius(
-                    parseInt(domElements.searchRadius.value)
-                );
-            }
-            // recargo la ruta filtrada
             loadHistoricalData();
         });
         
