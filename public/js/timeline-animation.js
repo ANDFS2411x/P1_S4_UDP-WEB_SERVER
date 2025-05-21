@@ -82,7 +82,7 @@ class TimelineAnimation {
         }
     }
 
-    setPoints(pointsData, mode = 'route') {
+    setPoints(pointsData, mode = 'point') {
         // Limpiar datos anteriores
         this.clear();
         
@@ -150,6 +150,49 @@ class TimelineAnimation {
     }
 
     updateVisualization() {
+        // Si no hay datos, salimos
+        if (!this.taxiData || Object.keys(this.taxiData).length === 0) return;
+
+        Object.keys(this.taxiData).forEach(taxiId => {
+            const pts = this.taxiData[taxiId];
+            if (!pts || pts.length === 0) return;
+
+            // Coordenadas completas del taxi
+            const fullPathCoords = pts.map(point => ({ lat: point.lat, lng: point.lng }));
+
+            if (this.mode === 'route') {
+                // 1) Siempre dejamos la polilínea completa
+                this.animationPaths[taxiId].setPath(fullPathCoords);
+
+                // 2) Calculamos el índice según el porcentaje de progress
+                const idx = Math.floor((this.progress / 100) * (fullPathCoords.length - 1));
+                const pos = fullPathCoords[idx];
+
+                // 3) Movemos el marcador a esa posición
+                this.currentMarkers[taxiId].setPosition(pos);
+                this.currentMarkers[taxiId].setMap(this.map);
+
+            } else {
+                // Modo “point” / “trail”: lógica original que va creciendo la ruta
+                // (puedes dejar aquí tu código existente si lo usas)
+                const currentTimestamp = this.startTimestamp + (this.endTimestamp - this.startTimestamp) * (this.progress / 100);
+                const visiblePoints = pts.filter(point => point.timestamp <= currentTimestamp);
+                if (visiblePoints.length === 0) {
+                    this.animationPaths[taxiId].setPath([]);
+                    this.currentMarkers[taxiId].setMap(null);
+                    return;
+                }
+                this.animationPaths[taxiId].setPath(visiblePoints.map(point => ({ lat: point.lat, lng: point.lng })));
+                const last = visiblePoints[visiblePoints.length - 1];
+                this.currentMarkers[taxiId].setPosition({ lat: last.lat, lng: last.lng });
+                this.currentMarkers[taxiId].setMap(this.map);
+            }
+        });
+    }
+
+
+    
+    /*updateVisualization() {
         if (this.startTimestamp === Infinity || this.endTimestamp === -Infinity) return;
         
         // Calcular el timestamp actual basado en el progreso
@@ -182,7 +225,7 @@ class TimelineAnimation {
             this.currentMarkers[taxiId].setPosition({ lat: lastPoint.lat, lng: lastPoint.lng });
             this.currentMarkers[taxiId].setMap(this.map);
         });
-    }
+    }*/
 
     setProgress(progressPercent) {
         this.progress = progressPercent;

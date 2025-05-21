@@ -55,14 +55,24 @@
                               </select>
                         </div>
                         <div class="info-grid">
-                            <p><strong>Latitud:</strong> <span id="latitud">N/A</span></p>
-                            <p><strong>Longitud:</strong> <span id="longitud">N/A</span></p>
-                            <p><strong>Fecha:</strong> <span id="fecha">N/A</span></p>
-                            <p><strong>Hora:</strong> <span id="tiempo">N/A</span></p>
-                            <p><strong>RPM:</strong> <span id="rpm"></span></p>
-                            <p><strong>Taxi ID:</strong> <span id="idTaxi">N/A</span></p>
+                            <div class="taxi-block" data-id="1">
+                                <p><strong>Latitud:</strong> <span id="lat1">N/A</span></p>
+                                <p><strong>Longitud:</strong> <span id="lng1">N/A</span></p>
+                                <p><strong>Fecha:</strong> <span id="date1">N/A</span></p>
+                                <p><strong>Hora:</strong> <span id="time1">N/A</span></p>
+                                <p><strong>RPM:</strong> <span id="rpm1">N/A</span></p>
+                                <p><strong>Taxi ID:</strong> <span id="idTaxi1">1</span></p>
+                            </div>
+                            <hr class="taxi-divider" id="taxiDivider">
+                            <div class="taxi-block" data-id="2">
+                                <p><strong>Latitud:</strong> <span id="lat2">N/A</span></p>
+                                <p><strong>Longitud:</strong> <span id="lng2">N/A</span></p>
+                                <p><strong>Fecha:</strong> <span id="date2">N/A</span></p>
+                                <p><strong>Hora:</strong> <span id="time2">N/A</span></p>
+                                <p><strong>RPM:</strong> <span id="rpm2">N/A</span></p>
+                                <p><strong>Taxi ID:</strong> <span id="idTaxi2">2</span></p>
+                            </div>
                         </div>
-                        <hr class="taxi-divider">
                         <button id="seguirBtn" class="action-button">Seguir Taxi</button>
                     </div>
                 </div>
@@ -91,6 +101,7 @@
                         <input type="range" id="timelineSlider" min="0" max="100" value="0" class="timeline-slider">
                         <div id="timeline-info" class="timeline-info">
                             <span id="currentTimeInfo">--:--:--</span>
+                            <span id="taxiInfo">Taxi: --</span>
                             <span id="rpmHist">-</span>
                             <span id="distanceInfo">Distancia al punto: -- m</span>
                         </div>
@@ -126,7 +137,7 @@
                             <div class="checkbox-container">
                                 <input type="checkbox" id="enablePointSelection">
                                 <label class="white" for="enablePointSelection">Seleccionar punto en el mapa</label>
-                                <span class="helper-text">(Haz clic en el mapa para seleccionar un punto)</span>
+                                <!--<span class="helper-text">(Haz clic en el mapa para seleccionar un punto)</span>-->
                             </div>
                             
                             <div class="coordinates-container">
