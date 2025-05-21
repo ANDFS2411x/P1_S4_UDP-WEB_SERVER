@@ -221,30 +221,80 @@ function stopRealTimeUpdates() {
 }*/
 
 async function updateRealTimeData() {
-  try {
-    const data = await fetchData('/data');
-    data.forEach(taxiData => {
-      const id = taxiData.ID_TAXI.toString();
-      const pos = {
-        lat: parseFloat(taxiData.LATITUDE),
-        lng: parseFloat(taxiData.LONGITUDE)
-      };
-      // 1) actualizar marcador y polilínea...
-      if (appState.realTime.markers[id]) {
-        appState.realTime.markers[id].setPosition(pos);
-        appState.realTime.polylines[id].setPath(appState.realTime.recorridos[id]);
-      }
-      // 2) si corresponde a la selección (o "0" para todos), actualiza valores
-      if (appState.realTime.currentTaxiId === "0"
-       || appState.realTime.currentTaxiId === id) {
-        updateInfoPanelFields(taxiData);
-      }
-    });
-    // 3) y finalmente ajusta visibilidad 
-    updateTaxiVisibility(appState.realTime.currentTaxiId);
-  } catch(e) {
-    console.error(e);
-  }
+    try {
+        const data = await fetchData('/data');
+        if (!data || !Array.isArray(data)) {
+            throw new Error("Formato de datos incorrecto");
+        }
+
+        // Si no hay datos, mostrar error
+        if (data.length === 0) {
+            throw new Error("No hay datos disponibles");
+        }
+
+        // Procesar cada taxi recibido
+        data.forEach(taxiData => {
+            if (!taxiData?.LATITUDE || !taxiData?.LONGITUDE || !taxiData?.ID_TAXI) {
+                console.warn("Datos incompletos para un taxi");
+                return;
+            }
+
+            const taxiId = taxiData.ID_TAXI.toString();
+            const nuevaPosicion = {
+                lat: parseFloat(taxiData.LATITUDE),
+                lng: parseFloat(taxiData.LONGITUDE)
+            };
+
+            // Verificar coordenadas válidas
+            if (isNaN(nuevaPosicion.lat) || isNaN(nuevaPosicion.lng)) {
+                console.warn("Coordenadas inválidas para taxi ID:", taxiId);
+                return;
+            }
+
+            // Asegurar que este taxi tiene una entrada en el registro de recorridos
+            if (!appState.realTime.recorridos[taxiId]) {
+                appState.realTime.recorridos[taxiId] = [];
+                console.log(`Inicializando recorrido para taxi ${taxiId}`);
+            }
+
+            // Actualizar posición del marcador
+            if (appState.realTime.markers[taxiId]) {
+                appState.realTime.markers[taxiId].setPosition(nuevaPosicion);
+            }
+
+            // Añadir punto al recorrido
+            if (appState.realTime.recorridos[taxiId].length > 500) {
+                appState.realTime.recorridos[taxiId].shift(); // Eliminar punto más antiguo
+            }
+            appState.realTime.recorridos[taxiId].push(nuevaPosicion);
+
+            // Actualizar polilínea
+            if (appState.realTime.polylines[taxiId]) {
+                appState.realTime.polylines[taxiId].setPath(appState.realTime.recorridos[taxiId]);
+                
+                // Asegurarse de que la polilínea esté visible si el taxi está seleccionado
+                const show = (appState.realTime.currentTaxiId === "0" || appState.realTime.currentTaxiId === taxiId);
+                appState.realTime.polylines[taxiId].setMap(show ? appState.realTime.map : null);
+            } else {
+                console.warn(`No existe polilínea para taxi ${taxiId}`);
+            }
+
+            // Si este es el taxi seleccionado, actualizar panel de información
+            if (appState.realTime.currentTaxiId === taxiId || appState.realTime.currentTaxiId === "0") {
+                updateInfoPanel(taxiData);
+
+                // Si está habilitado el seguimiento, centrar en el taxi seleccionado
+                if (appState.realTime.seguirCentrando && appState.realTime.currentTaxiId === taxiId) {
+                    centerOnTaxi(taxiId);
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Error actualizando datos en tiempo real:', error);
+        domElements.realTimeError.textContent = `Error: ${error.message}`;
+        domElements.realTimeError.style.display = 'block';
+    }
 }
 
 async function fetchData(endpoint) {
@@ -361,44 +411,73 @@ function initRealMapInstance() {
 }*/
 
 function updateTaxiVisibility(selectedTaxiId) {
-  // bloques
-  const block1 = document.querySelector('.taxi-block[data-id="1"]');
-  const block2 = document.querySelector('.taxi-block[data-id="2"]');
-  const seguirBtn = document.getElementById('seguirBtn');
-  const taxiDivider = document.getElementById('taxiDivider');
-
-  if (selectedTaxiId === "0") {
-    block1.style.display = 'block';
-    block2.style.display = 'block';
-    seguirBtn.style.display = 'none';
-  } else {
-    block1.style.display = selectedTaxiId === "1" ? 'block' : 'none';
-    block2.style.display = selectedTaxiId === "2" ? 'block' : 'none';
-    seguirBtn.style.display = 'none';
-    taxiDivider.style.display = 'none';
-  }
-
-   // Mostrar marcadores / rutas y calcular bounds
+    const infoPanelEl = document.querySelector('.info-grid');
+    const seguirBtnEl = document.getElementById('seguirBtn');
+  
+    // Reset del panel
+    infoPanelEl.innerHTML = '';
+    infoPanelEl.style.display = 'grid';
+    seguirBtnEl.style.display = selectedTaxiId !== "0" ? 'block' : 'none';
+  
+    // Mostrar marcadores / rutas y calcular bounds
     const bounds = new google.maps.LatLngBounds();
     Object.entries(appState.realTime.markers).forEach(([taxiId, marker]) => {
       const poly = appState.realTime.polylines[taxiId];
       const show = (selectedTaxiId === "0" || taxiId === selectedTaxiId);
+      
+      // Asegurarnos de que el marcador sea visible en el mapa apropiado
       marker.setMap(show ? appState.realTime.map : null);
-      poly.setMap(show ? appState.realTime.map : null);
-      if (show) bounds.extend(marker.getPosition());
+      
+      // Asegurarnos de que la polilínea sea visible en el mapa apropiado
+      if (poly) {
+        poly.setMap(show ? appState.realTime.map : null);
+        
+        // Verificar que la polilínea tenga puntos para mostrar
+        if (appState.realTime.recorridos[taxiId] && appState.realTime.recorridos[taxiId].length > 0) {
+            poly.setPath(appState.realTime.recorridos[taxiId]);
+        }
+      }
+      
+      if (show && marker.getPosition()) {
+        bounds.extend(marker.getPosition());
+      }
     });
-
-       // Ajustar vista
-    if (selectedTaxiId === "0") {
+  
+    // Ajustar vista
+    if (selectedTaxiId === "0" && !bounds.isEmpty()) {
       appState.realTime.map.fitBounds(bounds);
     } else {
       const m = appState.realTime.markers[selectedTaxiId];
-      if (m) {
+      if (m && m.getPosition()) {
         appState.realTime.map.panTo(m.getPosition());
         appState.realTime.map.setZoom(14);
       }
     }
-  // recenter/fitBounds...
+  
+    // Rellenar info: uno o todos
+    const taxiIds = selectedTaxiId === "0"
+      ? Object.keys(appState.realTime.markers)
+      : [selectedTaxiId];
+
+    taxiIds.forEach(id => {
+      fetchTaxiInfo(id).then(info => {
+          const entries = [
+            ['Latitud',   info.lat.toFixed(6)],
+            ['Longitud',  info.lng.toFixed(6)],
+            ['Fecha',     info.date.includes('T') ? info.date.split('T')[0] : info.date],
+            ['Hora',      info.time],
+            ['RPM',       info.RPM],
+            ['Taxi ID',   info.ID_TAXI]
+          ];
+    
+          entries.forEach(([label, value]) => {
+            const p = document.createElement('p');
+            p.innerHTML = `<strong>${label}:</strong> <span>${value}</span>`;
+            infoPanelEl.appendChild(p);
+          });
+        })
+        .catch(err => console.error(`Error al cargar info del taxi ${id}:`, err));
+    });
 }
 
 async function fetchTaxiInfo(taxiId) {
