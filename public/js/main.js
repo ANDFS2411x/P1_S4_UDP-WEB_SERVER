@@ -213,120 +213,31 @@ function stopRealTimeUpdates() {
     }
 }*/
 
-// async function updateRealTimeData() {
-//   try {
-//     const data = await fetchData('/data');
-//     data.forEach(taxiData => {
-//       const id = taxiData.ID_TAXI.toString();
-//       const pos = {
-//         lat: parseFloat(taxiData.LATITUDE),
-//         lng: parseFloat(taxiData.LONGITUDE)
-//       };
-//       // 1) actualizar marcador y polilínea...
-//       if (appState.realTime.markers[id]) {
-//         appState.realTime.markers[id].setPosition(pos);
-//         appState.realTime.polylines[id].setPath(appState.realTime.recorridos[id]);
-         
-//       }
-//       // 2) si corresponde a la selección (o "0" para todos), actualiza valores
-//       if (appState.realTime.currentTaxiId === "0"
-//        || appState.realTime.currentTaxiId === id) {
-//         updateInfoPanelFields(taxiData);
-//       }
-//     });
-//     // 3) y finalmente ajusta visibilidad 
-//     updateTaxiVisibility(appState.realTime.currentTaxiId);
-//   } catch(e) {
-//     console.error(e);
-//   }
-// }
-
 async function updateRealTimeData() {
-    try {
-        const data = await fetchData('/data');
-        if (!data || !Array.isArray(data)) {
-            throw new Error("Formato de datos incorrecto");
-        }
-
-        if (data.length === 0) {
-            throw new Error("No hay datos disponibles");
-        }
-
-        data.forEach(taxiData => {
-            if (!taxiData?.LATITUDE || !taxiData?.LONGITUDE || !taxiData?.ID_TAXI) {
-                console.warn("Datos incompletos para un taxi:", taxiData);
-                return;
-            }
-
-            const id = taxiData.ID_TAXI.toString();
-            const pos = {
-                lat: parseFloat(taxiData.LATITUDE),
-                lng: parseFloat(taxiData.LONGITUDE)
-            };
-
-            if (isNaN(pos.lat) || isNaN(pos.lng)) {
-                console.warn("Coordenadas inválidas para taxi ID:", id);
-                return;
-            }
-
-            // Inicializar recorrido si no existe
-            if (!appState.realTime.recorridos[id]) {
-                appState.realTime.recorridos[id] = [];
-            }
-
-            // Añadir nueva posición al recorrido
-            if (appState.realTime.recorridos[id].length > 500) {
-                appState.realTime.recorridos[id].shift(); // Eliminar punto más antiguo
-            }
-            appState.realTime.recorridos[id].push(pos);
-
-            // Crear marcador si no existe
-            if (!appState.realTime.markers[id]) {
-                appState.realTime.markers[id] = new google.maps.Marker({
-                    position: pos,
-                    map: appState.realTime.map,
-                    title: `Taxi ${id} 🚕`,
-                    icon: {
-                        url: "https://cdn-icons-png.flaticon.com/128/2401/2401174.png",
-                        scaledSize: new google.maps.Size(50, 50)
-                    }
-                });
-            } else {
-                appState.realTime.markers[id].setPosition(pos);
-            }
-
-            // Crear o actualizar polilínea
-            if (!appState.realTime.polylines[id]) {
-                const colors = ["#FF0000", "#0000FF", "#00FF00", "#FFFF00", "#FF00FF"];
-                appState.realTime.polylines[id] = new google.maps.Polyline({
-                    path: appState.realTime.recorridos[id],
-                    geodesic: true,
-                    strokeColor: colors[Object.keys(appState.realTime.polylines).length % colors.length],
-                    strokeOpacity: 1.0,
-                    strokeWeight: 4,
-                    map: appState.realTime.map
-                });
-            } else {
-                appState.realTime.polylines[id].setPath(appState.realTime.recorridos[id]);
-            }
-
-            // Actualizar panel de información si corresponde
-            if (appState.realTime.currentTaxiId === "0" || appState.realTime.currentTaxiId === id) {
-                updateInfoPanelFields(taxiData);
-            }
-
-            // Centrar mapa si está habilitado el seguimiento
-            if (appState.realTime.seguirCentrando && appState.realTime.currentTaxiId === id) {
-                centerOnTaxi(id);
-            }
-        });
-
-        // Actualizar visibilidad
-        updateTaxiVisibility(appState.realTime.currentTaxiId);
-    } catch (e) {
-        console.error('Error actualizando datos en tiempo real:', e);
-        showError(domElements.realTimeError, e.message);
-    }
+  try {
+    const data = await fetchData('/data');
+    data.forEach(taxiData => {
+      const id = taxiData.ID_TAXI.toString();
+      const pos = {
+        lat: parseFloat(taxiData.LATITUDE),
+        lng: parseFloat(taxiData.LONGITUDE)
+      };
+      // 1) actualizar marcador y polilínea...
+      if (appState.realTime.markers[id]) {
+        appState.realTime.markers[id].setPosition(pos);
+        appState.realTime.polylines[id].setPath(appState.realTime.recorridos[id]);
+      }
+      // 2) si corresponde a la selección (o "0" para todos), actualiza valores
+      if (appState.realTime.currentTaxiId === "0"
+       || appState.realTime.currentTaxiId === id) {
+        updateInfoPanelFields(taxiData);
+      }
+    });
+    // 3) y finalmente ajusta visibilidad 
+    updateTaxiVisibility(appState.realTime.currentTaxiId);
+  } catch(e) {
+    console.error(e);
+  }
 }
 
 async function fetchData(endpoint) {
@@ -496,7 +407,7 @@ async function fetchTaxiInfo(taxiId) {
     }
 }
 
-/*function createTaxiMarkers() {
+function createTaxiMarkers() {
     // Crear marcadores y polilíneas para cada taxi
     Object.keys(appState.realTime.recorridos).forEach((taxiId, index) => {
         const recorrido = appState.realTime.recorridos[taxiId];
@@ -523,42 +434,6 @@ async function fetchTaxiInfo(taxiId) {
             strokeWeight: 4,
             map: appState.realTime.map
         });
-    });
-    
-    // Configurar visibilidad inicial (mostrar todos)
-    updateTaxiVisibility("0");
-}*/
-
-function createTaxiMarkers() {
-    console.log('Creando marcadores y polilíneas para:', Object.keys(appState.realTime.recorridos));
-    
-    Object.keys(appState.realTime.recorridos).forEach((taxiId, index) => {
-        const recorrido = appState.realTime.recorridos[taxiId] || [];
-        const position = recorrido.length > 0 ? recorrido[recorrido.length - 1] : { lat: 11.0193213, lng: -74.8601743 }; // Posición por defecto si no hay recorrido
-        
-        // Crear marcador
-        appState.realTime.markers[taxiId] = new google.maps.Marker({
-            position: position,
-            map: appState.realTime.map,
-            title: `Taxi ${taxiId} 🚕`,
-            icon: {
-                url: "https://cdn-icons-png.flaticon.com/128/2401/2401174.png",
-                scaledSize: new google.maps.Size(50, 50)
-            }
-        });
-        
-        // Crear polilínea con un color diferente para cada taxi
-        const colors = ["#FF0000", "#0000FF", "#00FF00", "#FFFF00", "#FF00FF"];
-        appState.realTime.polylines[taxiId] = new google.maps.Polyline({
-            path: recorrido.length > 0 ? recorrido : [position], // Asegura que la polilínea tenga al menos un punto
-            geodesic: true,
-            strokeColor: colors[index % colors.length],
-            strokeOpacity: 1.0,
-            strokeWeight: 4,
-            map: appState.realTime.map
-        });
-        
-        console.log(`Marcador y polilínea creados para taxi ${taxiId}`);
     });
     
     // Configurar visibilidad inicial (mostrar todos)
