@@ -222,6 +222,7 @@ async function updateRealTimeData() {
         lat: parseFloat(taxiData.LATITUDE),
         lng: parseFloat(taxiData.LONGITUDE)
       };
+      
       // 1) actualizar marcador y polilínea...
       if (appState.realTime.markers[id]) {
         appState.realTime.markers[id].setPosition(pos);
